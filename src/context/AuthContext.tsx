@@ -17,6 +17,7 @@ import {
 } from 'firebase/auth'
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { auth, authReady, db } from '../lib/firebase'
+import { clearSavedCustomerId, saveCustomerId } from '../lib/customerId'
 import { mapAuthError } from '../lib/errors'
 import { normalizeWhatsapp, whatsappToEmail } from '../lib/identity'
 import { parseProfile, type Address, type UserProfile } from '../types'
@@ -59,6 +60,7 @@ async function hydrate(user: User): Promise<Session> {
       message: 'O cadastro desta conta está incompleto.',
     }
   }
+  if (profile.role === 'customer') saveCustomerId(profile.uid)
   return { status: 'ready', profile }
 }
 
@@ -78,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (suspendListener.current) return
           if (!user) {
             generation.current += 1
+            clearSavedCustomerId()
             setSession({ status: 'signedOut' })
             return
           }
@@ -184,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setSession({ status: 'signedOut' })
             throw error
           }
+          saveCustomerId(profile.uid)
           setSession({ status: 'ready', profile })
         } catch (error) {
           if (error instanceof Error && error.message.startsWith('Informe')) throw error

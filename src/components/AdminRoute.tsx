@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { AdminPanel } from './AdminPanel'
 import { Shell } from './Shell'
 import { StatusScreen } from './StatusScreen'
 
@@ -51,10 +52,10 @@ export function AdminRoute() {
 
   return (
     <Shell onLogout={() => void logout()}>
-      <section className="card">
+      <section className="card card--board">
         <p className="eyebrow">Administração</p>
         <h1>Painel</h1>
-        <div className="blank" aria-label="Painel vazio" />
+        <AdminPanel />
       </section>
     </Shell>
   )

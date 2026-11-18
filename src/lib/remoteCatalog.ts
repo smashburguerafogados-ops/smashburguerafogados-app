@@ -1,6 +1,7 @@
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { seedCatalog, type Catalog, type Category, type Extra, type Product } from '../data/catalog'
 import { db } from './firebase'
+import { sortCategories } from './menu'
 
 function asExtra(value: unknown): Extra | null {
   if (!value || typeof value !== 'object') return null
@@ -26,6 +27,7 @@ export async function loadRemoteCatalog(): Promise<Catalog | null> {
         id: entry.id,
         name: data.name,
         order: typeof data.order === 'number' ? data.order : 0,
+        destaque: data.destaque === true,
       })
     })
 
@@ -54,8 +56,7 @@ export async function loadRemoteCatalog(): Promise<Catalog | null> {
     })
 
     if (categories.length === 0 && products.length === 0) return null
-    categories.sort((a, b) => a.order - b.order)
-    return { categories, products }
+    return { categories: sortCategories(categories), products }
   } catch {
     return null
   }

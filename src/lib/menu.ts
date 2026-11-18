@@ -1,4 +1,4 @@
-import type { Product } from '../data/catalog'
+import type { Category, Product } from '../data/catalog'
 
 const CATEGORY_KEY = 'smash.category'
 
@@ -6,9 +6,30 @@ export type CartLine = {
   key: string
   productId: string
   name: string
+  image: string
   priceCents: number
   note: string
   qty: number
+}
+
+export function sortCategories(categories: Category[]): Category[] {
+  return [...categories].sort((a, b) => {
+    if (Boolean(a.destaque) !== Boolean(b.destaque)) return a.destaque ? -1 : 1
+    if (a.order !== b.order) return a.order - b.order
+    return a.name.localeCompare(b.name, 'pt-BR')
+  })
+}
+
+export function sortProductsByCategory(products: Product[], categories: Category[]): Product[] {
+  const rank = new Map(categories.map((category, index) => [category.id, index]))
+  return products
+    .map((product, index) => ({ product, index }))
+    .sort((a, b) => {
+      const ra = rank.get(a.product.categoryId) ?? categories.length
+      const rb = rank.get(b.product.categoryId) ?? categories.length
+      return ra - rb || a.index - b.index
+    })
+    .map((entry) => entry.product)
 }
 
 export function readSavedCategory(): string {
@@ -28,13 +49,19 @@ export function saveCategory(id: string): void {
   }
 }
 
+export function foldText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR')
+}
+
 export function filterProducts(products: Product[], categoryId: string, search: string): Product[] {
-  const query = search.trim().toLocaleLowerCase('pt-BR')
+  const query = foldText(search.trim())
   return products.filter((product) => {
     if (categoryId && product.categoryId !== categoryId) return false
     if (!query) return true
-    const haystack = `${product.name} ${product.description}`.toLocaleLowerCase('pt-BR')
-    return haystack.includes(query)
+    return foldText(`${product.name} ${product.description}`).includes(query)
   })
 }
 

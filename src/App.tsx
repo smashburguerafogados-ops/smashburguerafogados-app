@@ -5,6 +5,7 @@ import { Griddle } from './components/Griddle'
 import { MenuScreen } from './components/MenuScreen'
 import { Splash } from './components/Splash'
 import { AuthProvider } from './context/AuthContext'
+import { OrdersProvider, useBootReady } from './context/OrdersContext'
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
 
@@ -20,14 +21,23 @@ function AppRoutes() {
   )
 }
 
-export function App() {
+function Boot() {
+  const ready = useBootReady()
   const [booting, setBooting] = useState(true)
   const finishBoot = useCallback(() => setBooting(false), [])
 
+  return booting ? <Splash ready={ready} onDone={finishBoot} /> : <AppRoutes />
+}
+
+export function App() {
   return (
     <>
       <Griddle />
-      <AuthProvider>{booting ? <Splash onDone={finishBoot} /> : <AppRoutes />}</AuthProvider>
+      <AuthProvider>
+        <OrdersProvider>
+          <Boot />
+        </OrdersProvider>
+      </AuthProvider>
     </>
   )
 }

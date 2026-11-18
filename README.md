@@ -46,9 +46,9 @@ Address: the CEP is looked up at `https://viacep.com.br/ws/{cep}/json/`. When it
 
 Admin is not a password in this repo. There is no admin password and no hidden login string in the source.
 
-Admin is a Firebase Auth user whose `users/{uid}` document has `role: "admin"`. The route `/admin` renders an empty panel only for that role. Anyone else sees "Acesso restrito".
+Admin is a Firebase Auth user whose `users/{uid}` document has `role: "admin"`. The route `/admin` shows the order board only for that role. Anyone else sees "Acesso restrito".
 
-On the menu, a long press on the logo asks for that Firebase email and password. It does not use the customer WhatsApp form, and the password is not stored in this repo. A customer who tries it stays on the cardápio.
+On the menu, a long press on the logo opens just two fields, e-mail and senha, and an Entrar button. It does not use the customer WhatsApp form, and the password is not stored in this repo. A customer who tries it stays on the cardápio.
 
 Jameson: create that user in the Firebase console. Do not put the password in the repository or in chat.
 
@@ -82,7 +82,38 @@ As of this stage, the Firestore API was not enabled on `smashburguerafogados-ae5
 
 ## Menu
 
-After the splash the cardápio is open. There is no login wall. The menu sits on a dark night layer with a slow gold glow and a warm band along the bottom, like a grill after dark. Item rows and the floating bar stay on solid dark surfaces so the type stays readable. There are no flame drawings. Category chips filter the list; there is no "Geral" chip. Tapping the active chip returns to every item, and the choice is kept in `sessionStorage` (`smash.category`). Search, a sold-out state, item notes, and the cart are on the same screen.
+After the splash the cardápio is open. There is no login wall. Every screen sits on one near-black griddle (`src/components/Griddle.tsx`) with a slow gold glow and faint embers only at the edges. Item rows and the floating bar stay on solid dark surfaces so the type stays readable. Category chips filter the list; there is no "Geral" chip. Tapping the active chip returns to every item, and the choice is kept in `sessionStorage` (`smash.category`). Search filters on every typed letter and ignores case and accents (`Smash`, `smash` and `SMASH` match the same items; `rustica` finds `rústica`). A sold-out state, item notes, and the cart are on the same screen.
+
+Categories marked **destaque** sort first, their products are listed first, and their chip border pulses slowly in gold and orange.
+
+## Opening the app
+
+The customer id is the Firebase uid used for `users/{uid}` when their data was saved. It is also kept in `localStorage` (`smash.customerId`) and cleared on sign-out. On open, the splash stays until that customer's profile and order history have loaded from Firestore. A visitor without a saved customer sees only the normal splash. If Firestore never answers (offline), the splash gives up after 15 seconds and the history shows an error.
+
+## Carrinho
+
+Adding a product updates the count and total on the bar immediately. The cart lists each item with its price and the total. Below that the customer must pick Pix, Cartão or Dinheiro. A red line says the payment is made to the delivery person.
+
+With Dinheiro the customer answers "Precisa de troco?". Não enables **Fazer Pedido**. Sim shows a numeric-only field for the cash in hand, in whole reais. As they type, the change (cash minus total) is shown, and Fazer Pedido stays disabled until the cash is greater than the total. A visitor who is not signed in is sent to Conta instead.
+
+The order is saved in Firestore `orders` with the customer id, name, WhatsApp, address, items, total, payment and troco, and `status: "novo"`.
+
+## Meus pedidos
+
+The top-left hamburger opens Meus pedidos for customers. Cards update in realtime. An accepted order turns blue. A refused or cancelled order keeps its reason. When the order is out for delivery, the customer taps **Pedido recebido** to mark it finished.
+
+## Painel de pedidos
+
+Three columns: **Novos**, **Em Andamento** and **Finalizados**. Clicking a column filters the list. The Novos title blinks when a new order arrives through Firestore realtime and stops when Novos is opened. Clicking an order opens everything the customer entered.
+
+- Novos: **Aceitar** sends the customer a WhatsApp that the order was accepted and moves it to Em Andamento. **Recusar** asks for a reason, sends it on WhatsApp and keeps it on the order.
+- Em Andamento: **Enviar pedido** sends a WhatsApp with the product photo link, product name, Smash Burger, total, payment, address and that the delivery is on the way. **Cancelar** asks for a reason and sends it on WhatsApp. A sent order can also be closed with **Concluir**.
+
+## Criar Produto
+
+Admins get Criar Produto in the hamburger: nome, foto (Câmera or Galeria), categoria, valor, descrição and adicionais (for example molho). The category select lists existing categories, can create one (with a destaque tag) and can delete or re-tag the selected one. Products and categories are saved in Firestore.
+
+Firebase Storage is not enabled on this project, so the photo is resized to a JPEG of at most 640 px and saved on the product document. WhatsApp links can only carry text, so the delivery message links the photo: the public image file for the built-in items, or `…/smashburguerafogados-app/?produto={id}`, which opens that product with its photo, for uploaded photos.
 
 The sample cardápio in `src/data/catalog.ts` is what visitors see until Firestore has categories and products. Prices in Firestore are reais (a number such as `28`). Public reads use `where('available', '==', true)`, so sold-out products stay hidden from customers once the rules are published.
 
@@ -90,7 +121,13 @@ The sample cardápio in `src/data/catalog.ts` is what visitors see until Firesto
 
 A floating pill sits above the bottom edge: Conta, Carrinho, WhatsApp. The active item is a gold pill with its short label. The other items are icons. The cart always shows the count and the total.
 
-`BUSINESS_WHATSAPP` in `src/lib/whatsapp.ts` is the placeholder `5500000000000`. The button opens `https://wa.me/5500000000000`. Replace that constant with the shop number when it is known. It is not a secret, and the app does not send a message by itself.
+The WhatsApp button asks "Deseja falar com o Atendimento da Smash Burger?". Sim opens WhatsApp with the registered customer name in the message. Não closes the question.
+
+`BUSINESS_WHATSAPP` in `src/lib/whatsapp.ts` is still the named placeholder `5500000000000` because the shop number is not known yet. Replace that constant with the real number. It is not a secret.
+
+## WhatsApp
+
+Every message is opened with a `wa.me/{number}?text=` link, the same approach the refrigeração app uses. All builders live in `src/lib/whatsapp.ts`. The text is normalized and broken characters, joiners and variation selectors are removed before sending. Each customer message uses only single code point emoji with default emoji presentation (👋 ✅ ❌ 🔥 🍔 🛵 📍 💰 💵 📸 📝 💬 🙏 📦), which render the same way on iPhone and Android. WhatsApp opens inside the click, before the Firestore update, so mobile browsers do not block it.
 
 ## Fire
 
@@ -103,8 +140,8 @@ License: public domain (`{{PD-self}}`). The copyright holder released the work i
 
 ## Rules to publish
 
-`firestore.rules` still locks each customer to `users/{their uid}` and denies `connection_tests`. It now also allows anyone to read `categories`, and to read `products` only when `available == true` (an admin may read the rest). Writes to those two collections require `users/{uid}.role == 'admin'`. Publish the file before expecting the live menu to replace the sample data. The sample cardápio remains if the read fails.
+`firestore.rules` still locks each customer to `users/{their uid}` and denies `connection_tests`. It allows anyone to read `categories`, and to read `products` only when `available == true` (an admin may read the rest). Writes to those two collections require `users/{uid}.role == 'admin'`.
 
-## Out of scope
+`orders`: a signed-in customer may create an order only for their own uid with `status: "novo"`, read only their own orders, and change only `status` from `enviado` to `finalizado`. An admin reads and updates every order.
 
-Orders, sending WhatsApp messages, and the refrigeração repository.
+Publish the file before expecting the live menu, orders and the board to work. The sample cardápio remains if the catalog read fails.

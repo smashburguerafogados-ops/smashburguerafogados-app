@@ -30,7 +30,10 @@ it('leaves the splash on the menu, not a login wall', async () => {
   render(<App />)
 
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(3200)
+    await vi.advanceTimersByTimeAsync(2400)
+  })
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(700)
   })
 
   expect(screen.getByRole('heading', { name: 'Cardápio' })).toBeInTheDocument()

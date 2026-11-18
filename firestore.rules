@@ -13,6 +13,10 @@ rules_version = '2';
 // categories are public to read. products are public to read only when
 // available is true. An admin may also read sold-out products.
 // Writes to categories and products require users/{uid}.role == 'admin'.
+//
+// orders: a signed-in customer creates an order for their own uid with
+// status "novo". They read only their own orders and may only move one
+// from "enviado" to "finalizado". An admin reads and updates every order.
 // connection_tests is locked. Everything else is denied.
 
 service cloud.firestore {
@@ -53,6 +57,39 @@ service cloud.firestore {
     match /products/{productId} {
       allow read: if resource.data.available == true || isAdmin();
       allow write: if isAdmin();
+    }
+
+    function orderCreate() {
+      let data = request.resource.data;
+      return request.auth != null
+        && data.customerId == request.auth.uid
+        && data.status == 'novo'
+        && data.reason == ''
+        && data.customerName is string
+        && data.customerWhatsapp is string
+        && data.totalCents is int
+        && data.totalCents > 0
+        && data.items is list
+        && data.items.size() > 0
+        && data.items.size() <= 50
+        && data.payment is map
+        && data.payment.method in ['pix', 'cartao', 'dinheiro'];
+    }
+
+    function customerFinishes() {
+      return request.auth != null
+        && resource.data.customerId == request.auth.uid
+        && resource.data.status == 'enviado'
+        && request.resource.data.status == 'finalizado'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']);
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAdmin()
+        || (request.auth != null && resource.data.customerId == request.auth.uid);
+      allow create: if orderCreate();
+      allow update: if isAdmin() || customerFinishes();
+      allow delete: if isAdmin();
     }
 
     match /connection_tests/{docId} {
