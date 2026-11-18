@@ -94,7 +94,7 @@ A floating pill sits above the bottom edge: Conta, Carrinho, WhatsApp. The activ
 
 ## Fire
 
-The splash background is `public/fire.mp4` (958,356 bytes, about 936 KB), a 4.5 second silent H.264 loop at 640×854. `public/fire-poster.jpg` (23,387 bytes) is the still frame used before playback and when reduced motion is on.
+The splash background is `public/fire.mp4` (958,356 bytes, about 936 KB), a 4.5 second silent H.264 loop at 640×854. The player runs it at half speed (`playbackRate` 0.5) so the flame stays calm. `public/fire-poster.jpg` (23,387 bytes) is the still frame used before playback and when reduced motion is on.
 
 Source: Cary Bass, File:Fire.ogv, own work, 3 March 2007, Wikimedia Commons.
 https://commons.wikimedia.org/wiki/File:Fire.ogv
