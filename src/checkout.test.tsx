@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   canPlaceOrder,
   cashDigits,
@@ -9,10 +9,24 @@ import {
   checkoutProblem,
   type CheckoutState,
 } from './lib/checkout'
+import { joinPhone, phoneRest } from './lib/delivery'
 import { firebaseMocks } from './test/mocks'
 import { customerProfile, renderApp, signInAs } from './test/render'
 import './index.css'
 import './menu.css'
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
+
+describe('telefone 87 9', () => {
+  it('joins the prefix and what they typed into one number', () => {
+    expect(joinPhone('88887777')).toBe('5587988887777')
+    expect(joinPhone('8888-7777')).toBe('5587988887777')
+    expect(joinPhone('8888777')).toBeNull()
+    expect(phoneRest('5587988887777')).toBe('88887777')
+  })
+})
 
 describe('troco math', () => {
   it('keeps only digits in the cash field', () => {
@@ -203,5 +217,128 @@ describe('cart and checkout', () => {
 
     expect(screen.getByRole('dialog', { name: 'Conta' })).toBeInTheDocument()
     expect(firebaseMocks.addDoc).not.toHaveBeenCalled()
+  })
+
+  it('asks for nome, telefone and address instead of Conta when they are missing', async () => {
+    signInAs({ ...customerProfile, nome: '', whatsapp: '', address: null })
+    const user = userEvent.setup()
+    renderApp()
+    await waitFor(() => expect(firebaseMocks.getDoc).toHaveBeenCalled())
+    await addToCart(user, /Smash da casa/)
+    await user.click(screen.getByRole('button', { name: /carrinho/i }))
+    const cart = screen.getByRole('dialog', { name: 'Carrinho' })
+    await user.click(within(cart).getByRole('radio', { name: 'Pix' }))
+    await user.click(within(cart).getByRole('button', { name: 'Fazer Pedido' }))
+
+    const form = screen.getByRole('dialog', { name: 'Dados para entrega' })
+    expect(screen.queryByRole('dialog', { name: 'Conta' })).not.toBeInTheDocument()
+    expect(within(form).queryByRole('button', { name: 'Sair' })).not.toBeInTheDocument()
+    expect(within(form).getByRole('textbox', { name: 'Nome' })).toBeRequired()
+    expect(within(form).getByText('87 9')).toBeInTheDocument()
+    expect(within(form).getByRole('textbox', { name: 'Telefone' })).toBeRequired()
+    expect(firebaseMocks.addDoc).not.toHaveBeenCalled()
+    expect(firebaseMocks.updateDoc).not.toHaveBeenCalled()
+  })
+
+  it('saves one full number and the ViaCEP address, then places the order', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo) => {
+        const url = String(input)
+        if (!url.includes('https://viacep.com.br/ws/01001000/json')) throw new Error(`unexpected ${url}`)
+        return {
+          ok: true,
+          json: async () => ({
+            logradouro: 'Praça da Sé',
+            bairro: 'Sé',
+            localidade: 'São Paulo',
+            uf: 'SP',
+          }),
+        }
+      }),
+    )
+    signInAs({ ...customerProfile, nome: '', whatsapp: '', address: null })
+    const user = userEvent.setup()
+    renderApp()
+    await waitFor(() => expect(firebaseMocks.getDoc).toHaveBeenCalled())
+    await addToCart(user, /Smash da casa/)
+    await user.click(screen.getByRole('button', { name: /carrinho/i }))
+    await user.click(screen.getByRole('radio', { name: 'Pix' }))
+    await user.click(screen.getByRole('button', { name: 'Fazer Pedido' }))
+
+    const form = screen.getByRole('dialog', { name: 'Dados para entrega' })
+    await user.type(within(form).getByRole('textbox', { name: 'Nome' }), 'João Lima')
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '88887777')
+    await user.type(within(form).getByRole('textbox', { name: 'CEP' }), '01001000')
+
+    expect(await within(form).findByDisplayValue('Praça da Sé')).toBeInTheDocument()
+    expect(within(form).getByDisplayValue('Sé')).toBeInTheDocument()
+    expect(within(form).getByDisplayValue('São Paulo')).toBeInTheDocument()
+    const number = within(form).getByRole('textbox', { name: 'Número' })
+    expect(number).toHaveValue('')
+    expect(number).toBeRequired()
+    await user.type(number, '15')
+    await user.click(within(form).getByRole('button', { name: 'Salvar e pedir' }))
+
+    expect(await screen.findByText('Pedido enviado')).toBeInTheDocument()
+    const [userRef, patch] = firebaseMocks.updateDoc.mock.calls[0] as [{ path: string }, Record<string, unknown>]
+    expect(userRef.path).toBe('users/cliente-1')
+    expect(Object.keys(patch).sort()).toEqual(['address', 'nome', 'whatsapp'])
+    expect(patch.whatsapp).toBe('5587988887777')
+    expect(patch.address).toMatchObject({
+      cep: '01001000',
+      street: 'Praça da Sé',
+      number: '15',
+      neighborhood: 'Sé',
+      city: 'São Paulo',
+      state: 'SP',
+    })
+    const [, order] = firebaseMocks.addDoc.mock.calls[0] as [unknown, Record<string, unknown>]
+    expect(order).toMatchObject({
+      customerName: 'João Lima',
+      customerWhatsapp: '5587988887777',
+      address: { street: 'Praça da Sé', number: '15', neighborhood: 'Sé', city: 'São Paulo' },
+    })
+  })
+
+  it('still requires endereço, bairro, cidade and número when the CEP is not found', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ erro: true }),
+      })),
+    )
+    signInAs({ ...customerProfile, nome: 'João Lima', whatsapp: '', address: null })
+    const user = userEvent.setup()
+    renderApp()
+    await waitFor(() => expect(firebaseMocks.getDoc).toHaveBeenCalled())
+    await addToCart(user, /Smash da casa/)
+    await user.click(screen.getByRole('button', { name: /carrinho/i }))
+    await user.click(screen.getByRole('radio', { name: 'Pix' }))
+    await user.click(screen.getByRole('button', { name: 'Fazer Pedido' }))
+
+    const form = screen.getByRole('dialog', { name: 'Dados para entrega' })
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '88887777')
+    await user.type(within(form).getByRole('textbox', { name: 'CEP' }), '99999999')
+
+    const street = await within(form).findByRole('textbox', { name: 'Endereço' })
+    const neighborhood = within(form).getByRole('textbox', { name: 'Bairro' })
+    const city = within(form).getByRole('textbox', { name: 'Cidade' })
+    const number = within(form).getByRole('textbox', { name: 'Número' })
+    expect(street).toHaveValue('')
+    expect(neighborhood).toHaveValue('')
+    expect(city).toHaveValue('')
+    expect(number).toHaveValue('')
+    expect(street).toBeRequired()
+    expect(neighborhood).toBeRequired()
+    expect(city).toBeRequired()
+    expect(number).toBeRequired()
+    expect(within(form).getByRole('textbox', { name: 'Ponto de referência (opcional)' })).not.toBeRequired()
+
+    await user.click(within(form).getByRole('button', { name: 'Salvar e pedir' }))
+    expect(within(form).getByRole('alert')).toHaveTextContent('Preencha endereço, número, bairro e cidade.')
+    expect(firebaseMocks.addDoc).not.toHaveBeenCalled()
+    expect(firebaseMocks.updateDoc).not.toHaveBeenCalled()
   })
 })

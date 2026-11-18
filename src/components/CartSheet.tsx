@@ -14,8 +14,11 @@ import {
 } from '../lib/checkout'
 import { formatPrice } from '../lib/money'
 import { cartCount, cartTotal, type CartLine } from '../lib/menu'
+import { deliveryReady } from '../lib/delivery'
 import { buildOrder, placeOrder, shortId } from '../lib/orders'
+import { DeliveryForm } from './DeliveryForm'
 import { Overlay } from './Overlay'
+import type { UserProfile } from '../types'
 
 type CartSheetProps = {
   lines: CartLine[]
@@ -31,6 +34,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced, onNeedAccount }:
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [placedId, setPlacedId] = useState('')
+  const [needsDelivery, setNeedsDelivery] = useState(false)
 
   const total = cartTotal(lines)
   const count = cartCount(lines)
@@ -47,16 +51,11 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced, onNeedAccount }:
     }))
   }
 
-  async function submit() {
-    if (!ready || busy) return
-    if (session.status !== 'ready' || session.profile.role !== 'customer') {
-      onNeedAccount()
-      return
-    }
+  async function send(profile: UserProfile) {
     setBusy(true)
     setError('')
     try {
-      const id = await placeOrder(buildOrder(session.profile, lines, checkout, total))
+      const id = await placeOrder(buildOrder(profile, lines, checkout, total))
       setPlacedId(id)
       setCheckout(emptyCheckout)
       onPlaced()
@@ -65,6 +64,19 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced, onNeedAccount }:
     } finally {
       setBusy(false)
     }
+  }
+
+  async function submit() {
+    if (!ready || busy) return
+    if (session.status !== 'ready' || session.profile.role !== 'customer') {
+      onNeedAccount()
+      return
+    }
+    if (!deliveryReady(session.profile)) {
+      setNeedsDelivery(true)
+      return
+    }
+    await send(session.profile)
   }
 
   if (placedId) {
@@ -195,6 +207,13 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced, onNeedAccount }:
             {busy ? 'Enviando...' : 'Fazer Pedido'}
           </button>
         </>
+      )}
+      {needsDelivery && session.status === 'ready' && (
+        <DeliveryForm
+          profile={session.profile}
+          onClose={() => setNeedsDelivery(false)}
+          onSaved={(profile) => void send(profile)}
+        />
       )}
     </Overlay>
   )
