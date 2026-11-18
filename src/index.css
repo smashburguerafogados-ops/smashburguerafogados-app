@@ -32,7 +32,7 @@ body {
   background: #0b0b0a;
 }
 
-/* Looked-up festival colors. The menu text stays light, so the night stays dark and the festival colors sit in the pattern.
+/* Looked-up festival colors. The page itself stays #000000. Festival colors sit on text, borders, and the icons.
    Natal: red, green, gold. Ano Novo: black, gold, silver, white.
    Carnaval: gold, green, pink, blue, yellow (Mangueira green and pink; frevo yellow, green, and blue).
    Páscoa: yellow, green, lilac. São João: red, yellow, green, blue, orange. */
@@ -43,6 +43,7 @@ html[data-theme='natal'] {
   --theme-wash: rgba(7, 21, 37, 0.55);
   --theme-glow: rgba(212, 175, 55, 0.4);
   --theme-scene: snow-night;
+  background: #000000;
 }
 
 html[data-theme='ano-novo'] {
@@ -51,6 +52,7 @@ html[data-theme='ano-novo'] {
   --theme-wash: rgba(7, 6, 10, 0.5);
   --theme-glow: rgba(242, 193, 78, 0.45);
   --theme-scene: fireworks-night;
+  background: #000000;
 }
 
 html[data-theme='carnaval'] {
@@ -63,6 +65,7 @@ html[data-theme='carnaval'] {
   --theme-wash: rgba(18, 20, 28, 0.4);
   --theme-glow: rgba(230, 179, 37, 0.4);
   --theme-scene: carnival-pattern;
+  background: #000000;
 }
 
 html[data-theme='pascoa'] {
@@ -72,6 +75,7 @@ html[data-theme='pascoa'] {
   --theme-wash: rgba(28, 36, 48, 0.4);
   --theme-glow: rgba(246, 216, 107, 0.4);
   --theme-scene: easter;
+  background: #000000;
 }
 
 html[data-theme='sao-joao'] {
@@ -83,6 +87,87 @@ html[data-theme='sao-joao'] {
   --theme-wash: rgba(26, 16, 8, 0.45);
   --theme-glow: rgba(241, 90, 34, 0.5);
   --theme-scene: festa-junina;
+  background: #000000;
+}
+
+html[data-theme='natal'] body,
+html[data-theme='ano-novo'] body,
+html[data-theme='carnaval'] body,
+html[data-theme='pascoa'] body,
+html[data-theme='sao-joao'] body,
+html[data-theme='natal'] .splash,
+html[data-theme='ano-novo'] .splash,
+html[data-theme='carnaval'] .splash,
+html[data-theme='pascoa'] .splash,
+html[data-theme='sao-joao'] .splash,
+html[data-theme='natal'] .menu,
+html[data-theme='ano-novo'] .menu,
+html[data-theme='carnaval'] .menu,
+html[data-theme='pascoa'] .menu,
+html[data-theme='sao-joao'] .menu {
+  background: #000000;
+  background-image: none;
+}
+
+html[data-theme='natal'] .fire,
+html[data-theme='ano-novo'] .fire,
+html[data-theme='carnaval'] .fire,
+html[data-theme='pascoa'] .fire,
+html[data-theme='sao-joao'] .fire,
+html[data-theme='natal'] .splash__glow,
+html[data-theme='ano-novo'] .splash__glow,
+html[data-theme='carnaval'] .splash__glow,
+html[data-theme='pascoa'] .splash__glow,
+html[data-theme='sao-joao'] .splash__glow {
+  display: none;
+}
+
+html[data-theme='natal'] .menu__title,
+html[data-theme='ano-novo'] .menu__title,
+html[data-theme='carnaval'] .menu__title,
+html[data-theme='pascoa'] .menu__title,
+html[data-theme='sao-joao'] .menu__title {
+  color: var(--gold);
+}
+
+html[data-theme='natal'] .menu__search input,
+html[data-theme='ano-novo'] .menu__search input,
+html[data-theme='carnaval'] .menu__search input,
+html[data-theme='pascoa'] .menu__search input,
+html[data-theme='sao-joao'] .menu__search input,
+html[data-theme='natal'] .field input,
+html[data-theme='ano-novo'] .field input,
+html[data-theme='carnaval'] .field input,
+html[data-theme='pascoa'] .field input,
+html[data-theme='sao-joao'] .field input,
+html[data-theme='natal'] .field textarea,
+html[data-theme='ano-novo'] .field textarea,
+html[data-theme='carnaval'] .field textarea,
+html[data-theme='pascoa'] .field textarea,
+html[data-theme='sao-joao'] .field textarea,
+html[data-theme='natal'] .chip,
+html[data-theme='ano-novo'] .chip,
+html[data-theme='carnaval'] .chip,
+html[data-theme='pascoa'] .chip,
+html[data-theme='sao-joao'] .chip,
+html[data-theme='natal'] .item,
+html[data-theme='ano-novo'] .item,
+html[data-theme='carnaval'] .item,
+html[data-theme='pascoa'] .item,
+html[data-theme='sao-joao'] .item,
+html[data-theme='natal'] .password__toggle,
+html[data-theme='ano-novo'] .password__toggle,
+html[data-theme='carnaval'] .password__toggle,
+html[data-theme='pascoa'] .password__toggle,
+html[data-theme='sao-joao'] .password__toggle,
+html[data-theme='natal'] .tabs button,
+html[data-theme='ano-novo'] .tabs button,
+html[data-theme='carnaval'] .tabs button,
+html[data-theme='pascoa'] .tabs button,
+html[data-theme='sao-joao'] .tabs button {
+  border-color: #ffffff;
+  border-style: solid;
+  border-width: 1px;
 }
 
 html[data-theme='natal'] .dock__item.is-active,

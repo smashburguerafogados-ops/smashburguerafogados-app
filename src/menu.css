@@ -65,6 +65,7 @@
 .theme-snow__flake,
 .theme-piece,
 .theme-ornament,
+.theme-pin,
 .theme-flags,
 .theme-glow,
 .theme-year {
@@ -82,58 +83,13 @@
   position: absolute;
 }
 
-.theme-bg--natal {
-  background:
-    radial-gradient(circle at 8% 16%, rgba(255, 255, 255, 0.85) 0 1px, transparent 2px),
-    radial-gradient(circle at 22% 38%, rgba(255, 255, 255, 0.7) 0 1.5px, transparent 2.5px),
-    radial-gradient(circle at 70% 22%, rgba(255, 255, 255, 0.75) 0 1px, transparent 2px),
-    radial-gradient(circle at 84% 58%, rgba(255, 255, 255, 0.6) 0 1.5px, transparent 2.5px),
-    radial-gradient(circle at 40% 72%, rgba(255, 255, 255, 0.55) 0 1px, transparent 2px),
-    radial-gradient(ellipse at 0% 100%, rgba(200, 16, 46, 0.38), transparent 46%),
-    radial-gradient(ellipse at 100% 0%, rgba(20, 108, 67, 0.4), transparent 42%),
-    radial-gradient(ellipse at 50% 100%, rgba(212, 175, 55, 0.22), transparent 40%),
-    linear-gradient(180deg, #071525 0%, #0c2340 46%, #071018 100%);
-}
-
-.theme-bg--ano-novo {
-  background:
-    radial-gradient(circle at 16% 18%, rgba(242, 193, 78, 0.95) 0 2px, rgba(242, 193, 78, 0.25) 10px, transparent 22px),
-    radial-gradient(circle at 84% 14%, rgba(230, 230, 230, 0.95) 0 2px, rgba(230, 230, 230, 0.28) 12px, transparent 24px),
-    radial-gradient(circle at 74% 78%, rgba(247, 247, 247, 0.8) 0 1px, rgba(242, 193, 78, 0.3) 9px, transparent 20px),
-    radial-gradient(circle at 22% 76%, rgba(242, 193, 78, 0.7) 0 1px, transparent 16px),
-    linear-gradient(180deg, #07060a 0%, #14110c 52%, #0a0a0c 100%);
-}
-
-.theme-bg--carnaval {
-  background:
-    radial-gradient(circle at 6% 12%, #e6b325 0 7px, transparent 8px),
-    radial-gradient(circle at 18% 86%, #009c3b 0 7px, transparent 8px),
-    radial-gradient(circle at 92% 16%, #ff4f9a 0 8px, transparent 9px),
-    radial-gradient(circle at 84% 78%, #2f6fed 0 7px, transparent 8px),
-    radial-gradient(circle at 50% 6%, #ffe14d 0 6px, transparent 7px),
-    repeating-linear-gradient(115deg, transparent 0 14px, rgba(230, 179, 37, 0.55) 14px 16px, transparent 16px 28px, rgba(0, 156, 59, 0.5) 28px 30px, transparent 30px 42px, rgba(255, 79, 154, 0.5) 42px 44px, transparent 44px 56px, rgba(47, 111, 237, 0.5) 56px 58px, transparent 58px 70px, rgba(255, 225, 77, 0.5) 70px 72px),
-    radial-gradient(ellipse at 50% 42%, rgba(18, 20, 28, 0.94) 0 46%, rgba(18, 20, 28, 0.55) 72%),
-    linear-gradient(160deg, #1a1408 0%, #12141c 42%, #10160f 100%);
-}
-
-.theme-bg--pascoa {
-  background:
-    radial-gradient(circle at 10% 18%, #f6d86b 0 8px, transparent 9px),
-    radial-gradient(circle at 88% 22%, #7dcea0 0 9px, transparent 10px),
-    radial-gradient(circle at 16% 80%, #c9a0dc 0 8px, transparent 9px),
-    radial-gradient(circle at 82% 74%, #f7b5d2 0 7px, transparent 8px),
-    radial-gradient(ellipse at 50% 40%, rgba(28, 36, 48, 0.92) 0 46%, rgba(28, 36, 48, 0.5) 74%),
-    linear-gradient(180deg, #243044 0%, #1c2430 55%, #1a2218 100%);
-}
-
+.theme-bg--natal,
+.theme-bg--ano-novo,
+.theme-bg--carnaval,
+.theme-bg--pascoa,
 .theme-bg--sao-joao {
-  background:
-    linear-gradient(180deg, transparent 0 64px, #1a1008 150px),
-    radial-gradient(ellipse at 50% 108%, rgba(241, 90, 34, 0.55), transparent 46%),
-    repeating-linear-gradient(90deg, #e23b3b 0 14px, #ffcc00 14px 28px, #009c3b 28px 42px, #1d4ed8 42px 56px);
-  background-size: 100% 100%, 100% 100%, 100% 18px;
-  background-repeat: no-repeat;
-  background-color: #1a1008;
+  background-color: #000000;
+  background-image: none;
 }
 
 .theme-decor {
@@ -175,6 +131,7 @@
 
 .theme-piece img,
 .theme-ornament img,
+.theme-pin img,
 .theme-flags img,
 .theme-year img {
   width: 100%;
@@ -183,115 +140,125 @@
   object-fit: contain;
 }
 
-.theme-ornament {
+.theme-pin {
   position: absolute;
-  width: 36px;
-  height: 36px;
-  filter: drop-shadow(0 0 8px var(--theme-glow, transparent));
+  width: 22px;
+  height: 22px;
 }
 
-.theme-ornament--tree {
-  width: 78px;
-  height: 78px;
-  left: 10px;
-  bottom: 96px;
-  color: #d7f5c8;
+.theme-pin--menu.theme-pin--l2,
+.theme-pin--menu.theme-pin--r2 {
+  width: 28px;
+  height: 28px;
 }
 
-.theme-ornament--ball {
-  width: 30px;
-  height: 30px;
-  left: 78px;
-  bottom: 148px;
-  color: #e23b3b;
+.splash .theme-pin--stl,
+.splash .theme-pin--str,
+.splash .theme-pin--sbl,
+.splash .theme-pin--sbr {
+  width: 40px;
+  height: 40px;
 }
 
-.theme-ornament--gift {
-  width: 32px;
-  height: 32px;
-  right: 16px;
-  top: 72px;
-  color: #f2d27a;
-}
+.theme-pin--menu.theme-pin--l1 { top: 18px; left: 2px; }
+.theme-pin--menu.theme-pin--l2 { top: 196px; left: 1px; }
+.theme-pin--menu.theme-pin--l3 { top: 48%; left: 3px; }
+.theme-pin--menu.theme-pin--r1 { top: 92px; right: 2px; }
+.theme-pin--menu.theme-pin--r2 { top: 248px; right: 1px; }
+.theme-pin--menu.theme-pin--r3 { right: 2px; bottom: 118px; }
 
-.theme-ornament--mask {
-  width: 56px;
-  height: 56px;
-  right: 12px;
-  bottom: 108px;
-  color: #ffd23f;
-}
+.theme-pin--splash { display: none; }
 
-.theme-ornament--flag {
-  width: 34px;
-  height: 34px;
-  left: 14px;
-  top: 18px;
-  color: #3dbe6a;
-}
+.splash .theme-pin--menu { display: none; }
 
-.theme-ornament--egg {
-  left: 16px;
-  top: 64px;
-  color: #f3e27a;
-}
+.splash .theme-pin--splash { display: block; }
 
-.theme-ornament--egg-b {
-  left: auto;
-  right: 22px;
-  top: 120px;
-  color: #e09ad4;
-}
-
-.theme-ornament--bunny {
-  width: 48px;
-  height: 48px;
-  right: 18px;
-  bottom: 110px;
-  color: #f7f1e4;
-}
+.theme-pin--stl { top: 10px; left: 10px; }
+.theme-pin--str { top: 10px; right: 10px; }
+.theme-pin--sbl { bottom: 14px; left: 10px; }
+.theme-pin--sbr { bottom: 14px; right: 10px; }
 
 .theme-flags {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 148px;
+  bottom: 124px;
+  left: 3px;
+  right: auto;
   display: flex;
-  justify-content: space-between;
-  padding: 0 6px;
-  border-top: 3px solid var(--orange, #ff6a00);
+  flex-direction: column;
+  justify-content: space-evenly;
+  width: 22px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: none;
 }
 
 .theme-flags span {
-  width: 26px;
-  height: 34px;
+  width: 20px;
+  height: 26px;
 }
 
-.theme-glow {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 24vh;
-  background: radial-gradient(ellipse at center bottom, var(--theme-glow, rgba(255, 106, 0, 0.45)), transparent 70%);
+.splash .theme-flags {
+  top: 12px;
+  bottom: auto;
+  left: 58px;
+  right: 58px;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  flex-direction: row;
+  justify-content: center;
+  gap: 8px;
+}
+
+.splash .theme-flags span {
+  width: 22px;
+  height: 28px;
 }
 
 .theme-year {
   position: absolute;
-  top: 12px;
-  right: 14px;
+  top: 70px;
+  right: 1px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 1px;
+  width: 24px;
   color: var(--gold);
   font-weight: 700;
-  letter-spacing: 0.08em;
-  font-size: 1.2rem;
+  letter-spacing: 0;
+  font-size: 0.5rem;
+  line-height: 1.1;
+  text-align: center;
 }
 
 .theme-year img {
   width: 22px;
   height: 22px;
+}
+
+.splash .theme-year {
+  top: auto;
+  right: auto;
+  bottom: 16px;
+  left: 50%;
+  width: auto;
+  flex-direction: row;
+  gap: 6px;
+  font-size: 1.15rem;
+  letter-spacing: 0.08em;
+  transform: translateX(-50%);
+}
+
+html[data-theme='natal'] .menu__content,
+html[data-theme='ano-novo'] .menu__content,
+html[data-theme='carnaval'] .menu__content,
+html[data-theme='pascoa'] .menu__content,
+html[data-theme='sao-joao'] .menu__content {
+  padding-left: 30px;
+  padding-right: 30px;
 }
 
 .raffle-hourglass {
