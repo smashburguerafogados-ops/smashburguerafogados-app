@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { AdminPanel } from './AdminPanel'
 import { ProductDesk } from './ProductDesk'
 import { ProductForm } from './ProductForm'
+import { ShopScreen } from './ShopControls'
 import { SideMenu } from './SideMenu'
 
 function MenuIcon() {
@@ -47,6 +48,7 @@ export function AdminRoute() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [desk, setDesk] = useState(false)
+  const [shop, setShop] = useState(false)
   useTitle('Painel | Smash Burguer')
 
   if (session.status === 'loading') {
@@ -102,20 +104,29 @@ export function AdminRoute() {
         <SideMenu
           onClose={() => setMenuOpen(false)}
           onPanel={() => setMenuOpen(false)}
+          onShop={() => {
+            setMenuOpen(false)
+            setCreating(false)
+            setDesk(false)
+            setShop(true)
+          }}
           onProducts={() => {
             setMenuOpen(false)
             setCreating(false)
+            setShop(false)
             setDesk(true)
           }}
           onCreateProduct={() => {
             setMenuOpen(false)
             setDesk(false)
+            setShop(false)
             setCreating(true)
           }}
         />
       )}
       {creating && <ProductForm onClose={() => setCreating(false)} onSaved={() => undefined} />}
       {desk && <ProductDesk onClose={() => setDesk(false)} />}
+      {shop && <ShopScreen onClose={() => setShop(false)} />}
     </AdminFrame>
   )
 }

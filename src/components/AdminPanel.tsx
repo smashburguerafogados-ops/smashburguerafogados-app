@@ -10,7 +10,6 @@ import {
   type OrderColumn,
 } from '../lib/orders'
 import { OrderDialog } from './OrderDialog'
-import { ShopControls } from './ShopControls'
 
 const COLUMNS: OrderColumn[] = ['novos', 'andamento', 'finalizados']
 
@@ -53,9 +52,7 @@ export function AdminPanel() {
   const open = orders.find((order) => order.id === openId) ?? null
 
   return (
-    <>
-      <ShopControls />
-      <section className="board" aria-label="Pedidos">
+    <section className="board" aria-label="Pedidos">
       <div className="board__columns" role="tablist" aria-label="Colunas">
         {COLUMNS.map((key) => {
           const count = orders.filter((order) => columnOf(order.status) === key).length
@@ -108,6 +105,5 @@ export function AdminPanel() {
 
       {open && <OrderDialog key={open.id} order={open} onClose={() => setOpenId('')} />}
     </section>
-    </>
   )
 }

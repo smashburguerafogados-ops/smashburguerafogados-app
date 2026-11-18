@@ -1,7 +1,31 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { DEFAULT_CLOSED_MESSAGE, saveShop, watchShop, type ShopSettings } from '../lib/shop'
 
-export function ShopControls() {
+export function ShopScreen({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div className="product-screen" role="dialog" aria-modal="true" aria-label="Funcionamento">
+      <div className="product-screen__inner">
+        <div className="product-screen__bar">
+          <h2>Funcionamento</h2>
+          <button type="button" className="text-btn" onClick={onClose}>
+            Fechar
+          </button>
+        </div>
+        <ShopControls />
+      </div>
+    </div>
+  )
+}
+
+function ShopControls(): ReactNode {
   const [shop, setShop] = useState<ShopSettings>({ online: true, message: DEFAULT_CLOSED_MESSAGE })
   const [draft, setDraft] = useState(DEFAULT_CLOSED_MESSAGE)
   const [error, setError] = useState('')
