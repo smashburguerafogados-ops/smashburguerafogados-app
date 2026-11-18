@@ -57,7 +57,7 @@ export function Splash({ onDone, ready = true }: SplashProps) {
         <span className="tick tick--ne" aria-hidden="true" />
         <span className="tick tick--sw" aria-hidden="true" />
         <span className="tick tick--se" aria-hidden="true" />
-        <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Smash Burguer" />
+        <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Smash Burger" />
       </div>
       <p className="splash__status">{status}</p>
       <div className="splash__track" aria-hidden="true">

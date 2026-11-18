@@ -53,7 +53,7 @@ it('shows only the first name in the header once the customer has one', async ()
   expect(title.closest('.menu__brand')).not.toBeNull()
   expect(screen.queryByRole('heading', { name: 'Ana Souza' })).not.toBeInTheDocument()
   expect(screen.queryByText('Cardápio')).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Smash Burguer' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Smash Burger' })).toBeInTheDocument()
 })
 
 it('shows every category by default and has no Geral chip', () => {

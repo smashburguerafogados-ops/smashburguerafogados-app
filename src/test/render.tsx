@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { AdminRoute } from '../components/AdminRoute'
 import { MenuScreen } from '../components/MenuScreen'
+import { RaffleProvider } from '../components/RaffleProvider'
 import { CustomerTheme, ThemeFrame } from '../components/ThemeMark'
 import { AuthProvider } from '../context/AuthContext'
 import { OrdersProvider } from '../context/OrdersContext'
@@ -37,9 +38,11 @@ export function Providers({ children, path = '/' }: { children: ReactNode; path?
     <AuthProvider>
       <ThemeFrame>
         <OrdersProvider>
-          <MemoryRouter initialEntries={[path]}>
-            <CustomerTheme>{children}</CustomerTheme>
-          </MemoryRouter>
+          <RaffleProvider>
+            <MemoryRouter initialEntries={[path]}>
+              <CustomerTheme>{children}</CustomerTheme>
+            </MemoryRouter>
+          </RaffleProvider>
         </OrdersProvider>
       </ThemeFrame>
     </AuthProvider>

@@ -133,7 +133,7 @@ describe('shop hours', () => {
     })
 
     expect(screen.getByText(DEFAULT_CLOSED_MESSAGE)).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Smash Burguer' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Smash Burger' })).toBeInTheDocument()
     expect(document.querySelector('video.fire__video')).toHaveAttribute('src', expect.stringContaining('fire.mp4'))
     expect(screen.queryByRole('searchbox', { name: 'Buscar' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /carrinho/i })).not.toBeInTheDocument()

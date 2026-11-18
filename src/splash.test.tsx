@@ -22,7 +22,7 @@ it('plays the shipped fire loop and does not draw the old grill', () => {
   expect(FIRE_PLAYBACK_RATE).toBe(0.25)
   expect(container.querySelector('.grill__grate')).toBeNull()
   expect(container.querySelector('.grill__flame')).toBeNull()
-  expect(screen.getByRole('img', { name: 'Smash Burguer' })).toBeInTheDocument()
+  expect(screen.getByRole('img', { name: 'Smash Burger' })).toBeInTheDocument()
 })
 
 it('leaves the splash on the menu, not a login wall', async () => {

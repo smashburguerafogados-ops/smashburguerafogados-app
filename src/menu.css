@@ -294,6 +294,45 @@
   height: 22px;
 }
 
+.raffle-hourglass {
+  position: fixed;
+  z-index: 55;
+  top: 12px;
+  right: 12px;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #e3b15a;
+  border-radius: 50%;
+  background: #000;
+  color: #e3b15a;
+}
+
+.raffle-hourglass svg {
+  width: 26px;
+  height: 26px;
+  animation: raffle-spin 1.4s linear infinite;
+}
+
+.raffle-note {
+  margin: 0 0 12px;
+  color: var(--gold);
+}
+
+@keyframes raffle-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .raffle-hourglass svg {
+    animation: none;
+  }
+}
+
 @keyframes theme-snow-fall {
   0% {
     transform: translate3d(var(--x), -40px, 0) rotate(0deg);

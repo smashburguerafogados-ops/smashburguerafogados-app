@@ -74,7 +74,7 @@ describe('admin board', () => {
     expect(style.backgroundColor).toBe('rgb(0, 0, 0)')
     expect(Number(style.zIndex)).toBeGreaterThan(Number(getComputedStyle(screen.getByTestId('griddle')).zIndex))
     expect(admin.querySelector('img, video, .griddle, .griddle__glow, .menu__top, .topbar__brand')).toBeNull()
-    expect(screen.queryByRole('link', { name: 'Smash Burguer' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Smash Burger' })).not.toBeInTheDocument()
     expect(document.querySelector('.menu__title')).toBeNull()
   })
 

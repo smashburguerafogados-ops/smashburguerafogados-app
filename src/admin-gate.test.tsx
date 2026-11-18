@@ -21,7 +21,7 @@ function renderGate() {
 }
 
 async function openAdmin(user: ReturnType<typeof userEvent.setup>) {
-  fireEvent.pointerDown(screen.getByRole('button', { name: 'Smash Burguer' }))
+  fireEvent.pointerDown(screen.getByRole('button', { name: 'Smash Burger' }))
   await new Promise((resolve) => {
     window.setTimeout(resolve, 750)
   })

@@ -11,6 +11,7 @@ import { ProductDesk } from './ProductDesk'
 import { ProductForm } from './ProductForm'
 import { RevenueScreen } from './RevenueScreen'
 import { ThemeScreen } from './ThemeScreen'
+import { RaffleScreen } from './RaffleScreen'
 import { ShopScreen } from './ShopControls'
 import { SideMenu } from './SideMenu'
 
@@ -97,11 +98,12 @@ export function AdminRoute() {
   const [revenueOpen, setRevenueOpen] = useState(false)
   const [themesOpen, setThemesOpen] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
+  const [raffleOpen, setRaffleOpen] = useState(false)
   const adminReady = session.status === 'ready' && session.profile.role === 'admin'
   const revenue = useRevenue(adminReady)
   const contacts = useCustomers(adminReady)
   const theme = useTheme()
-  useTitle('Painel | Smash Burguer')
+  useTitle('Painel | Smash Burger')
 
   if (session.status === 'loading') {
     return (
@@ -163,6 +165,7 @@ export function AdminRoute() {
             setRevenueOpen(false)
             setThemesOpen(false)
             setContactOpen(false)
+            setRaffleOpen(false)
             setShop(true)
           }}
           onProducts={() => {
@@ -172,6 +175,7 @@ export function AdminRoute() {
             setRevenueOpen(false)
             setThemesOpen(false)
             setContactOpen(false)
+            setRaffleOpen(false)
             setDesk(true)
           }}
           onRevenue={() => {
@@ -181,6 +185,7 @@ export function AdminRoute() {
             setShop(false)
             setThemesOpen(false)
             setContactOpen(false)
+            setRaffleOpen(false)
             setRevenueOpen(true)
           }}
           onThemes={() => {
@@ -190,6 +195,7 @@ export function AdminRoute() {
             setShop(false)
             setRevenueOpen(false)
             setContactOpen(false)
+            setRaffleOpen(false)
             setThemesOpen(true)
           }}
           onContact={() => {
@@ -199,7 +205,18 @@ export function AdminRoute() {
             setShop(false)
             setRevenueOpen(false)
             setThemesOpen(false)
+            setRaffleOpen(false)
             setContactOpen(true)
+          }}
+          onRaffle={() => {
+            setMenuOpen(false)
+            setCreating(false)
+            setDesk(false)
+            setShop(false)
+            setRevenueOpen(false)
+            setThemesOpen(false)
+            setContactOpen(false)
+            setRaffleOpen(true)
           }}
           onCreateProduct={() => {
             setMenuOpen(false)
@@ -208,6 +225,7 @@ export function AdminRoute() {
             setRevenueOpen(false)
             setThemesOpen(false)
             setContactOpen(false)
+            setRaffleOpen(false)
             setCreating(true)
           }}
         />
@@ -222,6 +240,7 @@ export function AdminRoute() {
       {contactOpen && (
         <ContactScreen people={contacts.people} status={contacts.status} onClose={() => setContactOpen(false)} />
       )}
+      {raffleOpen && <RaffleScreen onClose={() => setRaffleOpen(false)} />}
     </AdminFrame>
   )
 }
