@@ -26,9 +26,18 @@ import { CartSheet } from './CartSheet'
 import { OrderHistory } from './OrderHistory'
 import { Overlay } from './Overlay'
 import { ProductDialog } from './ProductDialog'
-import { ProfileSheet } from './ProfileSheet'
+import { DeliveryForm } from './DeliveryForm'
+import type { UserProfile } from '../types'
 
 type Sheet = 'cart' | 'profile' | 'whatsapp' | 'orders' | null
+
+const EMPTY_CUSTOMER: UserProfile = {
+  uid: '',
+  nome: '',
+  whatsapp: '',
+  address: null,
+  role: 'customer',
+}
 
 function linkedProductId(): string {
   try {
@@ -240,7 +249,13 @@ export function MenuScreen() {
           onPlaced={() => setLines([])}
         />
       )}
-      {sheet === 'profile' && <ProfileSheet onClose={() => setSheet(null)} />}
+      {sheet === 'profile' && (
+        <DeliveryForm
+          profile={session.status === 'ready' && session.profile.role === 'customer' ? session.profile : EMPTY_CUSTOMER}
+          onClose={() => setSheet(null)}
+          onSaved={() => setSheet(null)}
+        />
+      )}
       {sheet === 'whatsapp' && <AttendancePrompt onClose={() => setSheet(null)} />}
       {sheet === 'orders' && (
         <Overlay label="Meus pedidos" onClose={() => setSheet(null)}>
