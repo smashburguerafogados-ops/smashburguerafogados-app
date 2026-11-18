@@ -100,7 +100,7 @@ The order is saved in Firestore `orders` with the customer id, name, WhatsApp, a
 
 ## Meus pedidos
 
-The top-left hamburger opens Meus pedidos for customers. Cards update in realtime. An accepted order turns blue. A refused or cancelled order keeps its reason. When the order is out for delivery, the customer taps **Pedido recebido** to mark it finished.
+The bottom pill's page icon opens Meus pedidos. The cardápio has no hamburger. Cards update in realtime. An accepted order turns blue. A refused or cancelled order keeps its reason. When the order is out for delivery, the customer taps **Pedido recebido** to mark it finished.
 
 ## Painel de pedidos
 
@@ -111,7 +111,7 @@ Three columns: **Novos**, **Em Andamento** and **Finalizados**. Clicking a colum
 
 ## Criar Produto
 
-Admins get Criar Produto in the hamburger: nome, foto (Câmera or Galeria), categoria, valor, descrição and adicionais (for example molho). The category select lists existing categories, can create one (with a destaque tag) and can delete or re-tag the selected one. Products and categories are saved in Firestore.
+The three-line menu is only on the admin screen. It opens Criar Produto: nome, foto (Câmera or Galeria), categoria, valor, descrição and adicionais (for example molho). The category select lists existing categories, can create one (with a destaque tag) and can delete or re-tag the selected one. Products and categories are saved in Firestore.
 
 Firebase Storage is not enabled on this project, so the photo is resized to a JPEG of at most 640 px and saved on the product document. WhatsApp links can only carry text, so the delivery message links the photo: the public image file for the built-in items, or `…/smashburguerafogados-app/?produto={id}`, which opens that product with its photo, for uploaded photos.
 
@@ -119,7 +119,7 @@ The sample cardápio in `src/data/catalog.ts` is what visitors see until Firesto
 
 ## Bottom bar
 
-A floating pill sits above the bottom edge: Conta, Carrinho, WhatsApp. The active item is a gold pill with its short label. The other items are icons. The cart always shows the count and the total.
+A floating pill sits above the bottom edge: Meus pedidos (a page icon), Conta, Carrinho and WhatsApp. A short vertical line sits between each item and stays clear of the pill's top and bottom. The active item is a gold pill with its short label. The other items are icons. The cart always shows the count and the total.
 
 The WhatsApp button asks "Deseja falar com o Atendimento da Smash Burger?". Sim opens WhatsApp with the registered customer name in the message. Não closes the question.
 
@@ -144,4 +144,4 @@ License: public domain (`{{PD-self}}`). The copyright holder released the work i
 
 `orders`: a signed-in customer may create an order only for their own uid with `status: "novo"`, read only their own orders, and change only `status` from `enviado` to `finalizado`. An admin reads and updates every order.
 
-Publish the file before expecting the live menu, orders and the board to work. The sample cardápio remains if the catalog read fails.
+Publish the file before expecting the live menu, orders and the board to work. The admin board listens to the whole `orders` collection. That read is its own rule in `firestore.rules`; until this file is published in the Firebase console, the board shows "Não foi possível carregar os pedidos." The sample cardápio remains if the catalog read fails.

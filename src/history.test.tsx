@@ -21,7 +21,7 @@ async function openHistory(orders = [
   await act(async () => {
     emit('orders', orders)
   })
-  await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
+  expect(screen.queryByRole('button', { name: 'Abrir menu' })).not.toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Meus pedidos' }))
   return user
 }
@@ -85,9 +85,13 @@ describe('customer order history', () => {
   it('gives admins the panel and Criar Produto in the hamburger', async () => {
     signInAs(adminProfile)
     const user = userEvent.setup()
-    renderApp()
+    const menuPage = renderApp()
     await waitFor(() => expect(firebaseMocks.getDoc).toHaveBeenCalled())
-    await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
+    expect(screen.queryByRole('button', { name: 'Abrir menu' })).not.toBeInTheDocument()
+    menuPage.unmount()
+
+    renderApp('/admin')
+    await user.click(await screen.findByRole('button', { name: 'Abrir menu' }))
     const menu = screen.getByRole('dialog', { name: 'Menu' })
     expect(within(menu).getByRole('button', { name: 'Criar Produto' })).toBeInTheDocument()
     expect(within(menu).getByRole('button', { name: 'Painel de pedidos' })).toBeInTheDocument()

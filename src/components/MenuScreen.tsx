@@ -24,11 +24,9 @@ import { CartSheet } from './CartSheet'
 import { OrderHistory } from './OrderHistory'
 import { Overlay } from './Overlay'
 import { ProductDialog } from './ProductDialog'
-import { ProductForm } from './ProductForm'
 import { ProfileSheet } from './ProfileSheet'
-import { SideMenu } from './SideMenu'
 
-type Sheet = 'cart' | 'profile' | 'whatsapp' | 'menu' | 'orders' | 'product-form' | null
+type Sheet = 'cart' | 'profile' | 'whatsapp' | 'orders' | null
 
 function linkedProductId(): string {
   try {
@@ -36,14 +34,6 @@ function linkedProductId(): string {
   } catch {
     return ''
   }
-}
-
-function MenuIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  )
 }
 
 export function MenuScreen() {
@@ -132,15 +122,6 @@ export function MenuScreen() {
     <main className="menu">
       <div className="menu__content">
       <header className="menu__top">
-        <button
-          type="button"
-          className="menu__burger"
-          aria-label="Abrir menu"
-          aria-expanded={sheet === 'menu'}
-          onClick={() => toggle('menu')}
-        >
-          <MenuIcon />
-        </button>
         <button type="button" className="menu__logo" aria-label="Smash Burguer" {...hold}>
           <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" />
         </button>
@@ -207,6 +188,7 @@ export function MenuScreen() {
         sheet={sheet}
         count={count}
         totalCents={total}
+        onOrders={() => toggle('orders')}
         onProfile={() => toggle('profile')}
         onCart={() => toggle('cart')}
         onWhatsapp={() => toggle('whatsapp')}
@@ -231,22 +213,11 @@ export function MenuScreen() {
       )}
       {sheet === 'profile' && <ProfileSheet onClose={() => setSheet(null)} />}
       {sheet === 'whatsapp' && <AttendancePrompt onClose={() => setSheet(null)} />}
-      {sheet === 'menu' && (
-        <SideMenu
-          onClose={() => setSheet(null)}
-          onOrders={() => setSheet('orders')}
-          onPanel={() => navigate('/admin')}
-          onCreateProduct={() => setSheet('product-form')}
-        />
-      )}
       {sheet === 'orders' && (
         <Overlay label="Meus pedidos" onClose={() => setSheet(null)}>
           <h2>Meus pedidos</h2>
           <OrderHistory />
         </Overlay>
-      )}
-      {sheet === 'product-form' && isAdmin && (
-        <ProductForm onClose={() => setSheet(null)} onSaved={reloadCatalog} />
       )}
       {adminOpen && <AdminPrompt onClose={() => setAdminOpen(false)} />}
     </main>

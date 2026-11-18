@@ -20,9 +20,8 @@ const categories = [
 async function openForm() {
   signInAs(adminProfile)
   const user = userEvent.setup()
-  renderApp()
-  await waitFor(() => expect(firebaseMocks.getDoc).toHaveBeenCalled())
-  await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
+  renderApp('/admin')
+  await user.click(await screen.findByRole('button', { name: 'Abrir menu' }))
   await user.click(await screen.findByRole('button', { name: 'Criar Produto' }))
   await waitFor(() => expect(activeListeners('categories')).toHaveLength(1))
   await act(async () => {
@@ -127,10 +126,9 @@ describe('Criar Produto', () => {
 
   it('is not offered to customers', async () => {
     signInAs(customerProfile)
-    const user = userEvent.setup()
     renderApp()
     await waitFor(() => expect(firebaseMocks.getDoc).toHaveBeenCalled())
-    await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
+    expect(screen.queryByRole('button', { name: 'Abrir menu' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Criar Produto' })).not.toBeInTheDocument()
   })
 })

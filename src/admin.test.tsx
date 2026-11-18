@@ -40,6 +40,66 @@ function lastUpdate(): { path: string; patch: Record<string, unknown> } {
 }
 
 describe('admin board', () => {
+  it('shows the hamburger only on the admin screen', async () => {
+    await openBoard()
+    const burger = screen.getByRole('button', { name: 'Abrir menu' })
+    expect(burger.querySelectorAll('path')[0]?.getAttribute('d')).toContain('M4 7h16')
+    expect(document.querySelector('.menu__burger')).toBe(burger)
+  })
+
+  it('reads the whole orders collection for the admin', async () => {
+    await openBoard()
+    const [listener] = activeListeners('orders')
+    expect(listener.ref.path).toBe('orders')
+    expect(listener.ref.constraints ?? []).toEqual([])
+  })
+
+  it('fits Novos, Em Andamento and Finalizados inside a phone-width card', async () => {
+    await openBoard()
+    const shell = document.querySelector('.shell__main') as HTMLElement
+    const card = document.querySelector('.card--board') as HTMLElement
+    const columns = document.querySelector('.board__columns') as HTMLElement
+    const column = document.querySelector('.board__column') as HTMLElement
+    const shellStyle = getComputedStyle(shell)
+    const cardStyle = getComputedStyle(card)
+    const columnsStyle = getComputedStyle(columns)
+    const columnStyle = getComputedStyle(column)
+    const phone = 320
+    const board =
+      phone -
+      parseFloat(shellStyle.paddingLeft) -
+      parseFloat(shellStyle.paddingRight) -
+      parseFloat(cardStyle.paddingLeft) -
+      parseFloat(cardStyle.paddingRight) -
+      parseFloat(cardStyle.borderLeftWidth) -
+      parseFloat(cardStyle.borderRightWidth)
+    const gap = parseFloat(columnsStyle.columnGap)
+    const content =
+      (board - gap * 2) / 3 -
+      parseFloat(columnStyle.paddingLeft) -
+      parseFloat(columnStyle.paddingRight) -
+      parseFloat(columnStyle.borderLeftWidth) -
+      parseFloat(columnStyle.borderRightWidth)
+
+    // Manrope 700 widths measured in Chrome, in em: Andamento 5.61, Finalizados 5.41.
+    const widestWordEm = 5.61
+    for (const name of ['Novos', 'Em Andamento', 'Finalizados']) {
+      const tab = screen.getByRole('tab', { name: new RegExp(name) })
+      const title = tab.querySelector('.board__title') as HTMLElement
+      const style = getComputedStyle(title)
+      expect(tab).toHaveStyle({ minWidth: '0px' })
+      expect(style.fontFamily).toContain('Manrope')
+      expect(style.whiteSpace).toBe('normal')
+      expect(style.overflowWrap).toBe('normal')
+      expect(style.wordBreak).toBe('normal')
+      expect(style.overflow).not.toBe('hidden')
+      expect(style.textOverflow).not.toBe('ellipsis')
+      const fontPx = parseFloat(style.fontSize)
+      expect(fontPx * widestWordEm).toBeLessThanOrEqual(content)
+    }
+    expect(content).toBeGreaterThan(60)
+  })
+
   it('shows Novos, Em Andamento and Finalizados and filters when a column is clicked', async () => {
     const user = userEvent.setup()
     await openBoard()

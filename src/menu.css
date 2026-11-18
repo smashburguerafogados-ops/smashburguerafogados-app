@@ -288,10 +288,10 @@
   left: 50%;
   bottom: 16px;
   transform: translateX(-50%);
-  width: min(400px, calc(100% - 28px));
+  width: min(420px, calc(100% - 28px));
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
   padding: 8px;
   background: #141416;
   color: #f4f5f6;
@@ -301,14 +301,23 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
+.dock__rule {
+  flex: none;
+  align-self: center;
+  width: 1px;
+  height: 18px;
+  border-radius: 1px;
+  background: rgba(244, 245, 246, 0.38);
+}
+
 .dock__item {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-width: 52px;
+  gap: 6px;
+  min-width: 40px;
   height: 48px;
-  padding: 0 12px;
+  padding: 0 8px;
   border: 0;
   border-radius: 999px;
   background: transparent;
@@ -660,15 +669,18 @@
 .board__columns {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
   margin: 12px 0;
 }
 
 .board__column {
   display: grid;
   gap: 4px;
+  align-content: center;
   justify-items: center;
-  padding: 12px 6px;
+  min-width: 0;
+  width: 100%;
+  padding: 10px 4px;
   border: 1px solid rgba(227, 177, 90, 0.35);
   border-radius: 14px;
   background: #141416;
@@ -682,9 +694,19 @@
 }
 
 .board__title {
-  font-family: var(--font-display);
-  font-size: 0.82rem;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
   font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .board__title.is-blinking {

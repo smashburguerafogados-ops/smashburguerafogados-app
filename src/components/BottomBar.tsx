@@ -1,12 +1,30 @@
+import { Fragment } from 'react'
 import { formatPrice } from '../lib/money'
 
 type BottomBarProps = {
   sheet: string | null
   count: number
   totalCents: number
+  onOrders: () => void
   onProfile: () => void
   onCart: () => void
   onWhatsapp: () => void
+}
+
+function PageIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M7 3.8h6.5L18.2 8.6V19a1.6 1.6 0 0 1-1.6 1.6H7.6A1.6 1.6 0 0 1 6 19V5.4c0-.9.7-1.6 1.6-1.6H7Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path d="M13.2 4v4.4h4.6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M9 12.2h6M9 15.6h4.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
 }
 
 function UserIcon() {
@@ -55,43 +73,67 @@ function ChatIcon() {
   )
 }
 
-export function BottomBar({ sheet, count, totalCents, onProfile, onCart, onWhatsapp }: BottomBarProps) {
+function Rule() {
+  return <span className="dock__rule" aria-hidden="true" />
+}
+
+export function BottomBar({ sheet, count, totalCents, onOrders, onProfile, onCart, onWhatsapp }: BottomBarProps) {
   const itemWord = count === 1 ? 'item' : 'itens'
+  const items = [
+    {
+      key: 'orders',
+      label: 'Meus pedidos',
+      activeLabel: 'Pedidos',
+      icon: <PageIcon />,
+      onClick: onOrders,
+    },
+    {
+      key: 'profile',
+      label: 'Conta',
+      activeLabel: 'Conta',
+      icon: <UserIcon />,
+      onClick: onProfile,
+    },
+    {
+      key: 'cart',
+      label: `Carrinho, ${count} ${itemWord}, ${formatPrice(totalCents)}`,
+      activeLabel: 'Carrinho',
+      icon: <CartIcon />,
+      onClick: onCart,
+      extra: (
+        <>
+          <span className="dock__count">{count}</span>
+          <span className="dock__sum">{formatPrice(totalCents)}</span>
+        </>
+      ),
+    },
+    {
+      key: 'whatsapp',
+      label: 'WhatsApp',
+      activeLabel: 'WhatsApp',
+      icon: <ChatIcon />,
+      onClick: onWhatsapp,
+    },
+  ]
 
   return (
     <nav className="dock" aria-label="Atalhos">
-      <button
-        type="button"
-        className={sheet === 'profile' ? 'dock__item is-active' : 'dock__item'}
-        aria-pressed={sheet === 'profile'}
-        aria-label="Conta"
-        onClick={onProfile}
-      >
-        <UserIcon />
-        {sheet === 'profile' && <span className="dock__label">Conta</span>}
-      </button>
-      <button
-        type="button"
-        className={sheet === 'cart' ? 'dock__item is-active' : 'dock__item'}
-        aria-pressed={sheet === 'cart'}
-        aria-label={`Carrinho, ${count} ${itemWord}, ${formatPrice(totalCents)}`}
-        onClick={onCart}
-      >
-        <CartIcon />
-        <span className="dock__count">{count}</span>
-        <span className="dock__sum">{formatPrice(totalCents)}</span>
-        {sheet === 'cart' && <span className="dock__label">Carrinho</span>}
-      </button>
-      <button
-        type="button"
-        className={sheet === 'whatsapp' ? 'dock__item is-active' : 'dock__item'}
-        aria-pressed={sheet === 'whatsapp'}
-        aria-label="WhatsApp"
-        onClick={onWhatsapp}
-      >
-        <ChatIcon />
-        {sheet === 'whatsapp' && <span className="dock__label">WhatsApp</span>}
-      </button>
+      {items.map((item, index) => (
+        <Fragment key={item.key}>
+          {index > 0 && <Rule />}
+          <button
+            type="button"
+            className={sheet === item.key ? 'dock__item is-active' : 'dock__item'}
+            aria-pressed={sheet === item.key}
+            aria-label={item.label}
+            onClick={item.onClick}
+          >
+            {item.icon}
+            {'extra' in item ? item.extra : null}
+            {sheet === item.key && <span className="dock__label">{item.activeLabel}</span>}
+          </button>
+        </Fragment>
+      ))}
     </nav>
   )
 }

@@ -57,8 +57,7 @@ describe('boot', () => {
     await tick(700)
     vi.useRealTimers()
 
-    screen.getByRole('button', { name: 'Abrir menu' }).click()
-    await act(async () => {})
+    expect(screen.queryByRole('button', { name: 'Abrir menu' })).not.toBeInTheDocument()
     screen.getByRole('button', { name: 'Meus pedidos' }).click()
     await act(async () => {})
 

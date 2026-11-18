@@ -26,7 +26,12 @@ describe('firestore.rules', () => {
 
   it('keeps orders private to their customer and the admin', () => {
     const orders = block('orders')
-    expect(orders).toMatch(/allow read: if isAdmin\(\)\s*\|\| \(request\.auth != null && resource\.data\.customerId == request\.auth\.uid\);/)
+    const reads = orders.match(/allow read:.*;/g) ?? []
+    expect(reads).toEqual([
+      'allow read: if isAdmin();',
+      'allow read: if request.auth != null && resource.data.customerId == request.auth.uid;',
+    ])
+    expect(reads[0]).not.toContain('resource.data')
     expect(orders).toContain('allow create: if orderCreate();')
     expect(orders).toContain('allow update: if isAdmin() || customerFinishes();')
     expect(orders).toContain('allow delete: if isAdmin();')

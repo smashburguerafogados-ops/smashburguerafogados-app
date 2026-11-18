@@ -17,6 +17,10 @@ rules_version = '2';
 // orders: a signed-in customer creates an order for their own uid with
 // status "novo". They read only their own orders and may only move one
 // from "enviado" to "finalizado". An admin reads and updates every order.
+// The admin read is its own rule. Combining it with the customer check
+// in one OR makes Firestore reject the admin's collection listener,
+// because a list query must be proven by a rule that does not depend on
+// a field the query does not filter.
 // connection_tests is locked. Everything else is denied.
 
 service cloud.firestore {
@@ -85,8 +89,8 @@ service cloud.firestore {
     }
 
     match /orders/{orderId} {
-      allow read: if isAdmin()
-        || (request.auth != null && resource.data.customerId == request.auth.uid);
+      allow read: if isAdmin();
+      allow read: if request.auth != null && resource.data.customerId == request.auth.uid;
       allow create: if orderCreate();
       allow update: if isAdmin() || customerFinishes();
       allow delete: if isAdmin();
