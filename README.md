@@ -1,6 +1,6 @@
 # Smash Burguer Afogados
 
-Static Vite + React + TypeScript app for GitHub Pages. Stage 1 is the splash, customer registration, and sign-in. The interface is in Portuguese.
+Static Vite + React + TypeScript app for GitHub Pages. The splash leads straight into the menu. Customer registration stays available from the account button. The interface is in Portuguese.
 
 The original mark is `public/logo.jpg`. The interface uses `public/logo.png`, the same drawing with the flat background removed.
 
@@ -12,6 +12,7 @@ https://smashburguerafogados-ops.github.io/smashburguerafogados-app/
 
 ```bash
 npm install
+npm test
 npm run dev
 npm run build
 npm run check:identity
@@ -47,6 +48,8 @@ Admin is not a password in this repo. There is no admin password and no hidden l
 
 Admin is a Firebase Auth user whose `users/{uid}` document has `role: "admin"`. The route `/admin` renders an empty panel only for that role. Anyone else sees "Acesso restrito".
 
+On the menu, a long press on the logo asks for that Firebase email and password. It does not use the customer WhatsApp form, and the password is not stored in this repo. A customer who tries it stays on the cardápio.
+
 Jameson: create that user in the Firebase console. Do not put the password in the repository or in chat.
 
 1. Authentication → Add user.
@@ -77,6 +80,31 @@ Create the Firestore database first. Then run the script once, while the databas
 
 As of this stage, the Firestore API was not enabled on `smashburguerafogados-ae50a`, so the write could not be completed from here. The script reports that case instead of treating it as a rules lock.
 
+## Menu
+
+After the splash the cardápio is open. There is no login wall. Category chips filter the list; there is no "Geral" chip. Tapping the active chip returns to every item, and the choice is kept in `sessionStorage` (`smash.category`). Search, a sold-out state, item notes, and the cart are on the same screen.
+
+The sample cardápio in `src/data/catalog.ts` is what visitors see until Firestore has categories and products. Prices in Firestore are reais (a number such as `28`). Public reads use `where('available', '==', true)`, so sold-out products stay hidden from customers once the rules are published.
+
+## Bottom bar
+
+A floating pill sits above the bottom edge: Conta, Carrinho, WhatsApp. The active item is a gold pill with its short label. The other items are icons. The cart always shows the count and the total.
+
+`BUSINESS_WHATSAPP` in `src/lib/whatsapp.ts` is the placeholder `5500000000000`. The button opens `https://wa.me/5500000000000`. Replace that constant with the shop number when it is known. It is not a secret, and the app does not send a message by itself.
+
+## Fire
+
+The splash background is `public/fire.mp4` (958,356 bytes, about 936 KB), a 4.5 second silent H.264 loop at 640×854. `public/fire-poster.jpg` (23,387 bytes) is the still frame used before playback and when reduced motion is on.
+
+Source: Cary Bass, File:Fire.ogv, own work, 3 March 2007, Wikimedia Commons.
+https://commons.wikimedia.org/wiki/File:Fire.ogv
+
+License: public domain (`{{PD-self}}`). The copyright holder released the work into the public domain worldwide and, where that is not legally possible, granted use for any purpose without conditions unless the law requires them. Audio was removed. The file is committed in this repo; the page does not hotlink Commons. See `public/fire-license.txt`.
+
+## Rules to publish
+
+`firestore.rules` still locks each customer to `users/{their uid}` and denies `connection_tests`. It now also allows anyone to read `categories`, and to read `products` only when `available == true` (an admin may read the rest). Writes to those two collections require `users/{uid}.role == 'admin'`. Publish the file before expecting the live menu to replace the sample data. The sample cardápio remains if the read fails.
+
 ## Out of scope
 
-Menu, orders, sending WhatsApp messages, and the refrigeração repository.
+Orders, sending WhatsApp messages, and the refrigeração repository.

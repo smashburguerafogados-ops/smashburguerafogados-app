@@ -9,12 +9,22 @@ rules_version = '2';
 // role and uid cannot be changed from the client, so nobody can promote
 // their own document to admin. Admin documents are written from the
 // Firebase console, which bypasses these rules.
-// connection_tests is locked. The dev script cannot write after publish.
+//
+// categories are public to read. products are public to read only when
+// available is true. An admin may also read sold-out products.
+// Writes to categories and products require users/{uid}.role == 'admin'.
+// connection_tests is locked. Everything else is denied.
 
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedInAs(userId) {
       return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
     function customerCreate(userId) {
@@ -33,6 +43,16 @@ service cloud.firestore {
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.role == resource.data.role;
       allow delete: if signedInAs(userId);
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /products/{productId} {
+      allow read: if resource.data.available == true || isAdmin();
+      allow write: if isAdmin();
     }
 
     match /connection_tests/{docId} {

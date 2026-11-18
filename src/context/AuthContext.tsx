@@ -37,6 +37,7 @@ export type RegisterInput = {
 type AuthContextValue = {
   session: Session
   login: (whatsapp: string, password: string) => Promise<void>
+  loginWithEmail: (email: string, password: string) => Promise<void>
   register: (input: RegisterInput) => Promise<void>
   logout: () => Promise<void>
 }
@@ -127,6 +128,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await signInWithEmailAndPassword(auth, email, password)
         } catch (error) {
           throw new Error(mapAuthError(error))
+        }
+      },
+      async loginWithEmail(email, password) {
+        const clean = email.trim()
+        if (!clean || !password) {
+          throw new Error('Informe e-mail e senha.')
+        }
+        suspendListener.current = true
+        try {
+          const credential = await signInWithEmailAndPassword(auth, clean, password)
+          const next = await hydrate(credential.user)
+          if (next.status !== 'ready' || next.profile.role !== 'admin') {
+            await signOut(auth)
+            setSession({ status: 'signedOut' })
+            throw new Error('Acesso restrito.')
+          }
+          setSession(next)
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            (error.message === 'Acesso restrito.' || error.message.startsWith('Informe'))
+          ) {
+            throw error
+          }
+          throw new Error(mapAuthError(error))
+        } finally {
+          suspendListener.current = false
         }
       },
       async register(input) {
