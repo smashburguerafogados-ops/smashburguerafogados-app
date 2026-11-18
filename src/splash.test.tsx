@@ -18,8 +18,8 @@ it('plays the shipped fire loop and does not draw the old grill', () => {
   const src = video?.getAttribute('src') ?? ''
   expect(src).toContain('fire.mp4')
   expect(src.startsWith('http://') || src.startsWith('https://')).toBe(false)
-  expect(video?.playbackRate).toBe(FIRE_PLAYBACK_RATE)
-  expect(FIRE_PLAYBACK_RATE).toBeLessThan(1)
+  expect(video?.playbackRate).toBe(0.25)
+  expect(FIRE_PLAYBACK_RATE).toBe(0.25)
   expect(container.querySelector('.grill__grate')).toBeNull()
   expect(container.querySelector('.grill__flame')).toBeNull()
   expect(screen.getByRole('img', { name: 'Smash Burguer' })).toBeInTheDocument()
