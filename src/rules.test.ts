@@ -48,6 +48,14 @@ describe('firestore.rules', () => {
     expect(rules).toContain("affectedKeys().hasOnly(['status', 'updatedAt'])")
   })
 
+  it('lets an admin list customers on its own rule', () => {
+    const users = block('users')
+    const reads = users.match(/allow read:.*;/g) ?? []
+    expect(reads).toEqual(['allow read: if isAdmin();', 'allow read: if signedInAs(userId);'])
+    expect(reads[0]).not.toContain('resource.data')
+    expect(users).not.toContain('allow read: if isAdmin() ||')
+  })
+
   it('lets everyone read the shop flag and only an admin change it', () => {
     const settings = block('settings')
     expect(settings).toContain("allow read: if settingId == 'shop' || settingId == 'theme';")

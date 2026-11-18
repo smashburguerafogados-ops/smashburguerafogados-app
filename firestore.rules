@@ -5,6 +5,9 @@ rules_version = '2';
 // database may still be in test mode.
 //
 // A signed-in person can read and write only users/{their uid}.
+// An admin read is its own rule so Contato can list every customer.
+// Combining that with the own-document check in one OR makes Firestore
+// reject the admin's collection listener.
 // Creating a profile through the app must set role "customer".
 // role and uid cannot be changed from the client, so nobody can promote
 // their own document to admin. Admin documents are written from the
@@ -57,6 +60,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
+      allow read: if isAdmin();
       allow read: if signedInAs(userId);
       allow create: if signedInAs(userId) && customerCreate(userId);
       allow update: if signedInAs(userId)

@@ -104,7 +104,12 @@ describe('WhatsApp messages', () => {
       expect(code, path).not.toContain('window.open')
     }
     const senders = app.filter(([, code]) => code.includes('openWhatsapp(')).map(([path]) => path).sort()
-    expect(senders).toEqual(['./components/AttendancePrompt.tsx', './components/OrderDialog.tsx', './lib/whatsapp.ts'])
+    expect(senders).toEqual([
+      './components/AttendancePrompt.tsx',
+      './components/ContactScreen.tsx',
+      './components/OrderDialog.tsx',
+      './lib/whatsapp.ts',
+    ])
     const dialog = sources['./components/OrderDialog.tsx']
     for (const builder of ['acceptedMessage', 'refusedMessage', 'sentMessage', 'cancelledMessage']) {
       expect(dialog).toContain(`${builder}(order`)
