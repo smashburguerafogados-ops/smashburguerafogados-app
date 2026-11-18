@@ -43,6 +43,14 @@ export function useTheme(): ThemeId {
   return useContext(ThemeContext)
 }
 
+export function applyDocumentTheme(theme: ThemeId | null) {
+  if (theme == null) {
+    delete document.documentElement.dataset.theme
+    return
+  }
+  document.documentElement.dataset.theme = theme
+}
+
 export function useAppliedTheme(): ThemeId {
   const [theme, setTheme] = useState<ThemeId>('atual')
 
@@ -54,10 +62,6 @@ export function useAppliedTheme(): ThemeId {
       ),
     [],
   )
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme
-  }, [theme])
 
   return theme
 }
