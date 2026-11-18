@@ -2,10 +2,12 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { watchRevenue, type RevenueEntry } from '../lib/revenue'
+import { useTheme } from '../lib/theme'
 import { AdminPanel } from './AdminPanel'
 import { ProductDesk } from './ProductDesk'
 import { ProductForm } from './ProductForm'
 import { RevenueScreen } from './RevenueScreen'
+import { ThemeScreen } from './ThemeScreen'
 import { ShopScreen } from './ShopControls'
 import { SideMenu } from './SideMenu'
 
@@ -71,7 +73,9 @@ export function AdminRoute() {
   const [desk, setDesk] = useState(false)
   const [shop, setShop] = useState(false)
   const [revenueOpen, setRevenueOpen] = useState(false)
+  const [themesOpen, setThemesOpen] = useState(false)
   const revenue = useRevenue(session.status === 'ready' && session.profile.role === 'admin')
+  const theme = useTheme()
   useTitle('Painel | Smash Burguer')
 
   if (session.status === 'loading') {
@@ -132,6 +136,7 @@ export function AdminRoute() {
             setCreating(false)
             setDesk(false)
             setRevenueOpen(false)
+            setThemesOpen(false)
             setShop(true)
           }}
           onProducts={() => {
@@ -139,6 +144,7 @@ export function AdminRoute() {
             setCreating(false)
             setShop(false)
             setRevenueOpen(false)
+            setThemesOpen(false)
             setDesk(true)
           }}
           onRevenue={() => {
@@ -146,13 +152,23 @@ export function AdminRoute() {
             setCreating(false)
             setDesk(false)
             setShop(false)
+            setThemesOpen(false)
             setRevenueOpen(true)
+          }}
+          onThemes={() => {
+            setMenuOpen(false)
+            setCreating(false)
+            setDesk(false)
+            setShop(false)
+            setRevenueOpen(false)
+            setThemesOpen(true)
           }}
           onCreateProduct={() => {
             setMenuOpen(false)
             setDesk(false)
             setShop(false)
             setRevenueOpen(false)
+            setThemesOpen(false)
             setCreating(true)
           }}
         />
@@ -163,6 +179,7 @@ export function AdminRoute() {
       {revenueOpen && (
         <RevenueScreen entries={revenue.entries} status={revenue.status} onClose={() => setRevenueOpen(false)} />
       )}
+      {themesOpen && <ThemeScreen applied={theme} onClose={() => setThemesOpen(false)} />}
     </AdminFrame>
   )
 }

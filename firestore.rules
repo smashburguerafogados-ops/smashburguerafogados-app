@@ -17,6 +17,8 @@ rules_version = '2';
 //
 // settings/shop is public to read so the opening screen can show whether
 // the shop is online and the closed message. Only an admin can change it.
+// settings/theme is public to read so every customer sees the confirmed
+// theme. Only an admin can change it.
 //
 // faturamento/{orderId} stores the amount once, when an order leaves em
 // andamento for finalizado. Admins read it. The create is one-shot: a
@@ -108,8 +110,8 @@ service cloud.firestore {
     }
 
     match /settings/{settingId} {
-      allow read: if settingId == 'shop';
-      allow write: if settingId == 'shop' && isAdmin();
+      allow read: if settingId == 'shop' || settingId == 'theme';
+      allow write: if (settingId == 'shop' || settingId == 'theme') && isAdmin();
     }
 
     function revenueCreate(orderId) {

@@ -32,6 +32,62 @@ body {
   background: #0b0b0a;
 }
 
+html[data-theme='natal'] {
+  --gold: #f2d27a;
+  --orange: #e23b3b;
+  --theme-wash: rgba(120, 12, 24, 0.45);
+  --theme-glow: rgba(226, 59, 59, 0.55);
+}
+
+html[data-theme='ano-novo'] {
+  --gold: #f6e7a1;
+  --orange: #8fd3ff;
+  --theme-wash: rgba(16, 28, 72, 0.48);
+  --theme-glow: rgba(143, 211, 255, 0.55);
+}
+
+html[data-theme='carnaval'] {
+  --gold: #ffd23f;
+  --orange: #c46bff;
+  --theme-wash: rgba(72, 8, 96, 0.46);
+  --theme-glow: rgba(196, 107, 255, 0.55);
+}
+
+html[data-theme='pascoa'] {
+  --gold: #f3e27a;
+  --orange: #e09ad4;
+  --theme-wash: rgba(96, 40, 84, 0.4);
+  --theme-glow: rgba(224, 154, 212, 0.55);
+}
+
+html[data-theme='sao-joao'] {
+  --gold: #ffcc33;
+  --orange: #ff6a00;
+  --theme-wash: rgba(110, 36, 0, 0.42);
+  --theme-glow: rgba(255, 106, 0, 0.58);
+}
+
+html[data-theme='natal'] .dock__item.is-active,
+html[data-theme='ano-novo'] .dock__item.is-active,
+html[data-theme='carnaval'] .dock__item.is-active,
+html[data-theme='pascoa'] .dock__item.is-active,
+html[data-theme='sao-joao'] .dock__item.is-active,
+html[data-theme='natal'] .mark-btn,
+html[data-theme='ano-novo'] .mark-btn,
+html[data-theme='carnaval'] .mark-btn,
+html[data-theme='pascoa'] .mark-btn,
+html[data-theme='sao-joao'] .mark-btn {
+  border-color: var(--gold);
+}
+
+html[data-theme='natal'] .dock__item.is-active,
+html[data-theme='ano-novo'] .dock__item.is-active,
+html[data-theme='carnaval'] .dock__item.is-active,
+html[data-theme='pascoa'] .dock__item.is-active,
+html[data-theme='sao-joao'] .dock__item.is-active {
+  background: var(--gold);
+}
+
 button,
 input {
   font: inherit;
