@@ -50,8 +50,8 @@ describe('firestore.rules', () => {
 
   it('lets everyone read the shop flag and only an admin change it', () => {
     const settings = block('settings')
-    expect(settings).toContain("allow read: if settingId == 'shop';")
-    expect(settings).toContain("allow write: if settingId == 'shop' && isAdmin();")
+    expect(settings).toContain("allow read: if settingId == 'shop' || settingId == 'theme';")
+    expect(settings).toContain("allow write: if (settingId == 'shop' || settingId == 'theme') && isAdmin();")
     expect(settings).not.toMatch(/allow write: if true/)
   })
 

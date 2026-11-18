@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { AdminRoute } from '../components/AdminRoute'
 import { MenuScreen } from '../components/MenuScreen'
+import { ThemeFrame } from '../components/ThemeMark'
 import { AuthProvider } from '../context/AuthContext'
 import { OrdersProvider } from '../context/OrdersContext'
 import type { Order } from '../lib/orders'
@@ -34,9 +35,11 @@ export function signInAs(profile: { uid: string } & Record<string, unknown>) {
 export function Providers({ children, path = '/' }: { children: ReactNode; path?: string }) {
   return (
     <AuthProvider>
-      <OrdersProvider>
-        <MemoryRouter initialEntries={[path]}>{children}</MemoryRouter>
-      </OrdersProvider>
+      <ThemeFrame>
+        <OrdersProvider>
+          <MemoryRouter initialEntries={[path]}>{children}</MemoryRouter>
+        </OrdersProvider>
+      </ThemeFrame>
     </AuthProvider>
   )
 }

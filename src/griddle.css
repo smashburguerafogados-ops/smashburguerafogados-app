@@ -22,6 +22,32 @@
     linear-gradient(180deg, #121211 0%, #0b0b0a 55%, #080807 100%);
 }
 
+html[data-theme='natal'] .griddle,
+html[data-theme='ano-novo'] .griddle,
+html[data-theme='carnaval'] .griddle,
+html[data-theme='pascoa'] .griddle,
+html[data-theme='sao-joao'] .griddle {
+  background: #10080c;
+}
+
+html[data-theme='natal'] .griddle__plate,
+html[data-theme='ano-novo'] .griddle__plate,
+html[data-theme='carnaval'] .griddle__plate,
+html[data-theme='pascoa'] .griddle__plate,
+html[data-theme='sao-joao'] .griddle__plate {
+  background:
+    radial-gradient(ellipse 85% 70% at 50% 45%, transparent 0%, rgba(0, 0, 0, 0.72) 100%),
+    linear-gradient(180deg, var(--theme-wash), #0b0b0a 72%);
+}
+
+html[data-theme='natal'] .griddle__glow,
+html[data-theme='ano-novo'] .griddle__glow,
+html[data-theme='carnaval'] .griddle__glow,
+html[data-theme='pascoa'] .griddle__glow,
+html[data-theme='sao-joao'] .griddle__glow {
+  background: radial-gradient(ellipse at 50% 40%, var(--theme-glow), transparent 72%);
+}
+
 .griddle__glow {
   left: 8%;
   right: 8%;
