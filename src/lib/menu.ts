@@ -28,13 +28,19 @@ export function saveCategory(id: string): void {
   }
 }
 
+export function foldText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR')
+}
+
 export function filterProducts(products: Product[], categoryId: string, search: string): Product[] {
-  const query = search.trim().toLocaleLowerCase('pt-BR')
+  const query = foldText(search.trim())
   return products.filter((product) => {
     if (categoryId && product.categoryId !== categoryId) return false
     if (!query) return true
-    const haystack = `${product.name} ${product.description}`.toLocaleLowerCase('pt-BR')
-    return haystack.includes(query)
+    return foldText(`${product.name} ${product.description}`).includes(query)
   })
 }
 
