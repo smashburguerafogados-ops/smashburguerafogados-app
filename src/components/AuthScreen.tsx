@@ -3,7 +3,7 @@ import { lookupCep } from '../lib/cep'
 import { digitsOnly, maskCep, maskWhatsappInput, normalizeWhatsapp } from '../lib/identity'
 import { useAuth } from '../context/AuthContext'
 import type { Address } from '../types'
-import { GrillField } from './GrillField'
+import { FireBackdrop } from './FireBackdrop'
 
 type Mode = 'login' | 'register'
 type CepStatus = 'idle' | 'loading' | 'found' | 'manual'
@@ -22,7 +22,7 @@ function useTitle(title: string) {
   }, [title])
 }
 
-export function AuthScreen() {
+export function AuthScreen({ embedded = false }: { embedded?: boolean }) {
   const { login, register } = useAuth()
   const [mode, setMode] = useState<Mode>('login')
   useTitle(mode === 'login' ? 'Entrar | Smash Burguer' : 'Criar conta | Smash Burguer')
@@ -172,15 +172,17 @@ export function AuthScreen() {
   const showAddress = mode === 'register' && (cepStatus === 'found' || cepStatus === 'manual')
 
   return (
-    <div className="stage stage--grill">
-      <GrillField />
-      <div className="stage__glow" aria-hidden="true" />
-      <div className="auth">
-        <img
-          className="auth__logo"
-          src={`${import.meta.env.BASE_URL}logo.png`}
-          alt="Smash Burguer"
-        />
+    <div className={embedded ? 'auth auth--sheet' : 'stage stage--fire'}>
+      {!embedded && <FireBackdrop />}
+      {!embedded && <div className="stage__glow" aria-hidden="true" />}
+      <div className={embedded ? 'auth__sheet' : 'auth'}>
+        {!embedded && (
+          <img
+            className="auth__logo"
+            src={`${import.meta.env.BASE_URL}logo.png`}
+            alt="Smash Burguer"
+          />
+        )}
         <section className="card">
           <div className="tabs" role="tablist" aria-label="Acesso">
             <button

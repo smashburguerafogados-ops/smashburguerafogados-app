@@ -1,0 +1,15 @@
+public/fire.mp4 and public/fire-poster.jpg
+
+Source: Cary Bass, "Fire.ogv" (a campfire), own work, 3 March 2007.
+Wikimedia Commons: https://commons.wikimedia.org/wiki/File:Fire.ogv
+Original file: https://upload.wikimedia.org/wikipedia/commons/8/8f/Fire.ogv
+
+License: Public domain. The author released the work with the Wikimedia Commons
+template PD-self: the copyright holder released this work into the public domain
+worldwide, and, where that is not legally possible, granted anyone the right to
+use the work for any purpose without conditions, unless such conditions are
+required by law.
+
+This copy is a 4.5 second silent excerpt (audio removed), scaled to 640×854,
+encoded as H.264. fire.mp4 is 958,356 bytes. fire-poster.jpg is one frame from
+that excerpt, 23,387 bytes. It is not a hotlink. No branding was added.
