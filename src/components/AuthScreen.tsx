@@ -3,6 +3,7 @@ import { lookupCep } from '../lib/cep'
 import { digitsOnly, maskCep, maskWhatsappInput, normalizeWhatsapp } from '../lib/identity'
 import { useAuth } from '../context/AuthContext'
 import type { Address } from '../types'
+import { GrillField } from './GrillField'
 
 type Mode = 'login' | 'register'
 type CepStatus = 'idle' | 'loading' | 'found' | 'manual'
@@ -171,7 +172,8 @@ export function AuthScreen() {
   const showAddress = mode === 'register' && (cepStatus === 'found' || cepStatus === 'manual')
 
   return (
-    <div className="stage">
+    <div className="stage stage--grill">
+      <GrillField />
       <div className="stage__glow" aria-hidden="true" />
       <div className="auth">
         <img
