@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { seedCatalog, type Catalog, type Product } from '../data/catalog'
 import { useAuth } from '../context/AuthContext'
@@ -47,10 +47,18 @@ export function MenuScreen() {
   const [sheet, setSheet] = useState<Sheet>(null)
   const [adminOpen, setAdminOpen] = useState(false)
   const [linkedId, setLinkedId] = useState(linkedProductId)
+  const [notice, setNotice] = useState<{ id: number; text: string } | null>(null)
+  const noticeId = useRef(0)
 
   useEffect(() => {
     document.title = 'Cardápio | Smash Burguer'
   }, [])
+
+  useEffect(() => {
+    if (!notice) return
+    const timer = window.setTimeout(() => setNotice(null), 3000)
+    return () => window.clearTimeout(timer)
+  }, [notice])
 
   const reloadCatalog = useCallback(() => {
     let active = true
@@ -103,6 +111,8 @@ export function MenuScreen() {
         note: clean,
       }),
     )
+    noticeId.current += 1
+    setNotice({ id: noticeId.current, text: `Adicionado: ${name}` })
     setProduct(null)
   }
 
@@ -123,6 +133,11 @@ export function MenuScreen() {
 
   return (
     <main className="menu">
+      {notice && (
+        <p className="toast" role="status">
+          {notice.text}
+        </p>
+      )}
       <div className="menu__content">
       <header className="menu__top">
         <button type="button" className="menu__logo" aria-label="Smash Burguer" {...hold}>

@@ -102,8 +102,8 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced, onNeedAccount }:
         <ul className="cart">
           {lines.map((line) => (
             <li key={line.key}>
-              <div>
-                <strong>{line.name}</strong>
+              <div className="cart__info">
+                <strong className="cart__name">{line.name}</strong>
                 <span>
                   {line.qty} × {formatPrice(line.priceCents)}
                 </span>

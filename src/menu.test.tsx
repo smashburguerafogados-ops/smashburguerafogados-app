@@ -1,6 +1,6 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { expect, it } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { MenuScreen } from './components/MenuScreen'
@@ -9,6 +9,10 @@ import { customerProfile, signInAs } from './test/render'
 import './index.css'
 import './menu.css'
 import './griddle.css'
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 function renderMenu() {
   return render(
@@ -135,6 +139,64 @@ it('adds a note and updates the cart count and total', async () => {
   expect(cart).toHaveTextContent('Smash da casa')
   expect(cart).toHaveTextContent('R$ 28,00')
   expect(dock.querySelector('.dock__item.is-active .dock__label')).toHaveTextContent('Carrinho')
+})
+
+it('shows a thin toast when a product is added and clears it after 3 seconds', async () => {
+  vi.useFakeTimers()
+  renderMenu()
+
+  fireEvent.click(screen.getByRole('button', { name: /Smash da casa/ }))
+  fireEvent.click(within(screen.getByRole('dialog', { name: 'Smash da casa' })).getByRole('button', { name: 'Adicionar' }))
+
+  const toast = screen.getByRole('status')
+  expect(toast).toHaveTextContent('Adicionado: Smash da casa')
+  expect(toast).toHaveClass('toast')
+  expect(toast.closest('[role="dialog"]')).toBeNull()
+  expect(getComputedStyle(toast).pointerEvents).toBe('none')
+
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(2999)
+  })
+  expect(screen.getByRole('status')).toHaveTextContent('Adicionado: Smash da casa')
+
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(1)
+  })
+  expect(screen.queryByRole('status')).not.toBeInTheDocument()
+})
+
+it('fits the item name on one line and does not head the cart with the customer name', async () => {
+  signInAs(customerProfile)
+  const user = userEvent.setup()
+  renderMenu()
+  await screen.findByRole('heading', { name: 'Ana' })
+
+  await user.click(screen.getByRole('button', { name: /Smash da casa/ }))
+  const detail = screen.getByRole('dialog', { name: 'Smash da casa' })
+  await user.click(within(detail).getByRole('checkbox', { name: /Cheddar/ }))
+  await user.click(within(detail).getByRole('button', { name: 'Adicionar' }))
+  await user.click(screen.getByRole('button', { name: /carrinho/i }))
+
+  const cart = screen.getByRole('dialog', { name: 'Carrinho' })
+  expect(within(cart).queryByRole('heading', { name: 'Ana' })).not.toBeInTheDocument()
+  expect(within(cart).queryByRole('heading', { name: 'Ana Souza' })).not.toBeInTheDocument()
+  expect(within(cart).getByRole('heading', { name: 'Carrinho' })).toBeInTheDocument()
+
+  const name = within(cart).getByText('Smash da casa + Cheddar')
+  const nameStyle = getComputedStyle(name)
+  expect(nameStyle.whiteSpace).toBe('nowrap')
+  expect(nameStyle.overflow).toBe('hidden')
+  expect(nameStyle.textOverflow).toBe('ellipsis')
+  expect(getComputedStyle(name.parentElement as HTMLElement).minWidth).toBe('0px')
+
+  const total = cart.querySelector('.cart__line-total') as HTMLElement
+  expect(total).toHaveTextContent('R$ 32,00')
+  expect(getComputedStyle(total).whiteSpace).toBe('nowrap')
+  expect(getComputedStyle(total.parentElement as HTMLElement).flexGrow).toBe('0')
+  expect(within(cart).getByText('1 × R$ 32,00')).toBeInTheDocument()
+  expect(within(cart).getByRole('button', { name: 'Remover' })).toBeInTheDocument()
+  expect(within(cart).getByTestId('cart-total')).toBeInTheDocument()
+  expect(within(cart).getByRole('group', { name: 'Forma de pagamento' })).toBeInTheDocument()
 })
 
 it('keeps the griddle behind a readable bar', () => {
