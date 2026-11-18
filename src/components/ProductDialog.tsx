@@ -16,7 +16,7 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
   const extraTotal = (product.extras ?? [])
     .filter((extra) => extras.includes(extra.id))
     .reduce((sum, extra) => sum + toCents(extra.price), 0)
-  const total = toCents(product.price) + extraTotal
+  const total = (toCents(product.price) + extraTotal) * qty
 
   function toggle(id: string) {
     setExtras((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))
