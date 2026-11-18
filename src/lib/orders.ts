@@ -1,0 +1,238 @@
+import {
+  addDoc,
+  collection,
+  doc,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from 'firebase/firestore'
+import type { Address, UserProfile } from '../types'
+import { cashToCents, changeCents, type CheckoutState, type PaymentMethod } from './checkout'
+import { db } from './firebase'
+import type { CartLine } from './menu'
+
+export type OrderStatus = 'novo' | 'andamento' | 'enviado' | 'recusado' | 'cancelado' | 'finalizado'
+export type OrderColumn = 'novos' | 'andamento' | 'finalizados'
+
+export type OrderItem = {
+  productId: string
+  name: string
+  image: string
+  priceCents: number
+  qty: number
+  note: string
+}
+
+export type OrderPayment = {
+  method: PaymentMethod
+  needsChange: boolean
+  cashCents: number | null
+  changeCents: number | null
+}
+
+export type Order = {
+  id: string
+  customerId: string
+  customerName: string
+  customerWhatsapp: string
+  address: Address | null
+  items: OrderItem[]
+  totalCents: number
+  payment: OrderPayment
+  status: OrderStatus
+  reason: string
+  createdAtMs: number
+}
+
+export type NewOrder = Omit<Order, 'id'>
+
+export const STATUS_LABEL: Record<OrderStatus, string> = {
+  novo: 'Recebido',
+  andamento: 'Aceito, em preparo',
+  enviado: 'Saiu para entrega',
+  recusado: 'Recusado',
+  cancelado: 'Cancelado',
+  finalizado: 'Finalizado',
+}
+
+export const COLUMN_LABEL: Record<OrderColumn, string> = {
+  novos: 'Novos',
+  andamento: 'Em Andamento',
+  finalizados: 'Finalizados',
+}
+
+const STATUSES: OrderStatus[] = ['novo', 'andamento', 'enviado', 'recusado', 'cancelado', 'finalizado']
+const METHODS: PaymentMethod[] = ['pix', 'cartao', 'dinheiro']
+
+export function columnOf(status: OrderStatus): OrderColumn {
+  if (status === 'novo') return 'novos'
+  if (status === 'andamento' || status === 'enviado') return 'andamento'
+  return 'finalizados'
+}
+
+export function isAccepted(status: OrderStatus): boolean {
+  return status === 'andamento' || status === 'enviado'
+}
+
+export function shortId(id: string): string {
+  return id.slice(-5).toUpperCase()
+}
+
+/** Only public http(s) images are kept on an order; inline photos stay on the product. */
+export function publicImage(src: string): string {
+  if (/^https?:\/\//i.test(src)) return src
+  if (src.startsWith('/') && typeof window !== 'undefined') return `${window.location.origin}${src}`
+  return ''
+}
+
+export function productLink(productId: string): string {
+  const base = typeof window !== 'undefined' ? `${window.location.origin}${import.meta.env.BASE_URL}` : ''
+  return `${base}?produto=${encodeURIComponent(productId)}`
+}
+
+export function photoLink(item: Pick<OrderItem, 'image' | 'productId'>): string {
+  return item.image || productLink(item.productId)
+}
+
+export function buildOrder(
+  profile: UserProfile,
+  lines: CartLine[],
+  checkout: CheckoutState,
+  totalCents: number,
+  now = Date.now(),
+): NewOrder {
+  if (!checkout.method) throw new Error('Escolha a forma de pagamento.')
+  const needsChange = checkout.method === 'dinheiro' && checkout.needsChange === 'sim'
+  const cash = needsChange ? cashToCents(checkout.cash) : null
+  return {
+    customerId: profile.uid,
+    customerName: profile.nome,
+    customerWhatsapp: profile.whatsapp,
+    address: profile.address,
+    items: lines.map((line) => ({
+      productId: line.productId,
+      name: line.name,
+      image: publicImage(line.image),
+      priceCents: line.priceCents,
+      qty: line.qty,
+      note: line.note,
+    })),
+    totalCents,
+    payment: {
+      method: checkout.method,
+      needsChange,
+      cashCents: cash,
+      changeCents: needsChange ? changeCents(cash, totalCents) : null,
+    },
+    status: 'novo',
+    reason: '',
+    createdAtMs: now,
+  }
+}
+
+function asNumber(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0
+}
+
+function asString(value: unknown): string {
+  return typeof value === 'string' ? value : ''
+}
+
+function parseAddress(value: unknown): Address | null {
+  if (!value || typeof value !== 'object') return null
+  const raw = value as Record<string, unknown>
+  return {
+    cep: asString(raw.cep),
+    street: asString(raw.street),
+    number: asString(raw.number),
+    neighborhood: asString(raw.neighborhood),
+    city: asString(raw.city),
+    state: asString(raw.state),
+    reference: asString(raw.reference),
+  }
+}
+
+export function parseOrder(id: string, data: unknown): Order | null {
+  if (!data || typeof data !== 'object') return null
+  const raw = data as Record<string, unknown>
+  const status = STATUSES.find((value) => value === raw.status)
+  const paymentRaw = (raw.payment ?? {}) as Record<string, unknown>
+  const method = METHODS.find((value) => value === paymentRaw.method)
+  if (!status || !method || typeof raw.customerId !== 'string') return null
+  const items = Array.isArray(raw.items)
+    ? raw.items
+        .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object')
+        .map((item) => ({
+          productId: asString(item.productId),
+          name: asString(item.name),
+          image: asString(item.image),
+          priceCents: asNumber(item.priceCents),
+          qty: Math.max(1, asNumber(item.qty)),
+          note: asString(item.note),
+        }))
+    : []
+  return {
+    id,
+    customerId: raw.customerId,
+    customerName: asString(raw.customerName),
+    customerWhatsapp: asString(raw.customerWhatsapp),
+    address: parseAddress(raw.address),
+    items,
+    totalCents: asNumber(raw.totalCents),
+    payment: {
+      method,
+      needsChange: paymentRaw.needsChange === true,
+      cashCents: typeof paymentRaw.cashCents === 'number' ? paymentRaw.cashCents : null,
+      changeCents: typeof paymentRaw.changeCents === 'number' ? paymentRaw.changeCents : null,
+    },
+    status,
+    reason: asString(raw.reason),
+    createdAtMs: asNumber(raw.createdAtMs),
+  }
+}
+
+type SnapshotLike = { docs: { id: string; data: () => unknown }[] }
+
+function toOrders(snapshot: SnapshotLike): Order[] {
+  return snapshot.docs
+    .map((entry) => parseOrder(entry.id, entry.data()))
+    .filter((order): order is Order => order !== null)
+    .sort((a, b) => b.createdAtMs - a.createdAtMs)
+}
+
+export async function placeOrder(order: NewOrder): Promise<string> {
+  const ref = await addDoc(collection(db, 'orders'), {
+    ...order,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+  return ref.id
+}
+
+export function watchCustomerOrders(
+  customerId: string,
+  onNext: (orders: Order[]) => void,
+  onError: () => void,
+): () => void {
+  return onSnapshot(
+    query(collection(db, 'orders'), where('customerId', '==', customerId)),
+    (snapshot) => onNext(toOrders(snapshot)),
+    () => onError(),
+  )
+}
+
+export function watchAllOrders(onNext: (orders: Order[]) => void, onError: () => void): () => void {
+  return onSnapshot(
+    collection(db, 'orders'),
+    (snapshot) => onNext(toOrders(snapshot)),
+    () => onError(),
+  )
+}
+
+export async function setOrderStatus(id: string, status: OrderStatus, reason?: string): Promise<void> {
+  const patch: Record<string, unknown> = { status, updatedAt: serverTimestamp() }
+  if (reason !== undefined) patch.reason = reason.trim()
+  await updateDoc(doc(db, 'orders', id), patch)
+}

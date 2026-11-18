@@ -31,36 +31,32 @@ export function AdminPrompt({ onClose }: AdminPromptProps) {
 
   return (
     <Overlay label="Administração" onClose={onClose} variant="popup">
-      <p className="eyebrow">Administração</p>
-      <h2>Entrar no painel</h2>
-      <form onSubmit={onSubmit}>
-        <label className="field">
-          <span>E-mail</span>
-          <input
-            type="email"
-            autoComplete="username"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
-        </label>
-        <label className="field">
-          <span>Senha</span>
-          <input
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-          />
-        </label>
+      <form className="admin-login" onSubmit={onSubmit}>
+        <input
+          type="email"
+          aria-label="E-mail"
+          placeholder="E-mail"
+          autoComplete="username"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          required
+        />
+        <input
+          type="password"
+          aria-label="Senha"
+          placeholder="Senha"
+          autoComplete="current-password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          required
+        />
         {error && (
           <p className="alert" role="alert">
             {error}
           </p>
         )}
         <button className="btn" type="submit" disabled={busy}>
-          {busy ? 'Aguarde...' : 'Entrar no painel'}
+          {busy ? 'Aguarde...' : 'Entrar'}
         </button>
       </form>
     </Overlay>

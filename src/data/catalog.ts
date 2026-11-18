@@ -8,6 +8,7 @@ export type Category = {
   id: string
   name: string
   order: number
+  destaque?: boolean
 }
 
 export type Product = {

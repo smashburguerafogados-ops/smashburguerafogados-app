@@ -1,4 +1,4 @@
-import type { Product } from '../data/catalog'
+import type { Category, Product } from '../data/catalog'
 
 const CATEGORY_KEY = 'smash.category'
 
@@ -6,9 +6,30 @@ export type CartLine = {
   key: string
   productId: string
   name: string
+  image: string
   priceCents: number
   note: string
   qty: number
+}
+
+export function sortCategories(categories: Category[]): Category[] {
+  return [...categories].sort((a, b) => {
+    if (Boolean(a.destaque) !== Boolean(b.destaque)) return a.destaque ? -1 : 1
+    if (a.order !== b.order) return a.order - b.order
+    return a.name.localeCompare(b.name, 'pt-BR')
+  })
+}
+
+export function sortProductsByCategory(products: Product[], categories: Category[]): Product[] {
+  const rank = new Map(categories.map((category, index) => [category.id, index]))
+  return products
+    .map((product, index) => ({ product, index }))
+    .sort((a, b) => {
+      const ra = rank.get(a.product.categoryId) ?? categories.length
+      const rb = rank.get(b.product.categoryId) ?? categories.length
+      return ra - rb || a.index - b.index
+    })
+    .map((entry) => entry.product)
 }
 
 export function readSavedCategory(): string {

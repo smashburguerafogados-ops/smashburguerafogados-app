@@ -3,7 +3,7 @@ import { useEffect, type ReactNode } from 'react'
 type OverlayProps = {
   label: string
   onClose: () => void
-  variant?: 'sheet' | 'popup'
+  variant?: 'sheet' | 'popup' | 'drawer'
   children: ReactNode
 }
 
@@ -16,8 +16,8 @@ export function Overlay({ label, onClose, variant = 'sheet', children }: Overlay
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const root = variant === 'popup' ? 'popup' : 'sheet'
-  const panel = variant === 'popup' ? 'popup__panel' : 'sheet__panel'
+  const root = variant
+  const panel = `${variant}__panel`
 
   return (
     <div className={root} onClick={onClose}>

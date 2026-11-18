@@ -149,8 +149,7 @@ it('uses a floating gold pill for the active shortcut and icons otherwise', asyn
   expect(style.borderRadius).toBe('999px')
   expect(style.backgroundColor).toBe('rgb(20, 20, 22)')
 
-  const whatsapp = screen.getByRole('link', { name: 'WhatsApp' })
-  expect(whatsapp).toHaveAttribute('href', 'https://wa.me/5500000000000')
+  const whatsapp = screen.getByRole('button', { name: 'WhatsApp' })
   expect(whatsapp.querySelector('.dock__label')).toBeNull()
 
   await user.click(screen.getByRole('button', { name: 'Conta' }))

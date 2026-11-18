@@ -25,10 +25,12 @@ async function openAdmin(user: ReturnType<typeof userEvent.setup>) {
   await new Promise((resolve) => {
     window.setTimeout(resolve, 750)
   })
-  expect(screen.getByRole('dialog', { name: 'Administração' })).toBeInTheDocument()
+  const dialog = screen.getByRole('dialog', { name: 'Administração' })
+  expect(dialog.querySelectorAll('input')).toHaveLength(2)
+  expect(dialog.querySelector('h2')).toBeNull()
   await user.type(screen.getByRole('textbox', { name: 'E-mail' }), 'pessoa@example.com')
   await user.type(screen.getByLabelText('Senha'), 'segredo-teste')
-  await user.click(screen.getByRole('button', { name: 'Entrar no painel' }))
+  await user.click(screen.getByRole('button', { name: 'Entrar' }))
 }
 
 it('does not open the panel for a customer', async () => {
@@ -52,7 +54,7 @@ it('does not open the panel for a customer', async () => {
   )
 })
 
-it('opens the empty panel only when the account role is admin', async () => {
+it('opens the orders panel only when the account role is admin', async () => {
   firebaseMocks.signInWithEmailAndPassword.mockResolvedValue({ user: { uid: 'admin-1' } })
   firebaseMocks.getDoc.mockResolvedValue({
     exists: () => true,
@@ -64,5 +66,7 @@ it('opens the empty panel only when the account role is admin', async () => {
   await openAdmin(user)
 
   expect(await screen.findByRole('heading', { name: 'Painel' })).toBeInTheDocument()
-  expect(screen.getByLabelText('Painel vazio')).toBeInTheDocument()
+  expect(screen.getByRole('tab', { name: /Novos/ })).toBeInTheDocument()
+  expect(screen.getByRole('tab', { name: /Em Andamento/ })).toBeInTheDocument()
+  expect(screen.getByRole('tab', { name: /Finalizados/ })).toBeInTheDocument()
 })

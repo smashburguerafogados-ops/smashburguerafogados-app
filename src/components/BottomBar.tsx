@@ -1,14 +1,12 @@
-import { businessWhatsappUrl } from '../lib/whatsapp'
 import { formatPrice } from '../lib/money'
 
-type Sheet = 'cart' | 'profile' | null
-
 type BottomBarProps = {
-  sheet: Sheet
+  sheet: string | null
   count: number
   totalCents: number
   onProfile: () => void
   onCart: () => void
+  onWhatsapp: () => void
 }
 
 function UserIcon() {
@@ -57,7 +55,7 @@ function ChatIcon() {
   )
 }
 
-export function BottomBar({ sheet, count, totalCents, onProfile, onCart }: BottomBarProps) {
+export function BottomBar({ sheet, count, totalCents, onProfile, onCart, onWhatsapp }: BottomBarProps) {
   const itemWord = count === 1 ? 'item' : 'itens'
 
   return (
@@ -84,9 +82,16 @@ export function BottomBar({ sheet, count, totalCents, onProfile, onCart }: Botto
         <span className="dock__sum">{formatPrice(totalCents)}</span>
         {sheet === 'cart' && <span className="dock__label">Carrinho</span>}
       </button>
-      <a className="dock__item" href={businessWhatsappUrl()} target="_blank" rel="noreferrer" aria-label="WhatsApp">
+      <button
+        type="button"
+        className={sheet === 'whatsapp' ? 'dock__item is-active' : 'dock__item'}
+        aria-pressed={sheet === 'whatsapp'}
+        aria-label="WhatsApp"
+        onClick={onWhatsapp}
+      >
         <ChatIcon />
-      </a>
+        {sheet === 'whatsapp' && <span className="dock__label">WhatsApp</span>}
+      </button>
     </nav>
   )
 }
