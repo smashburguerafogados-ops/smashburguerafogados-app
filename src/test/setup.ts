@@ -24,7 +24,7 @@ vi.mock('firebase/auth', async () => {
       return () => {}
     },
     signInWithEmailAndPassword: (...args: unknown[]) => mocks.signInWithEmailAndPassword(...args),
-    createUserWithEmailAndPassword: vi.fn(),
+    createUserWithEmailAndPassword: (...args: unknown[]) => mocks.createUserWithEmailAndPassword(...args),
     signOut: (...args: unknown[]) => mocks.signOut(...args),
     deleteUser: vi.fn(),
   }
