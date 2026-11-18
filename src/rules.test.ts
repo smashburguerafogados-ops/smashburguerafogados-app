@@ -55,6 +55,16 @@ describe('firestore.rules', () => {
     expect(settings).not.toMatch(/allow write: if true/)
   })
 
+  it('keeps a finalized amount even if the order status changes later', () => {
+    const revenue = block('faturamento')
+    expect(revenue).toContain('allow read: if isAdmin();')
+    expect(revenue).toContain('allow create: if revenueCreate(orderId);')
+    expect(revenue).toContain('allow update, delete: if false;')
+    expect(rules).toContain("order.status == 'finalizado'")
+    expect(rules).toContain('data.totalCents == order.totalCents')
+    expect(rules).toContain('order.customerId == request.auth.uid')
+  })
+
   it('still denies everything else', () => {
     expect(rules).toMatch(/match \/\{document=\*\*\} \{\s*allow read, write: if false;/)
   })

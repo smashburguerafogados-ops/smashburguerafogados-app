@@ -41,6 +41,7 @@ describe('boot', () => {
     await tick(700)
 
     expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Ana' })).toBeInTheDocument()
     expect(localStorage.getItem('smash.customerId')).toBe('cliente-1')
   })
 

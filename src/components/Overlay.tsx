@@ -4,7 +4,6 @@ type OverlayProps = {
   label: string
   onClose: () => void
   variant?: 'sheet' | 'popup' | 'drawer'
-  close?: 'text' | 'icon'
   children: ReactNode
 }
 
@@ -16,7 +15,15 @@ function CloseMark() {
   )
 }
 
-export function Overlay({ label, onClose, variant = 'sheet', close = 'text', children }: OverlayProps) {
+export function CloseButton({ onClick, className = '' }: { onClick: () => void; className?: string }) {
+  return (
+    <button type="button" className={`mark-btn${className ? ` ${className}` : ''}`} aria-label="Fechar" onClick={onClick}>
+      <CloseMark />
+    </button>
+  )
+}
+
+export function Overlay({ label, onClose, variant = 'sheet', children }: OverlayProps) {
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose()
@@ -37,14 +44,7 @@ export function Overlay({ label, onClose, variant = 'sheet', close = 'text', chi
         aria-label={label}
         onClick={(event) => event.stopPropagation()}
       >
-        <button
-          type="button"
-          className={close === 'icon' ? 'mark-btn overlay__close' : 'text-btn overlay__close'}
-          aria-label={close === 'icon' ? 'Fechar' : undefined}
-          onClick={onClose}
-        >
-          {close === 'icon' ? <CloseMark /> : 'Fechar'}
-        </button>
+        <CloseButton className="overlay__close" onClick={onClose} />
         {children}
       </div>
     </div>

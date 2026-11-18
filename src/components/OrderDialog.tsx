@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { formatWhatsapp } from '../lib/identity'
 import { formatPrice } from '../lib/money'
-import { STATUS_LABEL, setOrderStatus, shortId, type Order, type OrderStatus } from '../lib/orders'
+import { STATUS_LABEL, finalizeOrder, setOrderStatus, shortId, type Order, type OrderStatus } from '../lib/orders'
 import {
   acceptedMessage,
   cancelledMessage,
@@ -51,7 +51,7 @@ export function OrderDialog({ order, onClose }: OrderDialogProps) {
     setBusy(true)
     setError('')
     try {
-      await setOrderStatus(order.id, 'finalizado')
+      await finalizeOrder(order)
       onClose()
     } catch {
       setError('Não foi possível concluir o pedido.')
