@@ -3,8 +3,6 @@ import { lookupCep } from '../lib/cep'
 import { digitsOnly, maskCep, maskWhatsappInput, normalizeWhatsapp } from '../lib/identity'
 import { useAuth } from '../context/AuthContext'
 import type { Address } from '../types'
-import { FireBackdrop } from './FireBackdrop'
-
 type Mode = 'login' | 'register'
 type CepStatus = 'idle' | 'loading' | 'found' | 'manual'
 
@@ -172,9 +170,7 @@ export function AuthScreen({ embedded = false }: { embedded?: boolean }) {
   const showAddress = mode === 'register' && (cepStatus === 'found' || cepStatus === 'manual')
 
   return (
-    <div className={embedded ? 'auth auth--sheet' : 'stage stage--fire'}>
-      {!embedded && <FireBackdrop />}
-      {!embedded && <div className="stage__glow" aria-hidden="true" />}
+    <div className={embedded ? 'auth auth--sheet' : 'stage'}>
       <div className={embedded ? 'auth__sheet' : 'auth'}>
         {!embedded && (
           <img

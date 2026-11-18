@@ -91,10 +91,6 @@ export function MenuScreen() {
 
   return (
     <main className="menu">
-      <div className="menu__night" aria-hidden="true">
-        <span className="menu__night-gold" />
-        <span className="menu__night-coals" />
-      </div>
       <div className="menu__content">
       <header className="menu__top">
         <button type="button" className="menu__logo" aria-label="Smash Burguer" {...hold}>

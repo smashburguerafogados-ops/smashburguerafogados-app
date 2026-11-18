@@ -29,9 +29,7 @@ body,
 
 body {
   margin: 0;
-  background:
-    radial-gradient(900px 420px at 50% -10%, rgba(231, 103, 44, 0.18), transparent 60%),
-    var(--bg);
+  background: #0b0b0a;
 }
 
 button,
@@ -67,11 +65,8 @@ p {
   place-items: center;
   padding: 32px 18px 48px;
   position: relative;
-}
-
-.stage--fire {
-  background: #0c0c0e;
-  overflow: hidden;
+  z-index: 1;
+  background: transparent;
 }
 
 .fire {
@@ -98,22 +93,6 @@ p {
   background:
     radial-gradient(ellipse 58% 46% at 50% 42%, rgba(8, 8, 10, 0.78), rgba(8, 8, 10, 0.28) 62%, rgba(8, 8, 10, 0.5) 100%),
     linear-gradient(to top, rgba(8, 8, 10, 0.55), transparent 32%);
-}
-
-.stage--fire .stage__glow,
-.stage--fire .auth {
-  z-index: 1;
-}
-
-.stage__glow {
-  position: absolute;
-  width: 280px;
-  height: 280px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(227, 177, 90, 0.18), transparent 68%);
-  filter: blur(8px);
-  pointer-events: none;
-  top: 8%;
 }
 
 .auth {
@@ -341,6 +320,9 @@ form {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
+  background: transparent;
 }
 
 .topbar {
@@ -350,7 +332,7 @@ form {
   gap: 12px;
   padding: 10px 16px;
   border-bottom: 1px solid rgba(227, 177, 90, 0.28);
-  background: var(--bg);
+  background: rgba(11, 11, 10, 0.92);
   position: sticky;
   top: 0;
 }

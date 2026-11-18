@@ -1,0 +1,112 @@
+.griddle {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: #0b0b0a;
+}
+
+.griddle__plate,
+.griddle__glow,
+.griddle__embers {
+  position: absolute;
+  display: block;
+}
+
+.griddle__plate {
+  inset: 0;
+  background:
+    radial-gradient(ellipse 85% 70% at 50% 45%, transparent 0%, rgba(0, 0, 0, 0.7) 100%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 7px),
+    linear-gradient(180deg, #121211 0%, #0b0b0a 55%, #080807 100%);
+}
+
+.griddle__glow {
+  left: 8%;
+  right: 8%;
+  top: -10%;
+  height: 62%;
+  background: radial-gradient(ellipse at 50% 40%, rgba(227, 177, 90, 0.2), rgba(227, 177, 90, 0.06) 45%, transparent 72%);
+  filter: blur(14px);
+  animation: griddle-glow 28s ease-in-out infinite;
+}
+
+/* Embers live in edge strips and fade out before the center, so text stays clear. */
+.griddle__embers {
+  opacity: 0.55;
+  animation: griddle-embers 11s ease-in-out infinite;
+}
+
+.griddle__embers--left,
+.griddle__embers--right {
+  top: 0;
+  bottom: 0;
+  width: 13vw;
+  min-width: 48px;
+  max-width: 140px;
+  background:
+    radial-gradient(circle at 30% 18%, rgba(255, 140, 64, 0.9) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 62% 41%, rgba(227, 177, 90, 0.8) 0 1px, transparent 2px),
+    radial-gradient(circle at 22% 63%, rgba(231, 103, 44, 0.85) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 70% 82%, rgba(255, 160, 80, 0.75) 0 1px, transparent 2px),
+    radial-gradient(ellipse 120% 60% at 0% 70%, rgba(231, 103, 44, 0.14), transparent 70%);
+}
+
+.griddle__embers--left {
+  left: 0;
+  -webkit-mask-image: linear-gradient(to right, #000 0%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, transparent 100%);
+}
+
+.griddle__embers--right {
+  right: 0;
+  transform: scaleX(-1);
+  animation-delay: -5s;
+  -webkit-mask-image: linear-gradient(to right, #000 0%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, transparent 100%);
+}
+
+.griddle__embers--bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 16vh;
+  min-height: 70px;
+  animation-delay: -8s;
+  background:
+    radial-gradient(circle at 14% 72%, rgba(255, 140, 64, 0.85) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 37% 88%, rgba(227, 177, 90, 0.7) 0 1px, transparent 2px),
+    radial-gradient(circle at 63% 80%, rgba(231, 103, 44, 0.8) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 86% 66%, rgba(255, 160, 80, 0.7) 0 1px, transparent 2px),
+    radial-gradient(ellipse 70% 100% at 50% 100%, rgba(231, 103, 44, 0.2), transparent 75%);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 0%, transparent 100%);
+}
+
+@keyframes griddle-glow {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes griddle-embers {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .griddle__glow,
+  .griddle__embers {
+    animation: none;
+  }
+}
