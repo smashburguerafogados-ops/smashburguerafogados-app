@@ -52,6 +52,11 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+function freshCustomerPassword(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16))
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
 async function hydrate(user: User): Promise<Session> {
   const snap = await getDoc(doc(db, 'users', user.uid))
   if (!snap.exists()) {
@@ -204,9 +209,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
       async saveDelivery(input) {
-        if (session.status !== 'ready' || session.profile.role !== 'customer') {
-          throw new Error('Entre na conta para salvar a entrega.')
-        }
         const nome = input.nome.trim().replace(/\s+/g, ' ')
         const whatsapp = normalizeWhatsapp(input.whatsapp)
         if (!nome) throw new Error('Informe seu nome.')
@@ -218,27 +220,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!street || !number || !neighborhood || !city) {
           throw new Error('Preencha endereço, número, bairro e cidade.')
         }
-        const profile: UserProfile = {
-          ...session.profile,
-          nome,
-          whatsapp,
-          address: {
-            cep: digitsOnly(input.address.cep),
-            street,
-            number,
-            neighborhood,
-            city,
-            state: input.address.state.trim(),
-            reference: input.address.reference.trim(),
-          },
+        const address: Address = {
+          cep: digitsOnly(input.address.cep),
+          street,
+          number,
+          neighborhood,
+          city,
+          state: input.address.state.trim(),
+          reference: input.address.reference.trim(),
         }
-        await updateDoc(doc(db, 'users', profile.uid), {
-          nome: profile.nome,
-          whatsapp: profile.whatsapp,
-          address: profile.address,
-        })
-        setSession({ status: 'ready', profile })
-        return profile
+
+        if (session.status === 'ready' && session.profile.role === 'customer') {
+          const profile: UserProfile = { ...session.profile, nome, whatsapp, address }
+          await updateDoc(doc(db, 'users', profile.uid), {
+            nome: profile.nome,
+            whatsapp: profile.whatsapp,
+            address: profile.address,
+          })
+          setSession({ status: 'ready', profile })
+          return profile
+        }
+
+        const email = whatsappToEmail(whatsapp)
+        if (!email) throw new Error('Informe o telefone.')
+        suspendListener.current = true
+        try {
+          const credential = await createUserWithEmailAndPassword(auth, email, freshCustomerPassword())
+          const profile: UserProfile = {
+            uid: credential.user.uid,
+            nome,
+            whatsapp,
+            address,
+            role: 'customer',
+          }
+          try {
+            await setDoc(doc(db, 'users', profile.uid), {
+              ...profile,
+              createdAt: serverTimestamp(),
+            })
+          } catch (error) {
+            await deleteUser(credential.user).catch(() => undefined)
+            throw error
+          }
+          saveCustomerId(profile.uid)
+          setSession({ status: 'ready', profile })
+          return profile
+        } catch (error) {
+          if (error instanceof Error && error.message.startsWith('Informe')) throw error
+          throw new Error(mapAuthError(error))
+        } finally {
+          suspendListener.current = false
+        }
       },
       async logout() {
         await signOut(auth)

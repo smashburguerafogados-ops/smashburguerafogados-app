@@ -17,6 +17,7 @@ export const authState: { user: { uid: string } | null } = { user: null }
 
 export const firebaseMocks = {
   signInWithEmailAndPassword: vi.fn<AnyFn>(),
+  createUserWithEmailAndPassword: vi.fn<AnyFn>(async () => ({ user: { uid: 'cliente-novo' } })),
   signOut: vi.fn<AnyFn>(async () => undefined),
   getDoc: vi.fn<AnyFn>(async () => ({ exists: () => false, data: () => undefined })),
   getDocs: vi.fn<AnyFn>(async () => ({ empty: true, docs: [] })),
@@ -79,6 +80,8 @@ export function resetFirebaseMocks(): void {
   firebaseMocks.getDoc.mockReset()
   firebaseMocks.getDoc.mockResolvedValue({ exists: () => false, data: () => undefined })
   firebaseMocks.signInWithEmailAndPassword.mockReset()
+  firebaseMocks.createUserWithEmailAndPassword.mockReset()
+  firebaseMocks.createUserWithEmailAndPassword.mockResolvedValue({ user: { uid: 'cliente-novo' } })
   firebaseMocks.signOut.mockClear()
   firebaseMocks.setDoc.mockClear()
   firebaseMocks.addDoc.mockReset()
