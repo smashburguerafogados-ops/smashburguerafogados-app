@@ -16,6 +16,15 @@ afterEach(() => {
   delete document.documentElement.dataset.theme
 })
 
+function expectSoftGradient(style: CSSStyleDeclaration, washes: string[]) {
+  expect(style.backgroundImage).toMatch(/radial-gradient/)
+  expect(style.backgroundImage).toMatch(/linear-gradient/)
+  expect(style.backgroundImage).not.toMatch(/repeating-linear-gradient/)
+  expect(style.backgroundColor).not.toBe('rgb(0, 0, 0)')
+  expect(style.backgroundImage === 'none' && style.backgroundColor === 'rgb(0, 0, 0)').toBe(false)
+  for (const wash of washes) expect(style.backgroundImage).toContain(wash)
+}
+
 it('uses colorful shipped icons instead of one-color line drawings', () => {
   expect(treeSvg).toMatch(/fill="/)
   expect(maskSvg).toMatch(/fill="/)
@@ -97,10 +106,7 @@ it('shows customers the confirmed theme and hides the picker', async () => {
   )
   expect(natalIcons.size).toBeGreaterThan(4)
   const natalBg = getComputedStyle(document.querySelector('[data-theme-bg="natal"]')!)
-  expect(natalBg.backgroundColor).toBe('rgb(0, 0, 0)')
-  expect(natalBg.backgroundImage).toBe('none')
-  expect(getComputedStyle(document.body).backgroundColor).toBe('rgb(0, 0, 0)')
-  expect(getComputedStyle(document.documentElement).backgroundColor).toBe('rgb(0, 0, 0)')
+  expectSoftGradient(natalBg, ['200, 16, 46', '20, 108, 67', '212, 175, 55'])
   expect(getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()).toBe('#d4af37')
   expect(getComputedStyle(document.documentElement).getPropertyValue('--theme-scene').trim()).toBe('snow-night')
   const search = screen.getByRole('searchbox', { name: 'Buscar' })
@@ -132,8 +138,7 @@ it('shows customers the confirmed theme and hides the picker', async () => {
   expect(carnaval.getPropertyValue('--theme-wash')).not.toMatch(/72,\s*8,\s*96|196,\s*107,\s*255/)
   expect(carnaval.getPropertyValue('--theme-scene').trim()).toBe('carnival-pattern')
   const carnivalBg = getComputedStyle(document.querySelector('[data-theme-bg="carnaval"]')!)
-  expect(carnivalBg.backgroundColor).toBe('rgb(0, 0, 0)')
-  expect(carnivalBg.backgroundImage).toBe('none')
+  expectSoftGradient(carnivalBg, ['230, 179, 37', '0, 156, 59', '255, 79, 154', '47, 111, 237', '255, 225, 77'])
   const carnivalKinds = new Set(
     [...document.querySelectorAll('[data-theme-ornament="carnaval"] [data-fall-kind]')].map((node) => node.getAttribute('data-fall-kind')),
   )
@@ -153,7 +158,15 @@ it('shows customers the confirmed theme and hides the picker', async () => {
   expect(document.querySelector('[data-theme-glow]')).toBeInTheDocument()
   expect(getComputedStyle(document.documentElement).getPropertyValue('--theme-scene').trim()).toBe('festa-junina')
 
-  const scenes = ['natal', 'ano-novo', 'carnaval', 'pascoa', 'sao-joao']
+  const scenes = ['natal', 'ano-novo', 'carnaval', 'pascoa', 'sao-joao'] as const
+  const washes: Record<(typeof scenes)[number], string[]> = {
+    natal: ['200, 16, 46', '20, 108, 67', '212, 175, 55'],
+    'ano-novo': ['242, 193, 78', '214, 216, 222'],
+    carnaval: ['230, 179, 37', '0, 156, 59', '255, 79, 154', '47, 111, 237', '255, 225, 77'],
+    pascoa: ['246, 216, 107', '125, 206, 160', '201, 160, 220'],
+    'sao-joao': ['226, 59, 59', '255, 204, 0', '0, 156, 59', '29, 78, 216', '241, 90, 34'],
+  }
+  const images = new Set<string>()
   for (const theme of scenes) {
     await act(async () => {
       emitDoc('settings/theme', { theme })
@@ -161,9 +174,8 @@ it('shows customers the confirmed theme and hides the picker', async () => {
     const scene = document.querySelector(`[data-theme-bg="${theme}"]`)
     expect(scene).toBeInTheDocument()
     const sceneStyle = getComputedStyle(scene!)
-    expect(sceneStyle.backgroundColor).toBe('rgb(0, 0, 0)')
-    expect(sceneStyle.backgroundImage).toBe('none')
-    expect(getComputedStyle(document.body).backgroundColor).toBe('rgb(0, 0, 0)')
+    expectSoftGradient(sceneStyle, washes[theme])
+    images.add(sceneStyle.backgroundImage)
     const kinds = new Set(
       [...document.querySelectorAll(`[data-theme-ornament="${theme}"] [data-fall-kind]`)].map((node) =>
         node.getAttribute('data-fall-kind'),
@@ -173,6 +185,7 @@ it('shows customers the confirmed theme and hides the picker', async () => {
     expect(document.querySelectorAll(`[data-theme-ornament="${theme}"] [data-theme-pin]`).length).toBeGreaterThan(2)
     expect(getComputedStyle(document.querySelector(`[data-theme-ornament="${theme}"] .theme-pin`)!).pointerEvents).toBe('none')
   }
+  expect(images.size).toBe(scenes.length)
 
   await act(async () => {
     emitDoc('settings/theme', { theme: 'atual' })
@@ -199,8 +212,8 @@ it('decorates the opening screen with the confirmed theme', async () => {
   expect(document.querySelector('[data-theme-snow] .theme-snow__flake--thin')).toBeInTheDocument()
   expect(document.querySelector('[data-theme-tree] img')).toBeInTheDocument()
   expect(document.querySelector('[data-theme-bg="natal"]')).toBeInTheDocument()
-  expect(getComputedStyle(document.querySelector('[data-theme-bg="natal"]')!).backgroundColor).toBe('rgb(0, 0, 0)')
-  expect(getComputedStyle(screen.getByRole('status')).backgroundColor).toBe('rgb(0, 0, 0)')
+  expectSoftGradient(getComputedStyle(document.querySelector('[data-theme-bg="natal"]')!), ['200, 16, 46', '20, 108, 67', '212, 175, 55'])
+  expect(getComputedStyle(screen.getByRole('status')).backgroundColor).not.toBe('rgb(0, 0, 0)')
   expect(getComputedStyle(document.querySelector('.fire')!).display).toBe('none')
   const splashKinds = new Set(
     [...document.querySelectorAll('[data-theme-ornament="natal"] [data-fall-kind]')].map((node) => node.getAttribute('data-fall-kind')),
