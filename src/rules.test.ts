@@ -16,8 +16,14 @@ function block(name: string): string {
 describe('firestore.rules', () => {
   it('lets the public read available products and only admins write them', () => {
     const products = block('products')
-    expect(products).toContain('allow read: if resource.data.available == true || isAdmin();')
+    const reads = products.match(/allow read:.*;/g) ?? []
+    expect(reads).toEqual([
+      'allow read: if isAdmin();',
+      'allow read: if resource.data.available == true;',
+    ])
+    expect(reads[0]).not.toContain('resource.data')
     expect(products).toContain('allow write: if isAdmin();')
+    expect(products).not.toMatch(/allow delete: if (?!isAdmin)/)
     const categories = block('categories')
     expect(categories).toContain('allow read: if true;')
     expect(categories).toContain('allow write: if isAdmin();')
@@ -40,6 +46,13 @@ describe('firestore.rules', () => {
     expect(rules).toContain("resource.data.status == 'enviado'")
     expect(rules).toContain("request.resource.data.status == 'finalizado'")
     expect(rules).toContain("affectedKeys().hasOnly(['status', 'updatedAt'])")
+  })
+
+  it('lets everyone read the shop flag and only an admin change it', () => {
+    const settings = block('settings')
+    expect(settings).toContain("allow read: if settingId == 'shop';")
+    expect(settings).toContain("allow write: if settingId == 'shop' && isAdmin();")
+    expect(settings).not.toMatch(/allow write: if true/)
   })
 
   it('still denies everything else', () => {

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { AdminPanel } from './AdminPanel'
+import { ProductDesk } from './ProductDesk'
 import { ProductForm } from './ProductForm'
 import { SideMenu } from './SideMenu'
 
@@ -45,6 +46,7 @@ export function AdminRoute() {
   const { session, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [desk, setDesk] = useState(false)
   useTitle('Painel | Smash Burguer')
 
   if (session.status === 'loading') {
@@ -100,13 +102,20 @@ export function AdminRoute() {
         <SideMenu
           onClose={() => setMenuOpen(false)}
           onPanel={() => setMenuOpen(false)}
+          onProducts={() => {
+            setMenuOpen(false)
+            setCreating(false)
+            setDesk(true)
+          }}
           onCreateProduct={() => {
             setMenuOpen(false)
+            setDesk(false)
             setCreating(true)
           }}
         />
       )}
       {creating && <ProductForm onClose={() => setCreating(false)} onSaved={() => undefined} />}
+      {desk && <ProductDesk onClose={() => setDesk(false)} />}
     </AdminFrame>
   )
 }

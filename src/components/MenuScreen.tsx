@@ -17,7 +17,9 @@ import {
 } from '../lib/menu'
 import { formatPrice, toCents } from '../lib/money'
 import { loadRemoteCatalog } from '../lib/remoteCatalog'
+import { useShop } from '../lib/shop'
 import { AdminPrompt } from './AdminPrompt'
+import { ClosedScreen } from './ClosedScreen'
 import { AttendancePrompt } from './AttendancePrompt'
 import { BottomBar } from './BottomBar'
 import { CartSheet } from './CartSheet'
@@ -38,6 +40,7 @@ function linkedProductId(): string {
 
 export function MenuScreen() {
   const { session } = useAuth()
+  const shop = useShop()
   const navigate = useNavigate()
   const [catalog, setCatalog] = useState<Catalog>(seedCatalog)
   const [categoryId, setCategoryId] = useState(readSavedCategory)
@@ -126,6 +129,11 @@ export function MenuScreen() {
     }
     setAdminOpen(true)
   })
+
+  const adminKeepsMenu = session.status === 'ready' && session.profile.role === 'admin'
+  if (shop.ready && !shop.online && !adminKeepsMenu) {
+    return <ClosedScreen message={shop.message} />
+  }
 
   function toggle(next: Sheet) {
     setSheet((current) => (current === next ? null : next))

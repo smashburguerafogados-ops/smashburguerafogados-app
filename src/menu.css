@@ -1003,6 +1003,143 @@
   gap: 8px;
 }
 
+.shop-controls {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #1c1c1c;
+}
+
+.shop-controls__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shop-controls button[role='switch'] {
+  width: 48px;
+  height: 28px;
+  flex: none;
+  padding: 2px;
+  border: 1px solid #3a3a3a;
+  border-radius: 999px;
+  background: #1a1a1a;
+}
+
+.shop-controls button[role='switch'][aria-checked='true'] {
+  background: #f4f5f6;
+  border-color: #f4f5f6;
+}
+
+.shop-controls__knob {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f4f5f6;
+}
+
+.shop-controls button[role='switch'][aria-checked='true'] .shop-controls__knob {
+  background: #000;
+  transform: translateX(20px);
+}
+
+.shop-controls textarea,
+.catalog__price input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #3a3a3a;
+  background: #141416;
+  color: #f4f5f6;
+  font: inherit;
+}
+
+.catalog__price input {
+  width: 7.5rem;
+}
+
+.catalog {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.catalog__heading {
+  margin: 28px 0 8px;
+}
+
+.catalog__row {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #1c1c1c;
+}
+
+.catalog__main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.catalog__main strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.catalog__tag {
+  flex: none;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffb1a1;
+}
+
+.catalog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.confirm-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.confirm-screen__box {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #3a3a3a;
+  border-radius: 16px;
+  background: #000;
+  color: #f4f5f6;
+}
+
+.confirm-screen__box h2 {
+  margin: 0;
+}
+
+.confirm-screen__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .chip--destaque {
     animation: none;
