@@ -23,7 +23,7 @@ function useTitle(title: string) {
 export function AuthScreen({ embedded = false }: { embedded?: boolean }) {
   const { login, register } = useAuth()
   const [mode, setMode] = useState<Mode>('login')
-  useTitle(mode === 'login' ? 'Entrar | Smash Burguer' : 'Criar conta | Smash Burguer')
+  useTitle(mode === 'login' ? 'Entrar | Smash Burger' : 'Criar conta | Smash Burger')
 
   const [nome, setNome] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
@@ -176,7 +176,7 @@ export function AuthScreen({ embedded = false }: { embedded?: boolean }) {
           <img
             className="auth__logo"
             src={`${import.meta.env.BASE_URL}logo.png`}
-            alt="Smash Burguer"
+            alt="Smash Burger"
           />
         )}
         <section className="card">

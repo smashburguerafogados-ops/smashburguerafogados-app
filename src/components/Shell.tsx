@@ -14,7 +14,7 @@ export function Shell({ children, onLogout, menu }: ShellProps) {
         <div className="topbar__lead">
           {menu}
           <Link to="/" className="topbar__brand">
-            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Smash Burguer" />
+            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Smash Burger" />
           </Link>
         </div>
         <button type="button" className="btn btn--ghost" onClick={onLogout}>

@@ -5,6 +5,7 @@ import { Griddle } from './components/Griddle'
 import { MenuScreen } from './components/MenuScreen'
 import { Splash } from './components/Splash'
 import { CustomerTheme, ThemeFrame } from './components/ThemeMark'
+import { RaffleProvider } from './components/RaffleProvider'
 import { AuthProvider } from './context/AuthContext'
 import { OrdersProvider, useBootReady } from './context/OrdersContext'
 
@@ -39,7 +40,9 @@ export function App() {
       <AuthProvider>
         <ThemeFrame>
           <OrdersProvider>
-            <Boot />
+            <RaffleProvider>
+              <Boot />
+            </RaffleProvider>
           </OrdersProvider>
         </ThemeFrame>
       </AuthProvider>

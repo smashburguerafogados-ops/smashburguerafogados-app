@@ -26,8 +26,8 @@ export function ClosedScreen({ message }: ClosedScreenProps) {
     <div className="splash closed" role="status">
       <FireBackdrop />
       <div className="splash__mark">
-        <button type="button" className="closed__logo" aria-label="Smash Burguer" {...hold}>
-          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Smash Burguer" />
+        <button type="button" className="closed__logo" aria-label="Smash Burger" {...hold}>
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Smash Burger" />
         </button>
       </div>
       <p className="closed__message">{message}</p>

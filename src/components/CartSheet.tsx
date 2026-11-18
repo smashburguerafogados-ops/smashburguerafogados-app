@@ -18,6 +18,8 @@ import { deliveryReady } from '../lib/delivery'
 import { buildOrder, placeOrder, shortId } from '../lib/orders'
 import { DeliveryForm } from './DeliveryForm'
 import { Overlay } from './Overlay'
+import { useRaffle } from './RaffleProvider'
+import { localDay } from '../lib/raffle'
 import type { UserProfile } from '../types'
 
 const EMPTY_CUSTOMER: UserProfile = {
@@ -45,6 +47,8 @@ type CartSheetProps = {
 
 export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps) {
   const { session } = useAuth()
+  const raffle = useRaffle()
+  const raffleToday = raffle.active && raffle.day === localDay(Date.now())
   const [checkout, setCheckout] = useState<CheckoutState>(emptyCheckout)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -107,6 +111,9 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
   return (
     <Overlay label="Carrinho" onClose={onClose}>
       <h2>Carrinho</h2>
+      {raffleToday && (
+        <p className="raffle-note">Comprando hoje você entra no sorteio: {raffle.title}. Vale o pedido finalizado.</p>
+      )}
       {lines.length === 0 ? (
         <p className="muted">Seu carrinho está vazio.</p>
       ) : (

@@ -1,6 +1,7 @@
 import { useEffect, type CSSProperties, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { applyDocumentTheme, ThemeContext, useAppliedTheme, useTheme, type ThemeId } from '../lib/theme'
+import { RaffleMark } from './RaffleMark'
 import { juneFlags, themeIcons, ThemeIcon } from './ThemeIcons'
 
 type Piece = {
@@ -180,6 +181,7 @@ export function CustomerTheme({ children }: { children: ReactNode }) {
     <>
       {admin ? null : <ThemeBackdrop theme={theme} />}
       {admin ? null : <ThemeDecor theme={theme} />}
+      {admin ? null : <RaffleMark />}
       {children}
     </>
   )

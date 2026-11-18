@@ -1,4 +1,4 @@
-# Smash Burguer Afogados
+# Smash Burger Afogados
 
 Static Vite + React + TypeScript app for GitHub Pages. The splash leads straight into the menu. Customer registration stays available from the account button. The interface is in Portuguese.
 

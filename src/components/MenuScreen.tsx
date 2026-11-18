@@ -63,7 +63,7 @@ export function MenuScreen() {
   const noticeId = useRef(0)
 
   useEffect(() => {
-    document.title = 'Cardápio | Smash Burguer'
+    document.title = 'Cardápio | Smash Burger'
   }, [])
 
   useEffect(() => {
@@ -161,11 +161,11 @@ export function MenuScreen() {
       )}
       <div className="menu__content">
       <header className="menu__top">
-        <button type="button" className="menu__logo" aria-label="Smash Burguer" {...hold}>
+        <button type="button" className="menu__logo" aria-label="Smash Burger" {...hold}>
           <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" />
         </button>
         <div className="menu__brand">
-          <p className="eyebrow">Smash Burguer</p>
+          <p className="eyebrow">Smash Burger</p>
           {firstName ? <h1 className="menu__title">{firstName}</h1> : null}
         </div>
       </header>

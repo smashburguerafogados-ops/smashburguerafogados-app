@@ -22,6 +22,9 @@ rules_version = '2';
 // the shop is online and the closed message. Only an admin can change it.
 // settings/theme is public to read so every customer sees the confirmed
 // theme. Only an admin can change it.
+// settings/raffle is public to read so the customer menu can show the
+// hourglass and the order note. Only an admin writes the title, the day,
+// and the winner. A customer records only their own dismissal.
 //
 // faturamento/{orderId} stores the amount once, when an order leaves em
 // andamento for finalizado. Admins read it. The create is one-shot: a
@@ -114,8 +117,18 @@ service cloud.firestore {
     }
 
     match /settings/{settingId} {
-      allow read: if settingId == 'shop' || settingId == 'theme';
-      allow write: if (settingId == 'shop' || settingId == 'theme') && isAdmin();
+      allow read: if settingId == 'shop' || settingId == 'theme' || settingId == 'raffle';
+      allow write: if (settingId == 'shop' || settingId == 'theme' || settingId == 'raffle') && isAdmin();
+    }
+
+    match /raffleDismissals/{dismissalId} {
+      allow read: if isAdmin();
+      allow read: if request.auth != null && resource.data.customerId == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.customerId == request.auth.uid
+        && request.resource.data.day is string
+        && dismissalId == request.auth.uid + '_' + request.resource.data.day;
+      allow update, delete: if false;
     }
 
     function revenueCreate(orderId) {
