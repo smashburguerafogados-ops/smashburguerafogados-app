@@ -206,7 +206,7 @@ describe('cart and checkout', () => {
     expect(dock().querySelector('.dock__sum')).toHaveTextContent('R$ 0,00')
   })
 
-  it('sends a signed-out visitor to Conta instead of placing the order', async () => {
+  it('opens the delivery fields instead of Conta when the person is signed out', async () => {
     const user = userEvent.setup()
     renderApp()
     await addToCart(user, /Smash da casa/)
@@ -215,7 +215,14 @@ describe('cart and checkout', () => {
     await user.click(within(cart).getByRole('radio', { name: 'Pix' }))
     await user.click(within(cart).getByRole('button', { name: 'Fazer Pedido' }))
 
-    expect(screen.getByRole('dialog', { name: 'Conta' })).toBeInTheDocument()
+    const form = screen.getByRole('dialog', { name: 'Dados para entrega' })
+    expect(screen.queryByRole('dialog', { name: 'Conta' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Entrar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Criar conta' })).not.toBeInTheDocument()
+    expect(within(form).getByRole('textbox', { name: 'Nome' })).toBeRequired()
+    expect(within(form).getByText('87 9')).toBeInTheDocument()
+    expect(within(form).getByRole('textbox', { name: 'Telefone' })).toBeRequired()
+    expect(within(form).getByRole('textbox', { name: 'CEP' })).toBeInTheDocument()
     expect(firebaseMocks.addDoc).not.toHaveBeenCalled()
   })
 

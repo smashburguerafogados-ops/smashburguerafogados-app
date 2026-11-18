@@ -178,8 +178,28 @@
   padding: 18px;
 }
 
+.mark-btn {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1.5px solid #e3b15a;
+  border-radius: 50%;
+  background: transparent;
+  color: #f4f5f6;
+  line-height: 0;
+}
+
+.mark-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
 .sheet__panel,
 .popup__panel {
+  position: relative;
   width: min(520px, 100%);
   max-height: min(88vh, 820px);
   overflow: auto;
@@ -201,6 +221,19 @@
 .overlay__close {
   margin-left: auto;
   display: block;
+}
+
+.overlay__close.mark-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  margin: 0;
+}
+
+.sheet__panel:has(.overlay__close.mark-btn) h2,
+.popup__panel:has(.overlay__close.mark-btn) h2 {
+  padding-right: 42px;
 }
 
 .delivery {
@@ -421,12 +454,6 @@
 
 .dock__item--cart.is-active {
   flex-grow: 1.6;
-}
-
-.dock__label {
-  font-family: var(--font-display);
-  font-size: 0.78rem;
-  font-weight: 600;
 }
 
 .dock__count,

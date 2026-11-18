@@ -80,21 +80,18 @@ export function BottomBar({ sheet, count, totalCents, onOrders, onProfile, onCar
     {
       key: 'orders',
       label: 'Meus pedidos',
-      activeLabel: 'Pedidos',
       icon: <PageIcon />,
       onClick: onOrders,
     },
     {
       key: 'profile',
       label: 'Conta',
-      activeLabel: 'Conta',
       icon: <UserIcon />,
       onClick: onProfile,
     },
     {
       key: 'cart',
       label: `Carrinho, ${count} ${itemWord}, ${formatPrice(totalCents)}`,
-      activeLabel: 'Carrinho',
       icon: <CartIcon />,
       onClick: onCart,
       wide: true,
@@ -108,7 +105,6 @@ export function BottomBar({ sheet, count, totalCents, onOrders, onProfile, onCar
     {
       key: 'whatsapp',
       label: 'WhatsApp',
-      activeLabel: 'WhatsApp',
       icon: <WhatsAppIcon />,
       onClick: onWhatsapp,
     },
@@ -134,7 +130,6 @@ export function BottomBar({ sheet, count, totalCents, onOrders, onProfile, onCar
           >
             {item.icon}
             {'extra' in item ? item.extra : null}
-            {sheet === item.key && <span className="dock__label">{item.activeLabel}</span>}
           </button>
         </Fragment>
       ))}
