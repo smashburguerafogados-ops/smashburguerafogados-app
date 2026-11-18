@@ -117,6 +117,11 @@ p {
   width: min(460px, 100%);
 }
 
+.card--board {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
 .card::before,
 .card::after {
   content: '';
@@ -337,6 +342,13 @@ form {
   top: 0;
 }
 
+.topbar__lead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
 .topbar__brand img {
   height: 72px;
   width: auto;
@@ -346,6 +358,18 @@ form {
   width: min(640px, 100%);
   margin: 0 auto;
   padding: 28px 18px 48px;
+}
+
+@media (max-width: 420px) {
+  .shell__main {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .card--board {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
 }
 
 .details {

@@ -141,7 +141,7 @@ it('uses a floating gold pill for the active shortcut and icons otherwise', asyn
   renderMenu()
 
   const dock = screen.getByRole('navigation', { name: 'Atalhos' })
-  expect(dock.querySelectorAll('.dock__item')).toHaveLength(3)
+  expect(dock.querySelectorAll('.dock__item')).toHaveLength(4)
   expect(dock.querySelector('.is-active')).toBeNull()
 
   const style = getComputedStyle(dock)
@@ -157,4 +157,40 @@ it('uses a floating gold pill for the active shortcut and icons otherwise', asyn
   expect(active.querySelector('.dock__label')).toHaveTextContent('Conta')
   expect(getComputedStyle(active).backgroundColor).toBe('rgb(227, 177, 90)')
   expect(dock.querySelectorAll('.dock__label')).toHaveLength(1)
+})
+
+it('hides the hamburger and shows history with short dividers on the customer bar', () => {
+  renderMenu()
+  expect(screen.queryByRole('button', { name: 'Abrir menu' })).not.toBeInTheDocument()
+  expect(document.querySelector('.menu__burger')).toBeNull()
+
+  const dock = screen.getByRole('navigation', { name: 'Atalhos' })
+  const history = screen.getByRole('button', { name: 'Meus pedidos' })
+  expect(history.closest('nav')).toBe(dock)
+  expect(history.querySelector('circle')).toBeNull()
+  expect(history.querySelector('svg')).not.toBeNull()
+  expect(dock.querySelector('.dock__count')).toHaveTextContent('0')
+  expect(dock.querySelector('.dock__sum')).toHaveTextContent('R$ 0,00')
+  expect(screen.getByRole('button', { name: 'WhatsApp' })).toBeInTheDocument()
+
+  const items = Array.from(dock.querySelectorAll('.dock__item')) as HTMLElement[]
+  const rules = Array.from(dock.querySelectorAll('.dock__rule')) as HTMLElement[]
+  expect(items).toHaveLength(4)
+  expect(rules).toHaveLength(items.length - 1)
+
+  const itemHeight = parseFloat(getComputedStyle(items[0]).height)
+  const paddingTop = parseFloat(getComputedStyle(dock).paddingTop)
+  const paddingBottom = parseFloat(getComputedStyle(dock).paddingBottom)
+  expect(paddingTop).toBeGreaterThan(0)
+  expect(paddingBottom).toBeGreaterThan(0)
+
+  for (const rule of rules) {
+    const style = getComputedStyle(rule)
+    const height = parseFloat(style.height)
+    expect(rule.previousElementSibling).toHaveClass('dock__item')
+    expect(rule.nextElementSibling).toHaveClass('dock__item')
+    expect(style.alignSelf).toBe('center')
+    expect(height).toBe(18)
+    expect(height).toBeLessThan(itemHeight)
+  }
 })
