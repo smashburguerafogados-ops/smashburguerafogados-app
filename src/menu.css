@@ -28,6 +28,7 @@
 .menu__top {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 12px;
 }
 
@@ -41,6 +42,15 @@
 
 .menu__logo img {
   width: 100%;
+}
+
+.menu__brand {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .menu__title {

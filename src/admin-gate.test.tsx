@@ -46,7 +46,7 @@ it('does not open the panel for a customer', async () => {
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Acesso restrito.')
   expect(screen.queryByRole('heading', { name: 'Painel' })).not.toBeInTheDocument()
-  expect(screen.getByRole('heading', { name: 'Cardápio' })).toBeInTheDocument()
+  expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
   expect(firebaseMocks.signInWithEmailAndPassword).toHaveBeenCalledWith(
     expect.anything(),
     'pessoa@example.com',

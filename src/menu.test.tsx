@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { MenuScreen } from './components/MenuScreen'
 import { Griddle } from './components/Griddle'
+import { customerProfile, signInAs } from './test/render'
 import './index.css'
 import './menu.css'
 import './griddle.css'
@@ -18,6 +19,38 @@ function renderMenu() {
     </AuthProvider>,
   )
 }
+
+it('leaves the title empty until a name exists, then shows the first name', async () => {
+  renderMenu()
+  const header = document.querySelector('.menu__top') as HTMLElement
+  const logo = header.querySelector('.menu__logo') as HTMLElement
+  const brand = header.querySelector('.menu__brand') as HTMLElement
+  expect(header.querySelector('.menu__title')).toBeNull()
+  expect(header).not.toHaveTextContent('Cardápio')
+  expect(screen.queryByRole('heading')).not.toBeInTheDocument()
+  expect(logo).toBe(header.firstElementChild)
+  expect(getComputedStyle(header).justifyContent).toBe('flex-start')
+  expect(getComputedStyle(logo).flexGrow).toBe('0')
+  expect(getComputedStyle(brand).flexGrow).toBe('1')
+  expect(getComputedStyle(brand).alignItems).toBe('center')
+  expect(getComputedStyle(brand).textAlign).toBe('center')
+
+  signInAs({ ...customerProfile, nome: '' })
+  renderMenu()
+  expect(document.querySelector('.menu__title')).toBeNull()
+  expect(screen.queryByRole('heading')).not.toBeInTheDocument()
+})
+
+it('shows only the first name in the header once the customer has one', async () => {
+  signInAs(customerProfile)
+  renderMenu()
+  const title = await screen.findByRole('heading', { name: 'Ana' })
+  expect(title).toHaveClass('menu__title')
+  expect(title.closest('.menu__brand')).not.toBeNull()
+  expect(screen.queryByRole('heading', { name: 'Ana Souza' })).not.toBeInTheDocument()
+  expect(screen.queryByText('Cardápio')).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Smash Burguer' })).toBeInTheDocument()
+})
 
 it('shows every category by default and has no Geral chip', () => {
   renderMenu()

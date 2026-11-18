@@ -36,7 +36,7 @@ describe('griddle background', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(700)
     })
-    expect(screen.getByRole('heading', { name: 'Cardápio' })).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
     expect(screen.getAllByTestId('griddle')).toHaveLength(1)
   })
 
