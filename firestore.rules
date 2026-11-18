@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// Publish this file in the Firebase console (Firestore → Rules) or with
+// `firebase deploy --only firestore:rules`. Until it is published, the
+// database may still be in test mode.
+//
+// A signed-in person can read and write only users/{their uid}.
+// Creating a profile through the app must set role "customer".
+// role and uid cannot be changed from the client, so nobody can promote
+// their own document to admin. Admin documents are written from the
+// Firebase console, which bypasses these rules.
+// connection_tests is locked. The dev script cannot write after publish.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedInAs(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function customerCreate(userId) {
+      let data = request.resource.data;
+      return data.uid == userId
+        && data.role == 'customer'
+        && data.nome is string
+        && data.whatsapp is string
+        && data.address is map;
+    }
+
+    match /users/{userId} {
+      allow read: if signedInAs(userId);
+      allow create: if signedInAs(userId) && customerCreate(userId);
+      allow update: if signedInAs(userId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.role == resource.data.role;
+      allow delete: if signedInAs(userId);
+    }
+
+    match /connection_tests/{docId} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

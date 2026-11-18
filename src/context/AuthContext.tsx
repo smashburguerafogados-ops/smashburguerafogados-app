@@ -1,0 +1,183 @@
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
+import {
+  createUserWithEmailAndPassword,
+  deleteUser,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  type User,
+} from 'firebase/auth'
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
+import { auth, authReady, db } from '../lib/firebase'
+import { mapAuthError } from '../lib/errors'
+import { normalizeWhatsapp, whatsappToEmail } from '../lib/identity'
+import { parseProfile, type Address, type UserProfile } from '../types'
+
+type Session =
+  | { status: 'loading' }
+  | { status: 'signedOut' }
+  | { status: 'ready'; profile: UserProfile }
+  | { status: 'error'; message: string }
+
+export type RegisterInput = {
+  nome: string
+  whatsapp: string
+  password: string
+  address: Address
+}
+
+type AuthContextValue = {
+  session: Session
+  login: (whatsapp: string, password: string) => Promise<void>
+  register: (input: RegisterInput) => Promise<void>
+  logout: () => Promise<void>
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null)
+
+async function hydrate(user: User): Promise<Session> {
+  const snap = await getDoc(doc(db, 'users', user.uid))
+  if (!snap.exists()) {
+    return {
+      status: 'error',
+      message: 'Não encontramos o cadastro desta conta.',
+    }
+  }
+  const profile = parseProfile(user.uid, snap.data())
+  if (!profile) {
+    return {
+      status: 'error',
+      message: 'O cadastro desta conta está incompleto.',
+    }
+  }
+  return { status: 'ready', profile }
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<Session>({ status: 'loading' })
+  const suspendListener = useRef(false)
+  const generation = useRef(0)
+
+  useEffect(() => {
+    let active = true
+    let unsubscribe = () => {}
+
+    authReady
+      .then(() => {
+        if (!active) return
+        unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (suspendListener.current) return
+          if (!user) {
+            generation.current += 1
+            setSession({ status: 'signedOut' })
+            return
+          }
+
+          const ticket = ++generation.current
+          setSession((current) => {
+            if (current.status === 'ready' && current.profile.uid === user.uid) return current
+            return { status: 'loading' }
+          })
+
+          hydrate(user)
+            .then((next) => {
+              if (!active || ticket !== generation.current || suspendListener.current) return
+              setSession(next)
+            })
+            .catch(() => {
+              if (!active || ticket !== generation.current || suspendListener.current) return
+              setSession({
+                status: 'error',
+                message: 'Não foi possível carregar sua conta.',
+              })
+            })
+        })
+      })
+      .catch(() => {
+        if (!active) return
+        setSession({
+          status: 'error',
+          message: 'Não foi possível iniciar a sessão.',
+        })
+      })
+
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [])
+
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      session,
+      async login(whatsapp, password) {
+        const email = whatsappToEmail(whatsapp)
+        if (!email) {
+          throw new Error('Informe um WhatsApp válido com DDD.')
+        }
+        try {
+          await signInWithEmailAndPassword(auth, email, password)
+        } catch (error) {
+          throw new Error(mapAuthError(error))
+        }
+      },
+      async register(input) {
+        const email = whatsappToEmail(input.whatsapp)
+        const whatsapp = normalizeWhatsapp(input.whatsapp)
+        if (!email || !whatsapp) {
+          throw new Error('Informe um WhatsApp válido com DDD.')
+        }
+
+        suspendListener.current = true
+        try {
+          const credential = await createUserWithEmailAndPassword(auth, email, input.password)
+          const profile: UserProfile = {
+            uid: credential.user.uid,
+            nome: input.nome.trim().replace(/\s+/g, ' '),
+            whatsapp,
+            address: input.address,
+            role: 'customer',
+          }
+          try {
+            await setDoc(doc(db, 'users', credential.user.uid), {
+              ...profile,
+              createdAt: serverTimestamp(),
+            })
+          } catch (error) {
+            await deleteUser(credential.user).catch(() => undefined)
+            setSession({ status: 'signedOut' })
+            throw error
+          }
+          setSession({ status: 'ready', profile })
+        } catch (error) {
+          if (error instanceof Error && error.message.startsWith('Informe')) throw error
+          throw new Error(mapAuthError(error))
+        } finally {
+          suspendListener.current = false
+        }
+      },
+      async logout() {
+        await signOut(auth)
+      },
+    }),
+    [session],
+  )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
+
+export function useAuth(): AuthContextValue {
+  const value = useContext(AuthContext)
+  if (!value) {
+    throw new Error('useAuth fora do AuthProvider')
+  }
+  return value
+}
