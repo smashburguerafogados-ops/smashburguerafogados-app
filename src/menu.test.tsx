@@ -102,6 +102,32 @@ it('adds a note and updates the cart count and total', async () => {
   expect(dock.querySelector('.dock__item.is-active .dock__label')).toHaveTextContent('Carrinho')
 })
 
+it('keeps a night atmosphere behind a readable bar', () => {
+  renderMenu()
+
+  const night = document.querySelector('.menu__night')
+  expect(night).not.toBeNull()
+  expect(night).toHaveAttribute('aria-hidden', 'true')
+  const nightStyle = getComputedStyle(night as HTMLElement)
+  expect(nightStyle.position).toBe('fixed')
+  expect(nightStyle.pointerEvents).toBe('none')
+  expect(nightStyle.backgroundImage).toContain('radial-gradient')
+  expect(document.querySelector('.menu__night-gold')).not.toBeNull()
+  expect(document.querySelector('.menu__night-coals')).not.toBeNull()
+  expect(document.querySelector('.grill__flame, .grill__grate, .grill__ember')).toBeNull()
+
+  const dock = screen.getByRole('navigation', { name: 'Atalhos' })
+  const dockStyle = getComputedStyle(dock)
+  expect(dockStyle.backgroundColor).toBe('rgb(20, 20, 22)')
+  expect(dockStyle.color).toBe('rgb(244, 245, 246)')
+  expect(Number(dockStyle.zIndex)).toBeGreaterThan(Number(nightStyle.zIndex))
+
+  const price = screen.getAllByText('R$ 28,00')[0]
+  expect(getComputedStyle(price).color).toBe('rgb(227, 177, 90)')
+  const name = screen.getByText('Smash da casa')
+  expect(getComputedStyle(name).color).toBe('rgb(244, 245, 246)')
+})
+
 it('uses a floating gold pill for the active shortcut and icons otherwise', async () => {
   const user = userEvent.setup()
   renderMenu()

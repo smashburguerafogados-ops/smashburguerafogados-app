@@ -82,7 +82,7 @@ As of this stage, the Firestore API was not enabled on `smashburguerafogados-ae5
 
 ## Menu
 
-After the splash the cardápio is open. There is no login wall. Category chips filter the list; there is no "Geral" chip. Tapping the active chip returns to every item, and the choice is kept in `sessionStorage` (`smash.category`). Search, a sold-out state, item notes, and the cart are on the same screen.
+After the splash the cardápio is open. There is no login wall. The menu sits on a dark night layer with a slow gold glow and a warm band along the bottom, like a grill after dark. Item rows and the floating bar stay on solid dark surfaces so the type stays readable. There are no flame drawings. Category chips filter the list; there is no "Geral" chip. Tapping the active chip returns to every item, and the choice is kept in `sessionStorage` (`smash.category`). Search, a sold-out state, item notes, and the cart are on the same screen.
 
 The sample cardápio in `src/data/catalog.ts` is what visitors see until Firestore has categories and products. Prices in Firestore are reais (a number such as `28`). Public reads use `where('available', '==', true)`, so sold-out products stay hidden from customers once the rules are published.
 
