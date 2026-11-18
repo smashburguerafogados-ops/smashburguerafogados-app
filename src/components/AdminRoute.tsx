@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { AdminPanel } from './AdminPanel'
 import { ProductForm } from './ProductForm'
-import { Shell } from './Shell'
 import { SideMenu } from './SideMenu'
-import { StatusScreen } from './StatusScreen'
 
 function MenuIcon() {
   return (
@@ -21,6 +19,28 @@ function useTitle(title: string) {
   }, [title])
 }
 
+function AdminFrame({
+  children,
+  onLogout,
+  menu,
+}: {
+  children: ReactNode
+  onLogout: () => void
+  menu?: ReactNode
+}) {
+  return (
+    <div className="admin">
+      <header className="admin__bar">
+        <div className="admin__lead">{menu}</div>
+        <button type="button" className="btn btn--ghost" onClick={onLogout}>
+          Sair
+        </button>
+      </header>
+      <main className="admin__main">{children}</main>
+    </div>
+  )
+}
+
 export function AdminRoute() {
   const { session, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -29,9 +49,10 @@ export function AdminRoute() {
 
   if (session.status === 'loading') {
     return (
-      <StatusScreen title="Carregando">
+      <AdminFrame onLogout={() => void logout()}>
+        <h1>Carregando</h1>
         <p className="muted">Abrindo o painel.</p>
-      </StatusScreen>
+      </AdminFrame>
     )
   }
 
@@ -41,29 +62,25 @@ export function AdminRoute() {
 
   if (session.status === 'error') {
     return (
-      <StatusScreen title="Conta">
+      <AdminFrame onLogout={() => void logout()}>
+        <h1>Conta</h1>
         <p>{session.message}</p>
-        <button type="button" className="btn" onClick={() => void logout()}>
-          Sair
-        </button>
-      </StatusScreen>
+      </AdminFrame>
     )
   }
 
   if (session.profile.role !== 'admin') {
     return (
-      <Shell onLogout={() => void logout()}>
-        <section className="card">
-          <p className="eyebrow">Restrito</p>
-          <h1>Acesso restrito</h1>
-          <p className="muted">Esta área é só da administração.</p>
-        </section>
-      </Shell>
+      <AdminFrame onLogout={() => void logout()}>
+        <p className="eyebrow">Restrito</p>
+        <h1>Acesso restrito</h1>
+        <p className="muted">Esta área é só da administração.</p>
+      </AdminFrame>
     )
   }
 
   return (
-    <Shell
+    <AdminFrame
       onLogout={() => void logout()}
       menu={
         <button
@@ -77,11 +94,8 @@ export function AdminRoute() {
         </button>
       }
     >
-      <section className="card card--board">
-        <p className="eyebrow">Administração</p>
-        <h1>Painel</h1>
-        <AdminPanel />
-      </section>
+      <h1>Painel</h1>
+      <AdminPanel />
       {menuOpen && (
         <SideMenu
           onClose={() => setMenuOpen(false)}
@@ -93,6 +107,6 @@ export function AdminRoute() {
         />
       )}
       {creating && <ProductForm onClose={() => setCreating(false)} onSaved={() => undefined} />}
-    </Shell>
+    </AdminFrame>
   )
 }
