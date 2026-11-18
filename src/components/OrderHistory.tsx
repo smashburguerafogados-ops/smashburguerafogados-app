@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useOrders } from '../context/OrdersContext'
 import { PAYMENT_LABELS } from '../lib/checkout'
 import { formatPrice } from '../lib/money'
-import { STATUS_LABEL, isAccepted, setOrderStatus, shortId, type Order } from '../lib/orders'
+import { STATUS_LABEL, finalizeOrder, isAccepted, shortId, type Order } from '../lib/orders'
 
 function formatWhen(ms: number): string {
   if (!ms) return ''
@@ -19,7 +19,7 @@ function HistoryCard({ order }: { order: Order }) {
     setBusy(true)
     setError('')
     try {
-      await setOrderStatus(order.id, 'finalizado')
+      await finalizeOrder(order)
     } catch {
       setError('Não foi possível finalizar. Tente de novo.')
     } finally {

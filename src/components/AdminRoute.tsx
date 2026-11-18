@@ -1,9 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { watchRevenue, type RevenueEntry } from '../lib/revenue'
 import { AdminPanel } from './AdminPanel'
 import { ProductDesk } from './ProductDesk'
 import { ProductForm } from './ProductForm'
+import { RevenueScreen } from './RevenueScreen'
 import { ShopScreen } from './ShopControls'
 import { SideMenu } from './SideMenu'
 
@@ -43,12 +45,33 @@ function AdminFrame({
   )
 }
 
+function useRevenue(enabled: boolean) {
+  const [entries, setEntries] = useState<RevenueEntry[]>([])
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+
+  useEffect(() => {
+    if (!enabled) return
+    setStatus('loading')
+    return watchRevenue(
+      (next) => {
+        setEntries(next)
+        setStatus('ready')
+      },
+      () => setStatus('error'),
+    )
+  }, [enabled])
+
+  return { entries, status }
+}
+
 export function AdminRoute() {
   const { session, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [desk, setDesk] = useState(false)
   const [shop, setShop] = useState(false)
+  const [revenueOpen, setRevenueOpen] = useState(false)
+  const revenue = useRevenue(session.status === 'ready' && session.profile.role === 'admin')
   useTitle('Painel | Smash Burguer')
 
   if (session.status === 'loading') {
@@ -108,18 +131,28 @@ export function AdminRoute() {
             setMenuOpen(false)
             setCreating(false)
             setDesk(false)
+            setRevenueOpen(false)
             setShop(true)
           }}
           onProducts={() => {
             setMenuOpen(false)
             setCreating(false)
             setShop(false)
+            setRevenueOpen(false)
             setDesk(true)
+          }}
+          onRevenue={() => {
+            setMenuOpen(false)
+            setCreating(false)
+            setDesk(false)
+            setShop(false)
+            setRevenueOpen(true)
           }}
           onCreateProduct={() => {
             setMenuOpen(false)
             setDesk(false)
             setShop(false)
+            setRevenueOpen(false)
             setCreating(true)
           }}
         />
@@ -127,6 +160,9 @@ export function AdminRoute() {
       {creating && <ProductForm onClose={() => setCreating(false)} onSaved={() => undefined} />}
       {desk && <ProductDesk onClose={() => setDesk(false)} />}
       {shop && <ShopScreen onClose={() => setShop(false)} />}
+      {revenueOpen && (
+        <RevenueScreen entries={revenue.entries} status={revenue.status} onClose={() => setRevenueOpen(false)} />
+      )}
     </AdminFrame>
   )
 }

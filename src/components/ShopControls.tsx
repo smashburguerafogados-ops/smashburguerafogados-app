@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { DEFAULT_CLOSED_MESSAGE, saveShop, watchShop, type ShopSettings } from '../lib/shop'
+import { CloseButton } from './Overlay'
 
 export function ShopScreen({ onClose }: { onClose: () => void }) {
   useEffect(() => {
@@ -15,9 +16,7 @@ export function ShopScreen({ onClose }: { onClose: () => void }) {
       <div className="product-screen__inner">
         <div className="product-screen__bar">
           <h2>Funcionamento</h2>
-          <button type="button" className="text-btn" onClick={onClose}>
-            Fechar
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
         <ShopControls />
       </div>

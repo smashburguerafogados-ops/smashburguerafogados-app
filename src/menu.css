@@ -197,6 +197,73 @@
   height: 16px;
 }
 
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.stepper button {
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid #e3b15a;
+  border-radius: 50%;
+  background: transparent;
+  color: #f4f5f6;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.stepper button:disabled {
+  opacity: 0.4;
+}
+
+.stepper span {
+  min-width: 1.5rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.revenue__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.revenue__filters button {
+  padding: 8px 12px;
+  border: 1px solid #3a3a3a;
+  border-radius: 999px;
+  background: #000;
+  color: #f4f5f6;
+  font: inherit;
+}
+
+.revenue__filters button.is-active {
+  border-color: #e3b15a;
+  color: #e3b15a;
+}
+
+.revenue__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.revenue__list li,
+.revenue__total {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+}
+
 .sheet__panel,
 .popup__panel {
   position: relative;
@@ -593,6 +660,7 @@
 }
 
 .drawer__panel {
+  position: relative;
   width: min(300px, 82vw);
   min-height: 100%;
   background: #141416;
@@ -604,6 +672,7 @@
 
 .drawer__panel h2 {
   margin: 0 0 12px;
+  padding-right: 42px;
   font-family: var(--font-display);
   font-size: 1.15rem;
 }

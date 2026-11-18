@@ -6,12 +6,13 @@ import { Overlay } from './Overlay'
 type ProductDialogProps = {
   product: Product
   onClose: () => void
-  onAdd: (note: string, extraIds: string[]) => void
+  onAdd: (note: string, extraIds: string[], qty: number) => void
 }
 
 export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
   const [note, setNote] = useState('')
   const [extras, setExtras] = useState<string[]>([])
+  const [qty, setQty] = useState(1)
   const extraTotal = (product.extras ?? [])
     .filter((extra) => extras.includes(extra.id))
     .reduce((sum, extra) => sum + toCents(extra.price), 0)
@@ -60,11 +61,20 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
           disabled={!product.available}
         />
       </label>
+      <div className="stepper" role="group" aria-label="Quantidade">
+        <button type="button" aria-label="Diminuir" disabled={!product.available || qty <= 1} onClick={() => setQty((current) => Math.max(1, current - 1))}>
+          −
+        </button>
+        <span>{qty}</span>
+        <button type="button" aria-label="Aumentar" disabled={!product.available} onClick={() => setQty((current) => current + 1)}>
+          +
+        </button>
+      </div>
       <button
         type="button"
         className="btn"
         disabled={!product.available}
-        onClick={() => onAdd(note, extras)}
+        onClick={() => onAdd(note, extras, qty)}
       >
         Adicionar
       </button>

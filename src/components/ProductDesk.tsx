@@ -11,6 +11,7 @@ import {
   type ListedProduct,
 } from '../lib/adminCatalog'
 import { formatPrice, toCents } from '../lib/money'
+import { CloseButton } from './Overlay'
 
 type ProductDeskProps = {
   onClose: () => void
@@ -109,9 +110,7 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
       <div className="product-screen__inner">
         <div className="product-screen__bar">
           <h2>Produtos</h2>
-          <button type="button" className="text-btn" onClick={onClose}>
-            Fechar
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
         {loadError && (
           <p className="alert" role="alert">

@@ -108,7 +108,10 @@ it('opens the detail popup and blocks a sold-out item', async () => {
   const detail = screen.getByRole('dialog', { name: 'Smash da casa' })
   expect(detail).toHaveTextContent('molho da casa')
   expect(detail).toHaveTextContent('Cheddar')
-  await user.click(within(detail).getByRole('button', { name: 'Fechar' }))
+  const close = within(detail).getByRole('button', { name: 'Fechar' })
+  expect(close).toHaveClass('mark-btn')
+  expect(close).not.toHaveTextContent('Fechar')
+  await user.click(close)
 
   await user.click(screen.getByRole('button', { name: /Smash picante/ }))
   const sold = screen.getByRole('dialog', { name: 'Smash picante' })
@@ -117,6 +120,31 @@ it('opens the detail popup and blocks a sold-out item', async () => {
   expect(add).toBeDisabled()
   await user.click(add)
   expect(screen.getByRole('navigation', { name: 'Atalhos' }).querySelector('.dock__count')).toHaveTextContent('0')
+})
+
+it('adds the chosen quantity, then another product as its own line', async () => {
+  const user = userEvent.setup()
+  renderMenu()
+
+  await user.click(screen.getByRole('button', { name: /Smash da casa/ }))
+  const detail = screen.getByRole('dialog', { name: 'Smash da casa' })
+  const less = within(detail).getByRole('button', { name: 'Diminuir' })
+  expect(less).toBeDisabled()
+  await user.click(within(detail).getByRole('button', { name: 'Aumentar' }))
+  await user.click(within(detail).getByRole('button', { name: 'Aumentar' }))
+  expect(within(detail).getByRole('group', { name: 'Quantidade' })).toHaveTextContent('3')
+  await user.click(within(detail).getByRole('button', { name: 'Adicionar' }))
+  expect(screen.getByRole('navigation', { name: 'Atalhos' }).querySelector('.dock__count')).toHaveTextContent('3')
+
+  await user.click(screen.getByRole('button', { name: /Batata rústica/ }))
+  await user.click(within(screen.getByRole('dialog', { name: 'Batata rústica' })).getByRole('button', { name: 'Adicionar' }))
+  await user.click(screen.getByRole('button', { name: /carrinho/i }))
+
+  const cart = screen.getByRole('dialog', { name: 'Carrinho' })
+  const rows = cart.querySelectorAll('.cart li')
+  expect(rows).toHaveLength(2)
+  expect(within(cart).getByText('3 × R$ 28,00')).toBeInTheDocument()
+  expect(within(cart).getByText('1 × R$ 16,00')).toBeInTheDocument()
 })
 
 it('adds a note and updates the cart count and total', async () => {

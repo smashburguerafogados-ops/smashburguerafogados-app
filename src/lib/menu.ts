@@ -73,10 +73,11 @@ export function cartTotal(lines: CartLine[]): number {
   return lines.reduce((sum, line) => sum + line.priceCents * line.qty, 0)
 }
 
-export function addCartLine(lines: CartLine[], next: Omit<CartLine, 'qty'>): CartLine[] {
+export function addCartLine(lines: CartLine[], next: Omit<CartLine, 'qty'>, qty = 1): CartLine[] {
+  const amount = Math.max(1, Math.floor(qty))
   const found = lines.find((line) => line.key === next.key)
-  if (!found) return [...lines, { ...next, qty: 1 }]
-  return lines.map((line) => (line.key === next.key ? { ...line, qty: line.qty + 1 } : line))
+  if (!found) return [...lines, { ...next, qty: amount }]
+  return lines.map((line) => (line.key === next.key ? { ...line, qty: line.qty + amount } : line))
 }
 
 export function removeCartLine(lines: CartLine[], key: string): CartLine[] {

@@ -12,6 +12,7 @@ import type { Address, UserProfile } from '../types'
 import { cashToCents, changeCents, type CheckoutState, type PaymentMethod } from './checkout'
 import { db } from './firebase'
 import type { CartLine } from './menu'
+import { recordRevenue } from './revenue'
 
 export type OrderStatus = 'novo' | 'andamento' | 'enviado' | 'recusado' | 'cancelado' | 'finalizado'
 export type OrderColumn = 'novos' | 'andamento' | 'finalizados'
@@ -235,4 +236,11 @@ export async function setOrderStatus(id: string, status: OrderStatus, reason?: s
   const patch: Record<string, unknown> = { status, updatedAt: serverTimestamp() }
   if (reason !== undefined) patch.reason = reason.trim()
   await updateDoc(doc(db, 'orders', id), patch)
+}
+
+/** Records the amount only when the order leaves em andamento for finalizado. */
+export async function finalizeOrder(order: Order): Promise<void> {
+  const earn = order.status === 'andamento' || order.status === 'enviado'
+  await setOrderStatus(order.id, 'finalizado')
+  if (earn) await recordRevenue(order)
 }

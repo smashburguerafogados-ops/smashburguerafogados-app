@@ -281,5 +281,51 @@ describe('admin board', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Concluir' }))
     expect(lastUpdate()).toEqual({ path: 'orders/pedido-00003', patch: { status: 'finalizado', updatedAt: 'SERVER_TIME' } })
     expect(window.open).not.toHaveBeenCalled()
+    expect(firebaseMocks.setDoc).toHaveBeenCalledWith(
+      { path: 'faturamento/pedido-00003' },
+      expect.objectContaining({ orderId: 'pedido-00003', totalCents: 5600 }),
+    )
+  })
+
+  it('adds to faturamento only when an order leaves em andamento', async () => {
+    const user = userEvent.setup()
+    await openBoard()
+    await waitFor(() => expect(activeListeners('faturamento')).toHaveLength(1))
+
+    await user.click(screen.getByRole('button', { name: /Ana Souza/ }))
+    await user.click(screen.getByRole('button', { name: 'Aceitar' }))
+    expect(firebaseMocks.setDoc).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('tab', { name: /Em Andamento/ }))
+    await user.click(screen.getByRole('button', { name: /Bruno Lima/ }))
+    await user.click(screen.getByRole('button', { name: 'Enviar pedido' }))
+    expect(firebaseMocks.setDoc).not.toHaveBeenCalled()
+  })
+
+  it('opens Faturamento on Geral with the stored amounts', async () => {
+    const user = userEvent.setup()
+    await openBoard()
+    await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
+    await user.click(screen.getByRole('button', { name: 'Faturamento' }))
+    const sheet = screen.getByRole('dialog', { name: 'Faturamento' })
+    expect(within(sheet).getByRole('tab', { name: 'Geral' })).toHaveAttribute('aria-selected', 'true')
+
+    const now = Date.now()
+    await act(async () => {
+      emit('faturamento', [
+        { id: 'pedido-00003', orderId: 'pedido-00003', totalCents: 5600, finalizedAtMs: now },
+        { id: 'antigo', orderId: 'antigo', totalCents: 1000, finalizedAtMs: now - 40 * 24 * 60 * 60 * 1000 },
+      ])
+    })
+
+    const rows = sheet.querySelectorAll('.revenue__list li')
+    expect(rows[0]).toHaveTextContent('Dia')
+    expect(rows[0]).toHaveTextContent('R$ 56,00')
+    expect(rows[4]).toHaveTextContent('Total')
+    expect(rows[4]).toHaveTextContent('R$ 66,00')
+    await user.click(within(sheet).getByRole('tab', { name: 'Dia' }))
+    expect(within(sheet).getByRole('tab', { name: 'Dia' })).toHaveAttribute('aria-selected', 'true')
+    expect(sheet).toHaveTextContent('R$ 56,00')
+    expect(sheet).not.toHaveTextContent('R$ 66,00')
   })
 })

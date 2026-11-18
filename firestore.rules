@@ -18,6 +18,12 @@ rules_version = '2';
 // settings/shop is public to read so the opening screen can show whether
 // the shop is online and the closed message. Only an admin can change it.
 //
+// faturamento/{orderId} stores the amount once, when an order leaves em
+// andamento for finalizado. Admins read it. The create is one-shot: a
+// later status change cannot update or delete the recorded amount. An
+// admin can record it, and the customer can record their own order after
+// it is already finalizado, for the order's own total.
+//
 // orders: a signed-in customer creates an order for their own uid with
 // status "novo". They read only their own orders and may only move one
 // from "enviado" to "finalizado". An admin reads and updates every order.
@@ -104,6 +110,24 @@ service cloud.firestore {
     match /settings/{settingId} {
       allow read: if settingId == 'shop';
       allow write: if settingId == 'shop' && isAdmin();
+    }
+
+    function revenueCreate(orderId) {
+      let data = request.resource.data;
+      let order = get(/databases/$(database)/documents/orders/$(orderId)).data;
+      return data.orderId == orderId
+        && data.totalCents == order.totalCents
+        && data.totalCents is int
+        && data.totalCents > 0
+        && data.finalizedAtMs is int
+        && order.status == 'finalizado'
+        && (isAdmin() || (request.auth != null && order.customerId == request.auth.uid));
+    }
+
+    match /faturamento/{orderId} {
+      allow read: if isAdmin();
+      allow create: if revenueCreate(orderId);
+      allow update, delete: if false;
     }
 
     match /connection_tests/{docId} {

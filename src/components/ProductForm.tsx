@@ -9,6 +9,7 @@ import {
 } from '../lib/adminCatalog'
 import { readPhoto } from '../lib/photo'
 import { ChoiceList } from './ChoiceList'
+import { CloseButton } from './Overlay'
 
 type ProductFormProps = {
   onClose: () => void
@@ -147,9 +148,7 @@ export function ProductForm({ onClose, onSaved }: ProductFormProps) {
       <div className="product-screen__inner">
       <div className="product-screen__bar">
         <h2>Criar Produto</h2>
-        <button type="button" className="text-btn" onClick={onClose}>
-          Fechar
-        </button>
+        <CloseButton onClick={onClose} />
       </div>
       <form className="product-form" onSubmit={onSubmit} noValidate>
         <label className="field">

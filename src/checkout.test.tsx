@@ -216,6 +216,9 @@ describe('cart and checkout', () => {
     await user.click(within(cart).getByRole('button', { name: 'Fazer Pedido' }))
 
     const form = screen.getByRole('dialog', { name: 'Dados para entrega' })
+    const close = within(form).getByRole('button', { name: 'Fechar' })
+    expect(close).toHaveClass('mark-btn')
+    expect(close).not.toHaveTextContent('Fechar')
     expect(screen.queryByRole('dialog', { name: 'Conta' })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Entrar' })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Criar conta' })).not.toBeInTheDocument()

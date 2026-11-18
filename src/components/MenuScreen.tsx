@@ -97,7 +97,7 @@ export function MenuScreen() {
     saveCategory(next)
   }
 
-  function addProduct(item: Product, note: string, extraIds: string[]) {
+  function addProduct(item: Product, note: string, extraIds: string[], qty: number) {
     if (!item.available) return
     const extras = (item.extras ?? []).filter((extra) => extraIds.includes(extra.id))
     const priceCents = toCents(item.price) + extras.reduce((sum, extra) => sum + toCents(extra.price), 0)
@@ -105,14 +105,18 @@ export function MenuScreen() {
     const key = [item.id, clean, extras.map((extra) => extra.id).sort().join(',')].join('|')
     const name = extras.length > 0 ? `${item.name} + ${extras.map((extra) => extra.name).join(', ')}` : item.name
     setLines((current) =>
-      addCartLine(current, {
-        key,
-        productId: item.id,
-        name,
-        image: item.image,
-        priceCents,
-        note: clean,
-      }),
+      addCartLine(
+        current,
+        {
+          key,
+          productId: item.id,
+          name,
+          image: item.image,
+          priceCents,
+          note: clean,
+        },
+        qty,
+      ),
     )
     noticeId.current += 1
     setNotice({ id: noticeId.current, text: `Adicionado: ${name}` })
@@ -225,7 +229,7 @@ export function MenuScreen() {
           key={product.id}
           product={product}
           onClose={() => setProduct(null)}
-          onAdd={(note, extraIds) => addProduct(product, note, extraIds)}
+          onAdd={(note, extraIds, qty) => addProduct(product, note, extraIds, qty)}
         />
       )}
       {sheet === 'cart' && (

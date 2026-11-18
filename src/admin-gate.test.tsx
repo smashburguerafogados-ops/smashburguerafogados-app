@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -26,6 +26,9 @@ async function openAdmin(user: ReturnType<typeof userEvent.setup>) {
     window.setTimeout(resolve, 750)
   })
   const dialog = screen.getByRole('dialog', { name: 'Administração' })
+  const close = within(dialog).getByRole('button', { name: 'Fechar' })
+  expect(close).toHaveClass('mark-btn')
+  expect(close).not.toHaveTextContent('Fechar')
   expect(dialog.querySelectorAll('input')).toHaveLength(2)
   expect(dialog.querySelector('h2')).toBeNull()
   await user.type(screen.getByRole('textbox', { name: 'E-mail' }), 'pessoa@example.com')

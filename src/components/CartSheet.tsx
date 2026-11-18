@@ -92,7 +92,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
 
   if (placedId) {
     return (
-      <Overlay label="Carrinho" onClose={onClose} close="icon">
+      <Overlay label="Carrinho" onClose={onClose}>
         <h2>Pedido enviado</h2>
         <p>
           Pedido <strong>#{shortId(placedId)}</strong> recebido. Acompanhe em Meus pedidos.
@@ -105,7 +105,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
   }
 
   return (
-    <Overlay label="Carrinho" onClose={onClose} close="icon">
+    <Overlay label="Carrinho" onClose={onClose}>
       <h2>Carrinho</h2>
       {lines.length === 0 ? (
         <p className="muted">Seu carrinho está vazio.</p>
