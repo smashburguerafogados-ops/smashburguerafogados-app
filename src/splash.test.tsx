@@ -36,7 +36,7 @@ it('leaves the splash on the menu, not a login wall', async () => {
     await vi.advanceTimersByTimeAsync(700)
   })
 
-  expect(screen.getByRole('heading', { name: 'Cardápio' })).toBeInTheDocument()
+  expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Smash da casa/ })).toBeInTheDocument()
   expect(screen.queryByRole('tab', { name: 'Entrar' })).not.toBeInTheDocument()
 })

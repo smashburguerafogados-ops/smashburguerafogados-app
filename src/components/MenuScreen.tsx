@@ -106,6 +106,9 @@ export function MenuScreen() {
     setProduct(null)
   }
 
+  const firstName =
+    session.status === 'ready' ? (session.profile.nome.trim().split(/\s+/)[0] ?? '') : ''
+
   const hold = useLongPress(() => {
     if (isAdmin) {
       navigate('/admin')
@@ -125,9 +128,9 @@ export function MenuScreen() {
         <button type="button" className="menu__logo" aria-label="Smash Burguer" {...hold}>
           <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" />
         </button>
-        <div>
+        <div className="menu__brand">
           <p className="eyebrow">Smash Burguer</p>
-          <h1 className="menu__title">Cardápio</h1>
+          {firstName ? <h1 className="menu__title">{firstName}</h1> : null}
         </div>
       </header>
 

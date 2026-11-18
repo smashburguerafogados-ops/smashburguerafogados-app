@@ -40,7 +40,7 @@ describe('boot', () => {
     })
     await tick(700)
 
-    expect(screen.getByRole('heading', { name: 'Cardápio' })).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
     expect(localStorage.getItem('smash.customerId')).toBe('cliente-1')
   })
 
@@ -71,7 +71,7 @@ describe('boot', () => {
     render(<App />)
     await tick(2400)
     await tick(700)
-    expect(screen.getByRole('heading', { name: 'Cardápio' })).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
     expect(activeListeners('orders')).toHaveLength(0)
     expect(localStorage.getItem('smash.customerId')).toBeNull()
   })
@@ -83,7 +83,7 @@ describe('boot', () => {
     await tick(2400)
     await tick(700)
     expect(localStorage.getItem('smash.customerId')).toBeNull()
-    expect(screen.getByRole('heading', { name: 'Cardápio' })).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
   })
 
   it('does not hang forever when the history never answers', async () => {
@@ -94,6 +94,6 @@ describe('boot', () => {
     expect(screen.queryByRole('heading', { name: 'Cardápio' })).not.toBeInTheDocument()
     await tick(200)
     await tick(700)
-    expect(screen.getByRole('heading', { name: 'Cardápio' })).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
   })
 })
