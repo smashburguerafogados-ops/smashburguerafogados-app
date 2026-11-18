@@ -57,6 +57,20 @@ export function activeListeners(path: string): Listener[] {
   return listeners.filter((listener) => listener.active && listener.ref.path === path)
 }
 
+/** Pushes a document snapshot to the listener on that document path. */
+export function emitDoc(path: string, data: Record<string, unknown> | null): number {
+  const targets = listeners.filter((listener) => listener.active && listener.ref.path === path)
+  const id = path.split('/').pop() ?? path
+  targets.forEach((listener) =>
+    listener.next({
+      id,
+      exists: () => data !== null,
+      data: () => data ?? undefined,
+    }),
+  )
+  return targets.length
+}
+
 export function resetFirebaseMocks(): void {
   listeners.length = 0
   authState.user = null

@@ -1,4 +1,15 @@
-import { addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore'
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from 'firebase/firestore'
 import type { Category, Extra } from '../data/catalog'
 import { db } from './firebase'
 import { sortCategories } from './menu'
@@ -41,7 +52,55 @@ export async function setCategoryDestaque(id: string, destaque: boolean): Promis
 }
 
 export async function deleteCategory(id: string): Promise<void> {
+  const using = await getDocs(query(collection(db, 'products'), where('categoryId', '==', id)))
+  if (!using.empty) {
+    throw new Error('Esta categoria ainda tem produtos. Exclua esses produtos antes.')
+  }
   await deleteDoc(doc(db, 'categories', id))
+}
+
+export type ListedProduct = {
+  id: string
+  name: string
+  categoryId: string
+  price: number
+  available: boolean
+}
+
+export function watchProducts(onNext: (products: ListedProduct[]) => void, onError: () => void): () => void {
+  return onSnapshot(
+    collection(db, 'products'),
+    (snapshot) => {
+      const products: ListedProduct[] = []
+      snapshot.docs.forEach((entry) => {
+        const data = entry.data() as Record<string, unknown>
+        if (typeof data.name !== 'string') return
+        products.push({
+          id: entry.id,
+          name: data.name,
+          categoryId: typeof data.categoryId === 'string' ? data.categoryId : '',
+          price: typeof data.price === 'number' ? data.price : 0,
+          available: data.available !== false,
+        })
+      })
+      products.sort((a, b) => a.name.localeCompare(b.name, 'pt'))
+      onNext(products)
+    },
+    () => onError(),
+  )
+}
+
+export async function deleteProduct(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'products', id))
+}
+
+export async function setProductPrice(id: string, price: number): Promise<void> {
+  if (!(price > 0)) throw new Error('Informe um valor válido.')
+  await updateDoc(doc(db, 'products', id), { price })
+}
+
+export async function setProductAvailable(id: string, available: boolean): Promise<void> {
+  await updateDoc(doc(db, 'products', id), { available })
 }
 
 export type NewProduct = {

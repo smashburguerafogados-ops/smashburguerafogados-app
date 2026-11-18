@@ -11,8 +11,9 @@ rules_version = '2';
 // Firebase console, which bypasses these rules.
 //
 // categories are public to read. products are public to read only when
-// available is true. An admin may also read sold-out products.
-// Writes to categories and products require users/{uid}.role == 'admin'.
+// available is true. An admin read is its own rule so the product list
+// can listen to the whole collection. Writes, including delete, require
+// users/{uid}.role == 'admin'.
 //
 // orders: a signed-in customer creates an order for their own uid with
 // status "novo". They read only their own orders and may only move one
@@ -59,7 +60,8 @@ service cloud.firestore {
     }
 
     match /products/{productId} {
-      allow read: if resource.data.available == true || isAdmin();
+      allow read: if isAdmin();
+      allow read: if resource.data.available == true;
       allow write: if isAdmin();
     }
 
