@@ -58,23 +58,193 @@
   font-size: 1.45rem;
 }
 
-.theme-mark {
-  position: fixed;
-  z-index: 2;
-  top: 10px;
-  left: 50%;
-  width: 28px;
-  height: 28px;
-  transform: translateX(-50%);
-  color: var(--gold);
+.theme-decor,
+.theme-snow,
+.theme-fall,
+.theme-snow__flake,
+.theme-piece,
+.theme-ornament,
+.theme-flags,
+.theme-glow,
+.theme-year {
   pointer-events: none;
 }
 
-.theme-mark svg {
-  width: 28px;
-  height: 28px;
+.theme-decor {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  color: var(--gold);
+}
+
+.theme-snow,
+.theme-fall {
+  position: absolute;
+  inset: 0;
+}
+
+.theme-snow__flake,
+.theme-piece {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: var(--opacity);
+  animation: theme-snow-fall var(--dur) linear infinite;
+  animation-delay: var(--delay);
+}
+
+.theme-snow__flake {
+  font-size: var(--size);
+  line-height: 1;
+  color: rgba(220, 236, 255, 0.92);
+  text-shadow: 0 0 6px rgba(180, 220, 255, 0.45);
+}
+
+.theme-piece {
+  width: var(--size);
+  height: var(--size);
+  color: var(--piece, var(--gold));
+}
+
+.theme-piece svg,
+.theme-ornament svg,
+.theme-flags svg,
+.theme-year svg {
+  width: 100%;
+  height: 100%;
   display: block;
+}
+
+.theme-ornament {
+  position: absolute;
+  width: 36px;
+  height: 36px;
   filter: drop-shadow(0 0 8px var(--theme-glow, transparent));
+}
+
+.theme-ornament--tree {
+  width: 78px;
+  height: 78px;
+  left: 10px;
+  bottom: 96px;
+  color: #d7f5c8;
+}
+
+.theme-ornament--ball {
+  width: 30px;
+  height: 30px;
+  left: 78px;
+  bottom: 148px;
+  color: #e23b3b;
+}
+
+.theme-ornament--gift {
+  width: 32px;
+  height: 32px;
+  right: 16px;
+  top: 72px;
+  color: #f2d27a;
+}
+
+.theme-ornament--mask {
+  width: 56px;
+  height: 56px;
+  right: 12px;
+  bottom: 108px;
+  color: #ffd23f;
+}
+
+.theme-ornament--flag {
+  width: 34px;
+  height: 34px;
+  left: 14px;
+  top: 18px;
+  color: #3dbe6a;
+}
+
+.theme-ornament--egg {
+  left: 16px;
+  top: 64px;
+  color: #f3e27a;
+}
+
+.theme-ornament--egg-b {
+  left: auto;
+  right: 22px;
+  top: 120px;
+  color: #e09ad4;
+}
+
+.theme-ornament--bunny {
+  width: 48px;
+  height: 48px;
+  right: 18px;
+  bottom: 110px;
+  color: #f7f1e4;
+}
+
+.theme-flags {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 6px;
+  border-top: 3px solid var(--orange, #ff6a00);
+}
+
+.theme-flags span {
+  width: 26px;
+  height: 34px;
+}
+
+.theme-glow {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 24vh;
+  background: radial-gradient(ellipse at center bottom, var(--theme-glow, rgba(255, 106, 0, 0.45)), transparent 70%);
+}
+
+.theme-year {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gold);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: 1.2rem;
+}
+
+.theme-year svg {
+  width: 22px;
+  height: 22px;
+}
+
+@keyframes theme-snow-fall {
+  0% {
+    transform: translate3d(var(--x), -40px, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(calc(var(--x) + var(--drift)), 54dvh, 0) rotate(280deg);
+  }
+  100% {
+    transform: translate3d(var(--x), 112dvh, 0) rotate(620deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-snow__flake,
+  .theme-piece {
+    animation: none;
+    transform: translate3d(var(--x), 18vh, 0);
+  }
 }
 
 .theme-options {

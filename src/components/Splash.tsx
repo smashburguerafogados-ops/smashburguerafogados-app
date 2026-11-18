@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { readSavedCustomerId } from '../lib/customerId'
+import { applyDocumentTheme, useTheme } from '../lib/theme'
 import { FireBackdrop } from './FireBackdrop'
+import { ThemeDecor } from './ThemeMark'
 
 const HOLD_MS = 2300
 const LEAVE_MS = 560
@@ -16,8 +18,13 @@ export function Splash({ onDone, ready = true }: SplashProps) {
   const [held, setHeld] = useState(false)
   const [timedOut, setTimedOut] = useState(false)
   const [leaving, setLeaving] = useState(false)
+  const theme = useTheme()
   const savedCustomer = useRef(readSavedCustomerId() !== '')
   const reduce = useRef(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+
+  useEffect(() => {
+    applyDocumentTheme(theme)
+  }, [theme])
 
   useEffect(() => {
     const hold = window.setTimeout(() => setHeld(true), reduce.current ? 350 : HOLD_MS)
@@ -41,6 +48,7 @@ export function Splash({ onDone, ready = true }: SplashProps) {
 
   return (
     <div className={leaving ? 'splash splash--out' : 'splash'} role="status" aria-live="polite">
+      <ThemeDecor theme={theme} />
       <FireBackdrop />
       <div className="splash__glow" aria-hidden="true" />
       <div className="splash__mark">
