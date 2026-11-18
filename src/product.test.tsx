@@ -100,17 +100,15 @@ describe('Criar Produto', () => {
     expect(lastAdd('categories')).toMatchObject({ name: 'Bebidas', destaque: true, order: 3 })
   })
 
-  it('deletes a category and toggles its destaque tag', async () => {
+  it('toggles a category destaque tag and leaves delete to Produtos', async () => {
     const { user, form } = await openForm()
     await pickCategory(user, form, 'Lanches')
     await user.click(within(form).getByRole('checkbox', { name: 'Destaque' }))
     const [ref, patch] = firebaseMocks.updateDoc.mock.calls[0] as [{ path: string }, Record<string, unknown>]
     expect(ref.path).toBe('categories/lanches')
     expect(patch).toEqual({ destaque: true })
-
-    await user.click(within(form).getByRole('button', { name: 'Excluir categoria' }))
-    const [deleted] = firebaseMocks.deleteDoc.mock.calls[0] as [{ path: string }]
-    expect(deleted.path).toBe('categories/lanches')
+    expect(within(form).queryByRole('button', { name: 'Excluir categoria' })).not.toBeInTheDocument()
+    expect(firebaseMocks.deleteDoc).not.toHaveBeenCalled()
   })
 
   it('saves name, photo, category, valor, descrição and adicionais to Firestore', async () => {

@@ -48,6 +48,13 @@ describe('firestore.rules', () => {
     expect(rules).toContain("affectedKeys().hasOnly(['status', 'updatedAt'])")
   })
 
+  it('lets everyone read the shop flag and only an admin change it', () => {
+    const settings = block('settings')
+    expect(settings).toContain("allow read: if settingId == 'shop';")
+    expect(settings).toContain("allow write: if settingId == 'shop' && isAdmin();")
+    expect(settings).not.toMatch(/allow write: if true/)
+  })
+
   it('still denies everything else', () => {
     expect(rules).toMatch(/match \/\{document=\*\*\} \{\s*allow read, write: if false;/)
   })

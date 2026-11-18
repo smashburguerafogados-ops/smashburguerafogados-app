@@ -3,7 +3,6 @@ import type { Category, Extra } from '../data/catalog'
 import {
   createCategory,
   createProduct,
-  deleteCategory,
   parsePrice,
   setCategoryDestaque,
   watchCategories,
@@ -78,17 +77,6 @@ export function ProductForm({ onClose, onSaved }: ProductFormProps) {
       setNewDestaque(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível criar a categoria.')
-    }
-  }
-
-  async function removeCategory() {
-    if (!selected) return
-    setError('')
-    try {
-      await deleteCategory(selected.id)
-      setCategoryId('')
-    } catch {
-      setError('Não foi possível excluir a categoria.')
     }
   }
 
@@ -225,9 +213,6 @@ export function ProductForm({ onClose, onSaved }: ProductFormProps) {
               />
               <span>Destaque</span>
             </label>
-            <button type="button" className="text-btn" onClick={() => void removeCategory()}>
-              Excluir categoria
-            </button>
           </div>
         )}
 

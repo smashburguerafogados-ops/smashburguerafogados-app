@@ -15,6 +15,9 @@ rules_version = '2';
 // can listen to the whole collection. Writes, including delete, require
 // users/{uid}.role == 'admin'.
 //
+// settings/shop is public to read so the opening screen can show whether
+// the shop is online and the closed message. Only an admin can change it.
+//
 // orders: a signed-in customer creates an order for their own uid with
 // status "novo". They read only their own orders and may only move one
 // from "enviado" to "finalizado". An admin reads and updates every order.
@@ -96,6 +99,11 @@ service cloud.firestore {
       allow create: if orderCreate();
       allow update: if isAdmin() || customerFinishes();
       allow delete: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if settingId == 'shop';
+      allow write: if settingId == 'shop' && isAdmin();
     }
 
     match /connection_tests/{docId} {
