@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { GrillField } from './GrillField'
 
 const HOLD_MS = 2300
 const LEAVE_MS = 560
@@ -24,6 +25,7 @@ export function Splash({ onDone }: SplashProps) {
 
   return (
     <div className={leaving ? 'splash splash--out' : 'splash'} role="status" aria-live="polite">
+      <GrillField />
       <div className="splash__glow" aria-hidden="true" />
       <div className="splash__mark">
         <span className="tick tick--nw" aria-hidden="true" />
