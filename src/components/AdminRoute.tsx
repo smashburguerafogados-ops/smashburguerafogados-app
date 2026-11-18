@@ -1,9 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { watchCustomers } from '../lib/contacts'
 import { watchRevenue, type RevenueEntry } from '../lib/revenue'
 import { useTheme } from '../lib/theme'
+import type { UserProfile } from '../types'
 import { AdminPanel } from './AdminPanel'
+import { ContactScreen } from './ContactScreen'
 import { ProductDesk } from './ProductDesk'
 import { ProductForm } from './ProductForm'
 import { RevenueScreen } from './RevenueScreen'
@@ -66,6 +69,25 @@ function useRevenue(enabled: boolean) {
   return { entries, status }
 }
 
+function useCustomers(enabled: boolean) {
+  const [people, setPeople] = useState<UserProfile[]>([])
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+
+  useEffect(() => {
+    if (!enabled) return
+    setStatus('loading')
+    return watchCustomers(
+      (next) => {
+        setPeople(next)
+        setStatus('ready')
+      },
+      () => setStatus('error'),
+    )
+  }, [enabled])
+
+  return { people, status }
+}
+
 export function AdminRoute() {
   const { session, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -74,7 +96,10 @@ export function AdminRoute() {
   const [shop, setShop] = useState(false)
   const [revenueOpen, setRevenueOpen] = useState(false)
   const [themesOpen, setThemesOpen] = useState(false)
-  const revenue = useRevenue(session.status === 'ready' && session.profile.role === 'admin')
+  const [contactOpen, setContactOpen] = useState(false)
+  const adminReady = session.status === 'ready' && session.profile.role === 'admin'
+  const revenue = useRevenue(adminReady)
+  const contacts = useCustomers(adminReady)
   const theme = useTheme()
   useTitle('Painel | Smash Burguer')
 
@@ -137,6 +162,7 @@ export function AdminRoute() {
             setDesk(false)
             setRevenueOpen(false)
             setThemesOpen(false)
+            setContactOpen(false)
             setShop(true)
           }}
           onProducts={() => {
@@ -145,6 +171,7 @@ export function AdminRoute() {
             setShop(false)
             setRevenueOpen(false)
             setThemesOpen(false)
+            setContactOpen(false)
             setDesk(true)
           }}
           onRevenue={() => {
@@ -153,6 +180,7 @@ export function AdminRoute() {
             setDesk(false)
             setShop(false)
             setThemesOpen(false)
+            setContactOpen(false)
             setRevenueOpen(true)
           }}
           onThemes={() => {
@@ -161,7 +189,17 @@ export function AdminRoute() {
             setDesk(false)
             setShop(false)
             setRevenueOpen(false)
+            setContactOpen(false)
             setThemesOpen(true)
+          }}
+          onContact={() => {
+            setMenuOpen(false)
+            setCreating(false)
+            setDesk(false)
+            setShop(false)
+            setRevenueOpen(false)
+            setThemesOpen(false)
+            setContactOpen(true)
           }}
           onCreateProduct={() => {
             setMenuOpen(false)
@@ -169,6 +207,7 @@ export function AdminRoute() {
             setShop(false)
             setRevenueOpen(false)
             setThemesOpen(false)
+            setContactOpen(false)
             setCreating(true)
           }}
         />
@@ -180,6 +219,9 @@ export function AdminRoute() {
         <RevenueScreen entries={revenue.entries} status={revenue.status} onClose={() => setRevenueOpen(false)} />
       )}
       {themesOpen && <ThemeScreen applied={theme} onClose={() => setThemesOpen(false)} />}
+      {contactOpen && (
+        <ContactScreen people={contacts.people} status={contacts.status} onClose={() => setContactOpen(false)} />
+      )}
     </AdminFrame>
   )
 }

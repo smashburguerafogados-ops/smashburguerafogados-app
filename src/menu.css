@@ -99,6 +99,73 @@
   color: var(--gold);
 }
 
+.contact-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.contact-list button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  background: #000;
+  color: #f4f5f6;
+  text-align: left;
+}
+
+.contact-list button.is-selected {
+  border-color: #e3b15a;
+}
+
+.contact-list span {
+  color: #b4b3b8;
+}
+
+.contact-compose {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.contact-compose .field {
+  flex: 1;
+}
+
+.contact-compose textarea {
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+}
+
+.send-btn {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #e3b15a;
+  color: #141416;
+}
+
+.send-btn:disabled {
+  opacity: 0.4;
+}
+
+.send-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
 .menu__search {
   margin-top: 14px;
 }

@@ -7,10 +7,20 @@ type SideMenuProps = {
   onProducts: () => void
   onRevenue: () => void
   onThemes: () => void
+  onContact: () => void
   onCreateProduct: () => void
 }
 
-export function SideMenu({ onClose, onPanel, onShop, onProducts, onRevenue, onThemes, onCreateProduct }: SideMenuProps) {
+export function SideMenu({
+  onClose,
+  onPanel,
+  onShop,
+  onProducts,
+  onRevenue,
+  onThemes,
+  onContact,
+  onCreateProduct,
+}: SideMenuProps) {
   return (
     <Overlay label="Menu" onClose={onClose} variant="drawer">
       <h2>Menu</h2>
@@ -29,6 +39,9 @@ export function SideMenu({ onClose, onPanel, onShop, onProducts, onRevenue, onTh
         </button>
         <button type="button" className="drawer__link" onClick={onThemes}>
           Temas
+        </button>
+        <button type="button" className="drawer__link" onClick={onContact}>
+          Contato
         </button>
         <button type="button" className="drawer__link" onClick={onCreateProduct}>
           Criar Produto
