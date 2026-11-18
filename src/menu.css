@@ -1006,9 +1006,6 @@
 .shop-controls {
   display: grid;
   gap: 12px;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #1c1c1c;
 }
 
 .shop-controls__row {

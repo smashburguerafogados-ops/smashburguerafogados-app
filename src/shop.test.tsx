@@ -81,18 +81,29 @@ describe('Produtos', () => {
   })
 })
 
+async function openShop() {
+  signInAs(adminProfile)
+  const user = userEvent.setup()
+  renderApp('/admin')
+  await screen.findByRole('heading', { name: 'Painel' })
+  expect(screen.queryByRole('switch', { name: 'Online' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('textbox', { name: 'Mensagem de fechado' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Salvar mensagem' })).not.toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
+  await user.click(screen.getByRole('button', { name: 'Funcionamento' }))
+  const sheet = await screen.findByRole('dialog', { name: 'Funcionamento' })
+  await waitFor(() => expect(activeListeners('settings/shop')).toHaveLength(1))
+  return { user, sheet }
+}
+
 describe('shop hours', () => {
-  it('toggles Online and saves the closed message', async () => {
-    signInAs(adminProfile)
-    const user = userEvent.setup()
-    renderApp('/admin')
-    await screen.findByRole('heading', { name: 'Painel' })
-    await waitFor(() => expect(activeListeners('settings/shop')).toHaveLength(1))
+  it('opens Online and the closed message from the hamburger, not the painel', async () => {
+    const { user, sheet } = await openShop()
     await act(async () => {
       emitDoc('settings/shop', { online: true, message: DEFAULT_CLOSED_MESSAGE })
     })
 
-    const toggle = screen.getByRole('switch', { name: 'Online' })
+    const toggle = within(sheet).getByRole('switch', { name: 'Online' })
     expect(toggle).toHaveAttribute('aria-checked', 'true')
     await user.click(toggle)
     expect(firebaseMocks.setDoc).toHaveBeenCalledWith(
@@ -101,10 +112,10 @@ describe('shop hours', () => {
       { merge: true },
     )
 
-    const message = screen.getByRole('textbox', { name: 'Mensagem de fechado' })
+    const message = within(sheet).getByRole('textbox', { name: 'Mensagem de fechado' })
     await user.clear(message)
     await user.type(message, 'Hoje fechado. Abrimos sexta, das 18h às 23h.')
-    await user.click(screen.getByRole('button', { name: 'Salvar mensagem' }))
+    await user.click(within(sheet).getByRole('button', { name: 'Salvar mensagem' }))
     expect(firebaseMocks.setDoc).toHaveBeenLastCalledWith(
       { path: 'settings/shop' },
       { online: false, message: 'Hoje fechado. Abrimos sexta, das 18h às 23h.' },
@@ -151,14 +162,11 @@ describe('shop hours', () => {
   })
 
   it('keeps the admin panel available while the shop is offline', async () => {
-    signInAs(adminProfile)
-    renderApp('/admin')
-    expect(await screen.findByRole('heading', { name: 'Painel' })).toBeInTheDocument()
-    await waitFor(() => expect(activeListeners('settings/shop')).toHaveLength(1))
+    const { sheet } = await openShop()
     await act(async () => {
       emitDoc('settings/shop', { online: false, message: 'Fechado hoje.' })
     })
     expect(screen.getByRole('heading', { name: 'Painel' })).toBeInTheDocument()
-    expect(screen.getByRole('switch', { name: 'Online' })).toHaveAttribute('aria-checked', 'false')
+    expect(within(sheet).getByRole('switch', { name: 'Online' })).toHaveAttribute('aria-checked', 'false')
   })
 })
