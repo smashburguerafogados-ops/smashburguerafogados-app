@@ -9,7 +9,7 @@ import {
   watchCategories,
 } from '../lib/adminCatalog'
 import { readPhoto } from '../lib/photo'
-import { Overlay } from './Overlay'
+import { ChoiceList } from './ChoiceList'
 
 type ProductFormProps = {
   onClose: () => void
@@ -35,6 +35,14 @@ export function ProductForm({ onClose, onSaved }: ProductFormProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
 
   useEffect(
     () =>
@@ -147,8 +155,14 @@ export function ProductForm({ onClose, onSaved }: ProductFormProps) {
   }
 
   return (
-    <Overlay label="Criar Produto" onClose={onClose}>
-      <h2>Criar Produto</h2>
+    <div className="product-screen" role="dialog" aria-modal="true" aria-label="Criar Produto">
+      <div className="product-screen__inner">
+      <div className="product-screen__bar">
+        <h2>Criar Produto</h2>
+        <button type="button" className="text-btn" onClick={onClose}>
+          Fechar
+        </button>
+      </div>
       <form className="product-form" onSubmit={onSubmit} noValidate>
         <label className="field">
           <span>Nome</span>
@@ -183,18 +197,22 @@ export function ProductForm({ onClose, onSaved }: ProductFormProps) {
           </div>
         </div>
 
-        <label className="field">
+        <div className="field">
           <span>Categoria</span>
-          <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>
-            <option value="">Escolha uma categoria</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.destaque ? `${category.name} (destaque)` : category.name}
-              </option>
-            ))}
-            <option value={NEW_CATEGORY}>+ Nova categoria</option>
-          </select>
-        </label>
+          <ChoiceList
+            label="Categoria"
+            value={categoryId}
+            onChange={setCategoryId}
+            choices={[
+              { value: '', label: 'Escolha uma categoria' },
+              ...categories.map((category) => ({
+                value: category.id,
+                label: category.destaque ? `${category.name} (destaque)` : category.name,
+              })),
+              { value: NEW_CATEGORY, label: '+ Nova categoria' },
+            ]}
+          />
+        </div>
         {categoriesError && <p className="alert">{categoriesError}</p>}
 
         {selected && (
@@ -299,6 +317,7 @@ export function ProductForm({ onClose, onSaved }: ProductFormProps) {
           {busy ? 'Salvando...' : 'Salvar produto'}
         </button>
       </form>
-    </Overlay>
+      </div>
+    </div>
   )
 }

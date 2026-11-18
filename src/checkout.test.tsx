@@ -99,6 +99,7 @@ describe('cart and checkout', () => {
     expect(within(cart).getByTestId('cart-total')).toHaveTextContent('R$ 44,00')
 
     expect(within(cart).getByRole('group', { name: 'Forma de pagamento' })).toBeInTheDocument()
+    expect(cart.querySelector('select')).toBeNull()
     const notice = within(cart).getByText('Os pagamentos são feitos ao entregador.')
     expect(getComputedStyle(notice).color).toBe('rgb(255, 59, 48)')
     expect(within(cart).getByRole('button', { name: 'Fazer Pedido' })).toBeDisabled()

@@ -151,6 +151,10 @@ it('uses a floating gold pill for the active shortcut and icons otherwise', asyn
 
   const whatsapp = screen.getByRole('button', { name: 'WhatsApp' })
   expect(whatsapp.querySelector('.dock__label')).toBeNull()
+  const mark = whatsapp.querySelector('svg')
+  expect(mark).toHaveAttribute('data-icon', 'whatsapp')
+  expect(mark?.querySelector('path')).toHaveAttribute('fill', 'currentColor')
+  expect(getComputedStyle(whatsapp).color).toBe('rgb(244, 245, 246)')
 
   await user.click(screen.getByRole('button', { name: 'Conta' }))
   const active = dock.querySelector('.dock__item.is-active') as HTMLElement
@@ -171,9 +175,19 @@ it('hides the hamburger and shows history with short dividers on the customer ba
   expect(history.querySelector('svg')).not.toBeNull()
   expect(dock.querySelector('.dock__count')).toHaveTextContent('0')
   expect(dock.querySelector('.dock__sum')).toHaveTextContent('R$ 0,00')
-  expect(screen.getByRole('button', { name: 'WhatsApp' })).toBeInTheDocument()
+  const whatsapp = screen.getByRole('button', { name: 'WhatsApp' })
+  expect(whatsapp.querySelector('svg')).toHaveAttribute('data-icon', 'whatsapp')
 
   const items = Array.from(dock.querySelectorAll('.dock__item')) as HTMLElement[]
+  const cart = screen.getByRole('button', { name: /Carrinho/ })
+  expect(cart.querySelector('.dock__count')).not.toBeNull()
+  expect(cart.querySelector('.dock__sum')).not.toBeNull()
+  for (const item of items) {
+    const style = getComputedStyle(item)
+    expect(style.justifyContent).toBe('center')
+    expect(style.alignItems).toBe('center')
+    expect(Number(style.flexGrow)).toBeGreaterThan(0)
+  }
   const rules = Array.from(dock.querySelectorAll('.dock__rule')) as HTMLElement[]
   expect(items).toHaveLength(4)
   expect(rules).toHaveLength(items.length - 1)

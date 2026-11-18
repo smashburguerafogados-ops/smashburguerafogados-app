@@ -30,6 +30,12 @@ async function openForm() {
   return { user, form: screen.getByRole('dialog', { name: 'Criar Produto' }) }
 }
 
+async function pickCategory(user: ReturnType<typeof userEvent.setup>, form: HTMLElement, name: string) {
+  await user.click(within(form).getByRole('button', { name: 'Categoria' }))
+  const list = within(form).getByRole('listbox', { name: 'Categoria' })
+  await user.click(within(list).getByRole('option', { name }))
+}
+
 function lastAdd(path: string): Record<string, unknown> {
   const call = firebaseMocks.addDoc.mock.calls.filter(([ref]) => (ref as { path: string }).path === path).pop()
   if (!call) throw new Error(`no addDoc on ${path}`)
@@ -58,13 +64,35 @@ describe('Criar Produto', () => {
     expect(gallery).not.toHaveAttribute('capture')
   })
 
+  it('is a full screen the admin can scroll', async () => {
+    const { form } = await openForm()
+    expect(form).toHaveClass('product-screen')
+    expect(form.closest('.sheet, .popup')).toBeNull()
+    const style = getComputedStyle(form)
+    expect(style.position).toBe('fixed')
+    expect(style.top).toBe('0px')
+    expect(style.right).toBe('0px')
+    expect(style.bottom).toBe('0px')
+    expect(style.left).toBe('0px')
+    expect(style.overflowY).toBe('auto')
+    expect(style.maxHeight).toBe('none')
+    expect(style.backgroundColor).toBe('rgb(0, 0, 0)')
+    expect(Number(style.zIndex)).toBeGreaterThan(50)
+    expect(form.querySelector('select')).toBeNull()
+  })
+
   it('lists existing categories with destaque first and can create one', async () => {
     const { user, form } = await openForm()
-    const select = within(form).getByRole('combobox', { name: 'Categoria' })
-    const options = within(select).getAllByRole('option').map((option) => option.textContent)
+    expect(form.querySelector('select')).toBeNull()
+    await user.click(within(form).getByRole('button', { name: 'Categoria' }))
+    const list = within(form).getByRole('listbox', { name: 'Categoria' })
+    const listStyle = getComputedStyle(list)
+    expect(listStyle.backgroundColor).toBe('rgb(0, 0, 0)')
+    expect(listStyle.color).toBe('rgb(244, 245, 246)')
+    const options = within(list).getAllByRole('option').map((option) => option.textContent)
     expect(options).toEqual(['Escolha uma categoria', 'Promoções (destaque)', 'Lanches', '+ Nova categoria'])
 
-    await user.selectOptions(select, '__nova__')
+    await user.click(within(list).getByRole('option', { name: '+ Nova categoria' }))
     await user.type(within(form).getByRole('textbox', { name: 'Nova categoria' }), 'Bebidas')
     await user.click(within(form).getByRole('checkbox', { name: 'Destaque' }))
     await user.click(within(form).getByRole('button', { name: 'Criar categoria' }))
@@ -74,7 +102,7 @@ describe('Criar Produto', () => {
 
   it('deletes a category and toggles its destaque tag', async () => {
     const { user, form } = await openForm()
-    await user.selectOptions(within(form).getByRole('combobox', { name: 'Categoria' }), 'lanches')
+    await pickCategory(user, form, 'Lanches')
     await user.click(within(form).getByRole('checkbox', { name: 'Destaque' }))
     const [ref, patch] = firebaseMocks.updateDoc.mock.calls[0] as [{ path: string }, Record<string, unknown>]
     expect(ref.path).toBe('categories/lanches')
@@ -96,7 +124,7 @@ describe('Criar Produto', () => {
       'src',
       'data:image/jpeg;base64,QUJD',
     )
-    await user.selectOptions(within(form).getByRole('combobox', { name: 'Categoria' }), 'promo')
+    await pickCategory(user, form, 'Promoções (destaque)')
     await user.type(within(form).getByRole('textbox', { name: 'Valor (R$)' }), 'R$29,90x')
     await user.type(within(form).getByRole('textbox', { name: 'Descrição' }), 'Blend 90g, bacon e cheddar.')
     await user.click(within(form).getByRole('button', { name: '+ Adicional' }))

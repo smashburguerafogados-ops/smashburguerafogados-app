@@ -1,10 +1,14 @@
-import { act, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { Griddle } from './components/Griddle'
 import { activeListeners, emit, firebaseMocks } from './test/mocks'
-import { adminProfile, makeOrder, renderApp, signInAs } from './test/render'
+import { adminProfile, makeOrder, Providers, renderApp, signInAs } from './test/render'
+import { AdminRoute } from './components/AdminRoute'
+import { Route, Routes } from 'react-router-dom'
 import './index.css'
 import './menu.css'
+import './griddle.css'
 
 const novo = makeOrder({ id: 'pedido-00001', status: 'novo' })
 const andamento = makeOrder({ id: 'pedido-00002', status: 'andamento', customerName: 'Bruno Lima' })
@@ -54,25 +58,36 @@ describe('admin board', () => {
     expect(listener.ref.constraints ?? []).toEqual([])
   })
 
+  it('is a plain black screen without the logo, griddle, or cardápio header', async () => {
+    signInAs(adminProfile)
+    render(
+      <Providers path="/admin">
+        <Griddle />
+        <Routes>
+          <Route path="/admin" element={<AdminRoute />} />
+        </Routes>
+      </Providers>,
+    )
+    await screen.findByRole('heading', { name: 'Painel' })
+    const admin = document.querySelector('.admin') as HTMLElement
+    const style = getComputedStyle(admin)
+    expect(style.backgroundColor).toBe('rgb(0, 0, 0)')
+    expect(Number(style.zIndex)).toBeGreaterThan(Number(getComputedStyle(screen.getByTestId('griddle')).zIndex))
+    expect(admin.querySelector('img, video, .griddle, .griddle__glow, .menu__top, .topbar__brand')).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Smash Burguer' })).not.toBeInTheDocument()
+    expect(document.querySelector('.menu__title')).toBeNull()
+  })
+
   it('fits Novos, Em Andamento and Finalizados inside a phone-width card', async () => {
     await openBoard()
-    const shell = document.querySelector('.shell__main') as HTMLElement
-    const card = document.querySelector('.card--board') as HTMLElement
+    const main = document.querySelector('.admin__main') as HTMLElement
     const columns = document.querySelector('.board__columns') as HTMLElement
     const column = document.querySelector('.board__column') as HTMLElement
-    const shellStyle = getComputedStyle(shell)
-    const cardStyle = getComputedStyle(card)
+    const mainStyle = getComputedStyle(main)
     const columnsStyle = getComputedStyle(columns)
     const columnStyle = getComputedStyle(column)
     const phone = 320
-    const board =
-      phone -
-      parseFloat(shellStyle.paddingLeft) -
-      parseFloat(shellStyle.paddingRight) -
-      parseFloat(cardStyle.paddingLeft) -
-      parseFloat(cardStyle.paddingRight) -
-      parseFloat(cardStyle.borderLeftWidth) -
-      parseFloat(cardStyle.borderRightWidth)
+    const board = phone - parseFloat(mainStyle.paddingLeft) - parseFloat(mainStyle.paddingRight)
     const gap = parseFloat(columnsStyle.columnGap)
     const content =
       (board - gap * 2) / 3 -
