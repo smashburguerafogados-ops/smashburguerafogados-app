@@ -20,15 +20,30 @@ import { DeliveryForm } from './DeliveryForm'
 import { Overlay } from './Overlay'
 import type { UserProfile } from '../types'
 
+const EMPTY_CUSTOMER: UserProfile = {
+  uid: '',
+  nome: '',
+  whatsapp: '',
+  address: null,
+  role: 'customer',
+}
+
+function MinusMark() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 12h10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 type CartSheetProps = {
   lines: CartLine[]
   onClose: () => void
   onRemove: (key: string) => void
   onPlaced: () => void
-  onNeedAccount: () => void
 }
 
-export function CartSheet({ lines, onClose, onRemove, onPlaced, onNeedAccount }: CartSheetProps) {
+export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps) {
   const { session } = useAuth()
   const [checkout, setCheckout] = useState<CheckoutState>(emptyCheckout)
   const [busy, setBusy] = useState(false)
@@ -68,20 +83,16 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced, onNeedAccount }:
 
   async function submit() {
     if (!ready || busy) return
-    if (session.status !== 'ready' || session.profile.role !== 'customer') {
-      onNeedAccount()
+    if (session.status === 'ready' && session.profile.role === 'customer' && deliveryReady(session.profile)) {
+      await send(session.profile)
       return
     }
-    if (!deliveryReady(session.profile)) {
-      setNeedsDelivery(true)
-      return
-    }
-    await send(session.profile)
+    setNeedsDelivery(true)
   }
 
   if (placedId) {
     return (
-      <Overlay label="Carrinho" onClose={onClose}>
+      <Overlay label="Carrinho" onClose={onClose} close="icon">
         <h2>Pedido enviado</h2>
         <p>
           Pedido <strong>#{shortId(placedId)}</strong> recebido. Acompanhe em Meus pedidos.
@@ -94,7 +105,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced, onNeedAccount }:
   }
 
   return (
-    <Overlay label="Carrinho" onClose={onClose}>
+    <Overlay label="Carrinho" onClose={onClose} close="icon">
       <h2>Carrinho</h2>
       {lines.length === 0 ? (
         <p className="muted">Seu carrinho está vazio.</p>
@@ -111,8 +122,8 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced, onNeedAccount }:
               </div>
               <div className="cart__side">
                 <span className="cart__line-total">{formatPrice(line.priceCents * line.qty)}</span>
-                <button type="button" className="text-btn" onClick={() => onRemove(line.key)}>
-                  Remover
+                <button type="button" className="mark-btn" aria-label="Remover" onClick={() => onRemove(line.key)}>
+                  <MinusMark />
                 </button>
               </div>
             </li>
@@ -208,9 +219,11 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced, onNeedAccount }:
           </button>
         </>
       )}
-      {needsDelivery && session.status === 'ready' && (
+      {needsDelivery && (
         <DeliveryForm
-          profile={session.profile}
+          profile={
+            session.status === 'ready' && session.profile.role === 'customer' ? session.profile : EMPTY_CUSTOMER
+          }
           onClose={() => setNeedsDelivery(false)}
           onSaved={(profile) => void send(profile)}
         />

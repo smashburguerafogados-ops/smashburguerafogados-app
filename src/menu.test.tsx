@@ -138,7 +138,8 @@ it('adds a note and updates the cart count and total', async () => {
   expect(cart).toHaveTextContent('sem cebola')
   expect(cart).toHaveTextContent('Smash da casa')
   expect(cart).toHaveTextContent('R$ 28,00')
-  expect(dock.querySelector('.dock__item.is-active .dock__label')).toHaveTextContent('Carrinho')
+  expect(dock.querySelector('.dock__label')).toBeNull()
+  expect(dock.querySelector('.dock__item.is-active')).not.toBeNull()
 })
 
 it('shows a thin toast when a product is added and clears it after 3 seconds', async () => {
@@ -189,12 +190,27 @@ it('fits the item name on one line and does not head the cart with the customer 
   expect(nameStyle.textOverflow).toBe('ellipsis')
   expect(getComputedStyle(name.parentElement as HTMLElement).minWidth).toBe('0px')
 
+  const close = within(cart).getByRole('button', { name: 'Fechar' })
+  expect(close).toHaveClass('mark-btn')
+  expect(close).not.toHaveTextContent('Fechar')
+  expect(close.querySelector('svg')).toBeInTheDocument()
+  const closeStyle = getComputedStyle(close)
+  expect(closeStyle.borderRadius).toBe('50%')
+  expect(closeStyle.borderColor).toBe('rgb(227, 177, 90)')
+  expect(closeStyle.color).toBe('rgb(244, 245, 246)')
+
+  const remove = within(cart).getByRole('button', { name: 'Remover' })
+  expect(remove).toHaveClass('mark-btn')
+  expect(remove).not.toHaveTextContent('Remover')
+  expect(remove.querySelector('svg')).toBeInTheDocument()
+  expect(getComputedStyle(remove).borderRadius).toBe('50%')
+
   const total = cart.querySelector('.cart__line-total') as HTMLElement
   expect(total).toHaveTextContent('R$ 32,00')
   expect(getComputedStyle(total).whiteSpace).toBe('nowrap')
   expect(getComputedStyle(total.parentElement as HTMLElement).flexGrow).toBe('0')
   expect(within(cart).getByText('1 × R$ 32,00')).toBeInTheDocument()
-  expect(within(cart).getByRole('button', { name: 'Remover' })).toBeInTheDocument()
+  expect(remove).toBeInTheDocument()
   expect(within(cart).getByTestId('cart-total')).toBeInTheDocument()
   expect(within(cart).getByRole('group', { name: 'Forma de pagamento' })).toBeInTheDocument()
 })
@@ -253,9 +269,14 @@ it('uses a floating gold pill for the active shortcut and icons otherwise', asyn
 
   await user.click(screen.getByRole('button', { name: 'Conta' }))
   const active = dock.querySelector('.dock__item.is-active') as HTMLElement
-  expect(active.querySelector('.dock__label')).toHaveTextContent('Conta')
+  expect(active).toHaveAttribute('aria-label', 'Conta')
+  expect(active.querySelector('.dock__label')).toBeNull()
+  expect(active.textContent?.trim()).toBe('')
   expect(getComputedStyle(active).backgroundColor).toBe('rgb(227, 177, 90)')
-  expect(dock.querySelectorAll('.dock__label')).toHaveLength(1)
+  expect(dock.querySelectorAll('.dock__label')).toHaveLength(0)
+  for (const button of dock.querySelectorAll('.dock__item')) {
+    expect(button.querySelector('.dock__label')).toBeNull()
+  }
 })
 
 it('hides the hamburger and shows history with short dividers on the customer bar', () => {

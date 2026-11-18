@@ -234,7 +234,6 @@ export function MenuScreen() {
           onClose={() => setSheet(null)}
           onRemove={(key) => setLines((current) => removeCartLine(current, key))}
           onPlaced={() => setLines([])}
-          onNeedAccount={() => setSheet('profile')}
         />
       )}
       {sheet === 'profile' && <ProfileSheet onClose={() => setSheet(null)} />}
