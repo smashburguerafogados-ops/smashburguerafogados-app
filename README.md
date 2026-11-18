@@ -96,6 +96,8 @@ Adding a product updates the count and total on the bar immediately. The cart li
 
 With Dinheiro the customer answers "Precisa de troco?". Não enables **Fazer Pedido**. Sim shows a numeric-only field for the cash in hand, in whole reais. As they type, the change (cash minus total) is shown, and Fazer Pedido stays disabled until the cash is greater than the total. A visitor who is not signed in is sent to Conta instead.
 
+A signed-in customer missing a name, phone or address gets **Dados para entrega** before the order is placed, not the Conta sheet. Nome is required. Telefone shows the prefix `87 9`; they type the rest, and the app stores one full number (prefix plus what they typed, with country code 55) on `users/{uid}.whatsapp` and on the order. CEP is looked up at ViaCEP. A match fills endereço, bairro and cidade, and número is still required. A miss leaves those fields empty and required. Ponto de referência stays optional. The saved profile is the one copied onto the order.
+
 The order is saved in Firestore `orders` with the customer id, name, WhatsApp, address, items, total, payment and troco, and `status: "novo"`.
 
 ## Meus pedidos

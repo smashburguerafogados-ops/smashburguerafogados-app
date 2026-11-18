@@ -15,11 +15,11 @@ import {
   signOut,
   type User,
 } from 'firebase/auth'
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
+import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 import { auth, authReady, db } from '../lib/firebase'
 import { clearSavedCustomerId, saveCustomerId } from '../lib/customerId'
 import { mapAuthError } from '../lib/errors'
-import { normalizeWhatsapp, whatsappToEmail } from '../lib/identity'
+import { digitsOnly, normalizeWhatsapp, whatsappToEmail } from '../lib/identity'
 import { parseProfile, type Address, type UserProfile } from '../types'
 
 type Session =
@@ -35,11 +35,18 @@ export type RegisterInput = {
   address: Address
 }
 
+export type DeliveryInput = {
+  nome: string
+  whatsapp: string
+  address: Address
+}
+
 type AuthContextValue = {
   session: Session
   login: (whatsapp: string, password: string) => Promise<void>
   loginWithEmail: (email: string, password: string) => Promise<void>
   register: (input: RegisterInput) => Promise<void>
+  saveDelivery: (input: DeliveryInput) => Promise<UserProfile>
   logout: () => Promise<void>
 }
 
@@ -195,6 +202,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } finally {
           suspendListener.current = false
         }
+      },
+      async saveDelivery(input) {
+        if (session.status !== 'ready' || session.profile.role !== 'customer') {
+          throw new Error('Entre na conta para salvar a entrega.')
+        }
+        const nome = input.nome.trim().replace(/\s+/g, ' ')
+        const whatsapp = normalizeWhatsapp(input.whatsapp)
+        if (!nome) throw new Error('Informe seu nome.')
+        if (!whatsapp) throw new Error('Informe o telefone.')
+        const street = input.address.street.trim()
+        const number = input.address.number.trim()
+        const neighborhood = input.address.neighborhood.trim()
+        const city = input.address.city.trim()
+        if (!street || !number || !neighborhood || !city) {
+          throw new Error('Preencha endereço, número, bairro e cidade.')
+        }
+        const profile: UserProfile = {
+          ...session.profile,
+          nome,
+          whatsapp,
+          address: {
+            cep: digitsOnly(input.address.cep),
+            street,
+            number,
+            neighborhood,
+            city,
+            state: input.address.state.trim(),
+            reference: input.address.reference.trim(),
+          },
+        }
+        await updateDoc(doc(db, 'users', profile.uid), {
+          nome: profile.nome,
+          whatsapp: profile.whatsapp,
+          address: profile.address,
+        })
+        setSession({ status: 'ready', profile })
+        return profile
       },
       async logout() {
         await signOut(auth)

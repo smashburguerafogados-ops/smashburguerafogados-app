@@ -193,6 +193,34 @@
   display: block;
 }
 
+.delivery {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.phone-join {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field .phone-join__prefix {
+  flex: none;
+  padding: 12px 10px;
+  border: 1px solid var(--line);
+  background: #0e0e10;
+  color: #f4f5f6;
+  font-family: var(--font-body);
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.phone-join input {
+  min-width: 0;
+}
+
 .product {
   display: flex;
   gap: 12px;
