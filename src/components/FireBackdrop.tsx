@@ -1,4 +1,4 @@
-export const FIRE_PLAYBACK_RATE = 0.5
+export const FIRE_PLAYBACK_RATE = 0.25
 
 function keepFireCalm(video: HTMLVideoElement | null) {
   if (!video || video.playbackRate === FIRE_PLAYBACK_RATE) return
