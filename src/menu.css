@@ -83,13 +83,54 @@
   position: absolute;
 }
 
-.theme-bg--natal,
-.theme-bg--ano-novo,
-.theme-bg--carnaval,
-.theme-bg--pascoa,
+.theme-bg--natal {
+  background-color: #100c10;
+  background-image:
+    radial-gradient(ellipse 78% 52% at 10% 6%, rgba(200, 16, 46, 0.34), transparent 64%),
+    radial-gradient(ellipse 70% 48% at 94% 16%, rgba(20, 108, 67, 0.36), transparent 66%),
+    radial-gradient(ellipse 90% 42% at 48% 100%, rgba(212, 175, 55, 0.2), transparent 62%),
+    linear-gradient(168deg, #160a10 0%, #0c1612 52%, #14110a 100%);
+}
+
+.theme-bg--ano-novo {
+  background-color: #09090b;
+  background-image:
+    radial-gradient(ellipse 62% 42% at 16% 10%, rgba(242, 193, 78, 0.26), transparent 64%),
+    radial-gradient(ellipse 56% 40% at 88% 18%, rgba(214, 216, 222, 0.2), transparent 66%),
+    radial-gradient(ellipse 80% 36% at 50% 100%, rgba(242, 193, 78, 0.12), transparent 60%),
+    linear-gradient(180deg, #050506 0%, #101014 54%, #0c0c10 100%);
+}
+
+.theme-bg--carnaval {
+  background-color: #14110e;
+  background-image:
+    radial-gradient(ellipse 52% 40% at 8% 8%, rgba(230, 179, 37, 0.28), transparent 66%),
+    radial-gradient(ellipse 48% 38% at 94% 14%, rgba(255, 79, 154, 0.24), transparent 64%),
+    radial-gradient(ellipse 46% 36% at 82% 90%, rgba(47, 111, 237, 0.22), transparent 66%),
+    radial-gradient(ellipse 48% 36% at 12% 88%, rgba(0, 156, 59, 0.26), transparent 64%),
+    radial-gradient(ellipse 36% 28% at 48% 46%, rgba(255, 225, 77, 0.12), transparent 62%),
+    linear-gradient(155deg, #16120c 0%, #12141c 50%, #10160f 100%);
+}
+
+.theme-bg--pascoa {
+  background-color: #14161a;
+  background-image:
+    radial-gradient(ellipse 54% 40% at 12% 12%, rgba(246, 216, 107, 0.26), transparent 66%),
+    radial-gradient(ellipse 50% 40% at 90% 18%, rgba(125, 206, 160, 0.24), transparent 64%),
+    radial-gradient(ellipse 58% 42% at 72% 92%, rgba(201, 160, 220, 0.26), transparent 66%),
+    radial-gradient(ellipse 40% 30% at 22% 80%, rgba(246, 216, 107, 0.1), transparent 62%),
+    linear-gradient(180deg, #16181e 0%, #141820 56%, #17141a 100%);
+}
+
 .theme-bg--sao-joao {
-  background-color: #000000;
-  background-image: none;
+  background-color: #16110c;
+  background-image:
+    radial-gradient(ellipse 48% 36% at 8% 10%, rgba(226, 59, 59, 0.26), transparent 66%),
+    radial-gradient(ellipse 44% 34% at 92% 12%, rgba(255, 204, 0, 0.2), transparent 64%),
+    radial-gradient(ellipse 46% 36% at 16% 90%, rgba(0, 156, 59, 0.24), transparent 66%),
+    radial-gradient(ellipse 42% 32% at 86% 86%, rgba(29, 78, 216, 0.22), transparent 64%),
+    radial-gradient(ellipse 60% 28% at 50% 100%, rgba(241, 90, 34, 0.2), transparent 60%),
+    linear-gradient(180deg, #1a120e 0%, #14110f 54%, #16140e 100%);
 }
 
 .theme-decor {

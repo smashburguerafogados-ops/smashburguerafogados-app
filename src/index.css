@@ -32,8 +32,8 @@ body {
   background: #0b0b0a;
 }
 
-/* Looked-up festival colors. The page itself stays #000000. Festival colors sit on text, borders, and the icons.
-   Natal: red, green, gold. Ano Novo: black, gold, silver, white.
+/* Looked-up festival colors. The page is a soft dark gradient of those colors. Text, borders, and icons keep the same palette.
+   Natal: red, green, gold. Ano Novo: black, gold, silver.
    Carnaval: gold, green, pink, blue, yellow (Mangueira green and pink; frevo yellow, green, and blue).
    Páscoa: yellow, green, lilac. São João: red, yellow, green, blue, orange. */
 html[data-theme='natal'] {
@@ -43,7 +43,6 @@ html[data-theme='natal'] {
   --theme-wash: rgba(7, 21, 37, 0.55);
   --theme-glow: rgba(212, 175, 55, 0.4);
   --theme-scene: snow-night;
-  background: #000000;
 }
 
 html[data-theme='ano-novo'] {
@@ -52,7 +51,6 @@ html[data-theme='ano-novo'] {
   --theme-wash: rgba(7, 6, 10, 0.5);
   --theme-glow: rgba(242, 193, 78, 0.45);
   --theme-scene: fireworks-night;
-  background: #000000;
 }
 
 html[data-theme='carnaval'] {
@@ -65,7 +63,6 @@ html[data-theme='carnaval'] {
   --theme-wash: rgba(18, 20, 28, 0.4);
   --theme-glow: rgba(230, 179, 37, 0.4);
   --theme-scene: carnival-pattern;
-  background: #000000;
 }
 
 html[data-theme='pascoa'] {
@@ -75,7 +72,6 @@ html[data-theme='pascoa'] {
   --theme-wash: rgba(28, 36, 48, 0.4);
   --theme-glow: rgba(246, 216, 107, 0.4);
   --theme-scene: easter;
-  background: #000000;
 }
 
 html[data-theme='sao-joao'] {
@@ -87,25 +83,19 @@ html[data-theme='sao-joao'] {
   --theme-wash: rgba(26, 16, 8, 0.45);
   --theme-glow: rgba(241, 90, 34, 0.5);
   --theme-scene: festa-junina;
-  background: #000000;
 }
 
-html[data-theme='natal'] body,
-html[data-theme='ano-novo'] body,
-html[data-theme='carnaval'] body,
-html[data-theme='pascoa'] body,
-html[data-theme='sao-joao'] body,
-html[data-theme='natal'] .splash,
-html[data-theme='ano-novo'] .splash,
-html[data-theme='carnaval'] .splash,
-html[data-theme='pascoa'] .splash,
-html[data-theme='sao-joao'] .splash,
 html[data-theme='natal'] .menu,
 html[data-theme='ano-novo'] .menu,
 html[data-theme='carnaval'] .menu,
 html[data-theme='pascoa'] .menu,
-html[data-theme='sao-joao'] .menu {
-  background: #000000;
+html[data-theme='sao-joao'] .menu,
+html[data-theme='natal'] .splash,
+html[data-theme='ano-novo'] .splash,
+html[data-theme='carnaval'] .splash,
+html[data-theme='pascoa'] .splash,
+html[data-theme='sao-joao'] .splash {
+  background-color: transparent;
   background-image: none;
 }
 
