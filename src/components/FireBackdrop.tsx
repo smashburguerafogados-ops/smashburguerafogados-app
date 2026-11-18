@@ -1,3 +1,10 @@
+export const FIRE_PLAYBACK_RATE = 0.5
+
+function keepFireCalm(video: HTMLVideoElement | null) {
+  if (!video || video.playbackRate === FIRE_PLAYBACK_RATE) return
+  video.playbackRate = FIRE_PLAYBACK_RATE
+}
+
 export function FireBackdrop() {
   const base = import.meta.env.BASE_URL
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -16,6 +23,10 @@ export function FireBackdrop() {
           loop
           playsInline
           preload="auto"
+          ref={keepFireCalm}
+          onLoadedMetadata={(event) => keepFireCalm(event.currentTarget)}
+          onPlay={(event) => keepFireCalm(event.currentTarget)}
+          onRateChange={(event) => keepFireCalm(event.currentTarget)}
         />
       )}
       <div className="fire__scrim" />

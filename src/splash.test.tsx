@@ -1,6 +1,7 @@
 import { act, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { App } from './App'
+import { FIRE_PLAYBACK_RATE } from './components/FireBackdrop'
 import { Splash } from './components/Splash'
 
 afterEach(() => {
@@ -17,6 +18,8 @@ it('plays the shipped fire loop and does not draw the old grill', () => {
   const src = video?.getAttribute('src') ?? ''
   expect(src).toContain('fire.mp4')
   expect(src.startsWith('http://') || src.startsWith('https://')).toBe(false)
+  expect(video?.playbackRate).toBe(FIRE_PLAYBACK_RATE)
+  expect(FIRE_PLAYBACK_RATE).toBeLessThan(1)
   expect(container.querySelector('.grill__grate')).toBeNull()
   expect(container.querySelector('.grill__flame')).toBeNull()
   expect(screen.getByRole('img', { name: 'Smash Burguer' })).toBeInTheDocument()
