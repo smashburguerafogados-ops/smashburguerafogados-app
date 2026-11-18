@@ -122,6 +122,25 @@ it('opens the detail popup and blocks a sold-out item', async () => {
   expect(screen.getByRole('navigation', { name: 'Atalhos' }).querySelector('.dock__count')).toHaveTextContent('0')
 })
 
+it('updates the product price live with quantity and add-ons', async () => {
+  const user = userEvent.setup()
+  renderMenu()
+
+  await user.click(screen.getByRole('button', { name: /Smash da casa/ }))
+  const detail = screen.getByRole('dialog', { name: 'Smash da casa' })
+  const price = () => within(detail).getByText(/^R\$ /)
+
+  expect(price()).toHaveTextContent('R$ 28,00')
+  await user.click(within(detail).getByRole('button', { name: 'Aumentar' }))
+  await user.click(within(detail).getByRole('button', { name: 'Aumentar' }))
+  expect(price()).toHaveTextContent('R$ 84,00')
+
+  await user.click(within(detail).getByRole('checkbox', { name: /Cheddar/ }))
+  expect(price()).toHaveTextContent('R$ 96,00')
+  await user.click(within(detail).getByRole('button', { name: 'Diminuir' }))
+  expect(price()).toHaveTextContent('R$ 64,00')
+})
+
 it('adds the chosen quantity, then another product as its own line', async () => {
   const user = userEvent.setup()
   renderMenu()
