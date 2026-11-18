@@ -4,6 +4,9 @@ import './griddle.css'
 import './menu.css'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it } from 'vitest'
+import treeSvg from './assets/theme/christmas-tree.svg?raw'
+import flagSvg from './assets/theme/flag-yellow.svg?raw'
+import maskSvg from './assets/theme/performing-arts.svg?raw'
 import { Splash } from './components/Splash'
 import { ThemeFrame } from './components/ThemeMark'
 import { activeListeners, emitDoc, firebaseMocks } from './test/mocks'
@@ -11,6 +14,14 @@ import { adminProfile, renderApp, signInAs } from './test/render'
 
 afterEach(() => {
   delete document.documentElement.dataset.theme
+})
+
+it('uses colorful shipped icons instead of one-color line drawings', () => {
+  expect(treeSvg).toMatch(/fill="/)
+  expect(maskSvg).toMatch(/fill="/)
+  expect(flagSvg).toContain('#FFE14D')
+  expect(treeSvg).not.toContain('stroke="currentColor"')
+  expect(maskSvg).not.toContain('stroke="currentColor"')
 })
 
 it('keeps the current look until an admin confirms another theme', async () => {
@@ -51,6 +62,7 @@ it('keeps the current look until an admin confirms another theme', async () => {
   })
   expect(document.documentElement).not.toHaveAttribute('data-theme')
   expect(document.querySelector('[data-theme-ornament]')).toBeNull()
+  expect(document.querySelector('[data-theme-bg]')).toBeNull()
   expect(document.querySelector('[data-theme-snow]')).toBeNull()
   expect(getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()).toBe('#e3b15a')
 })
@@ -68,10 +80,13 @@ it('shows customers the confirmed theme and hides the picker', async () => {
   expect(document.querySelector('[data-theme-ornament="natal"]')).toBeInTheDocument()
   expect(document.querySelector('[data-theme-snow] .theme-snow__flake--thin')).toBeInTheDocument()
   expect(document.querySelector('[data-theme-snow] .theme-snow__flake--large')).toBeInTheDocument()
-  expect(document.querySelector('[data-theme-tree] svg')).toBeInTheDocument()
-  expect(document.querySelector('[data-theme-ball] svg')).toBeInTheDocument()
+  expect(document.querySelector('[data-theme-tree] img')).toBeInTheDocument()
+  expect(document.querySelector('[data-theme-ball] img')).toBeInTheDocument()
+  expect(document.querySelector('[data-theme-bg="natal"]')).toBeInTheDocument()
+  expect(getComputedStyle(document.querySelector('[data-theme-bg="natal"]')!).pointerEvents).toBe('none')
   expect(getComputedStyle(document.querySelector('[data-theme-snow]')!).pointerEvents).toBe('none')
-  expect(getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()).toBe('#f2d27a')
+  expect(getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()).toBe('#d4af37')
+  expect(getComputedStyle(document.documentElement).getPropertyValue('--theme-scene').trim()).toBe('snow-night')
   expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Temas' })).not.toBeInTheDocument()
 
@@ -79,27 +94,57 @@ it('shows customers the confirmed theme and hides the picker', async () => {
     emitDoc('settings/theme', { theme: 'ano-novo' })
   })
   expect(document.querySelector('[data-theme-snow]')).toBeNull()
-  expect(document.querySelector('[data-theme-sparks] svg')).toBeInTheDocument()
+  expect(document.querySelector('[data-theme-sparks] img')).toBeInTheDocument()
   expect(document.querySelector('[data-theme-year]')?.textContent).toMatch(/\d{4}/)
+  expect(getComputedStyle(document.documentElement).getPropertyValue('--theme-scene').trim()).toBe('fireworks-night')
 
   await act(async () => {
     emitDoc('settings/theme', { theme: 'carnaval' })
   })
-  expect(document.querySelector('[data-theme-confetti] svg')).toBeInTheDocument()
-  expect(document.querySelector('[data-theme-mask] svg')).toBeInTheDocument()
-  expect(document.querySelector('[data-theme-flag] svg')).toBeInTheDocument()
+  expect(document.querySelector('[data-theme-confetti] img')).toBeInTheDocument()
+  expect(document.querySelector('[data-theme-mask] img')).toBeInTheDocument()
+  expect(document.querySelector('[data-theme-flag] img')).toBeInTheDocument()
+  const carnaval = getComputedStyle(document.documentElement)
+  const carnivalColors = ['--gold', '--orange', '--theme-green', '--theme-blue', '--theme-yellow', '--theme-pink'].map((name) =>
+    carnaval.getPropertyValue(name).trim().toLowerCase(),
+  )
+  expect(carnivalColors).toEqual(['#e6b325', '#ff4f9a', '#009c3b', '#2f6fed', '#ffe14d', '#ff4f9a'])
+  expect(carnivalColors.join(' ')).not.toMatch(/c46bff|7c3aed|purple/)
+  expect(carnaval.getPropertyValue('--theme-wash')).not.toMatch(/72,\s*8,\s*96|196,\s*107,\s*255/)
+  expect(carnaval.getPropertyValue('--theme-scene').trim()).toBe('carnival-pattern')
+  const carnivalBg = getComputedStyle(document.querySelector('[data-theme-bg="carnaval"]')!).backgroundImage
+  expect(carnivalBg).toContain('rgb(230, 179, 37)')
+  expect(carnivalBg).toContain('rgb(0, 156, 59)')
+  expect(carnivalBg).toContain('rgb(255, 79, 154)')
+  expect(carnivalBg).toContain('rgb(47, 111, 237)')
+  expect(carnivalBg).toContain('rgb(255, 225, 77)')
+  expect(carnivalBg).not.toMatch(/c46bff|7c3aed|rgb\(196,\s*107,\s*255\)/i)
 
   await act(async () => {
     emitDoc('settings/theme', { theme: 'pascoa' })
   })
-  expect(document.querySelector('[data-theme-egg] svg')).toBeInTheDocument()
-  expect(document.querySelector('[data-theme-bunny] svg')).toBeInTheDocument()
+  expect(document.querySelector('[data-theme-egg] img')).toBeInTheDocument()
+  expect(document.querySelector('[data-theme-bunny] img')).toBeInTheDocument()
+  expect(getComputedStyle(document.documentElement).getPropertyValue('--theme-scene').trim()).toBe('easter')
 
   await act(async () => {
     emitDoc('settings/theme', { theme: 'sao-joao' })
   })
-  expect(document.querySelectorAll('[data-theme-flags] svg').length).toBeGreaterThan(1)
+  expect(document.querySelectorAll('[data-theme-flags] img').length).toBeGreaterThan(1)
   expect(document.querySelector('[data-theme-glow]')).toBeInTheDocument()
+  expect(getComputedStyle(document.documentElement).getPropertyValue('--theme-scene').trim()).toBe('festa-junina')
+
+  const scenes = ['natal', 'ano-novo', 'carnaval', 'pascoa', 'sao-joao']
+  const backgrounds = new Set<string>()
+  for (const theme of scenes) {
+    await act(async () => {
+      emitDoc('settings/theme', { theme })
+    })
+    const scene = document.querySelector(`[data-theme-bg="${theme}"]`)
+    expect(scene).toBeInTheDocument()
+    backgrounds.add(getComputedStyle(scene!).backgroundImage)
+  }
+  expect(backgrounds.size).toBe(scenes.length)
 
   await act(async () => {
     emitDoc('settings/theme', { theme: 'atual' })
@@ -122,5 +167,6 @@ it('decorates the opening screen with the confirmed theme', async () => {
   })
   expect(document.documentElement).toHaveAttribute('data-theme', 'natal')
   expect(document.querySelector('[data-theme-snow] .theme-snow__flake--thin')).toBeInTheDocument()
-  expect(document.querySelector('[data-theme-tree] svg')).toBeInTheDocument()
+  expect(document.querySelector('[data-theme-tree] img')).toBeInTheDocument()
+  expect(document.querySelector('[data-theme-bg="natal"]')).toBeInTheDocument()
 })

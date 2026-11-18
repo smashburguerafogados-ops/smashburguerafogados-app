@@ -32,39 +32,57 @@ body {
   background: #0b0b0a;
 }
 
+/* Looked-up festival colors. The menu text stays light, so the night stays dark and the festival colors sit in the pattern.
+   Natal: red, green, gold. Ano Novo: black, gold, silver, white.
+   Carnaval: gold, green, pink, blue, yellow (Mangueira green and pink; frevo yellow, green, and blue).
+   Páscoa: yellow, green, lilac. São João: red, yellow, green, blue, orange. */
 html[data-theme='natal'] {
-  --gold: #f2d27a;
-  --orange: #e23b3b;
-  --theme-wash: rgba(120, 12, 24, 0.45);
-  --theme-glow: rgba(226, 59, 59, 0.55);
+  --gold: #d4af37;
+  --orange: #c8102e;
+  --theme-green: #146c43;
+  --theme-wash: rgba(7, 21, 37, 0.55);
+  --theme-glow: rgba(212, 175, 55, 0.4);
+  --theme-scene: snow-night;
 }
 
 html[data-theme='ano-novo'] {
-  --gold: #f6e7a1;
-  --orange: #8fd3ff;
-  --theme-wash: rgba(16, 28, 72, 0.48);
-  --theme-glow: rgba(143, 211, 255, 0.55);
+  --gold: #f2c14e;
+  --orange: #e6e6e6;
+  --theme-wash: rgba(7, 6, 10, 0.5);
+  --theme-glow: rgba(242, 193, 78, 0.45);
+  --theme-scene: fireworks-night;
 }
 
 html[data-theme='carnaval'] {
-  --gold: #ffd23f;
-  --orange: #c46bff;
-  --theme-wash: rgba(72, 8, 96, 0.46);
-  --theme-glow: rgba(196, 107, 255, 0.55);
+  --gold: #e6b325;
+  --orange: #ff4f9a;
+  --theme-green: #009c3b;
+  --theme-blue: #2f6fed;
+  --theme-yellow: #ffe14d;
+  --theme-pink: #ff4f9a;
+  --theme-wash: rgba(18, 20, 28, 0.4);
+  --theme-glow: rgba(230, 179, 37, 0.4);
+  --theme-scene: carnival-pattern;
 }
 
 html[data-theme='pascoa'] {
-  --gold: #f3e27a;
-  --orange: #e09ad4;
-  --theme-wash: rgba(96, 40, 84, 0.4);
-  --theme-glow: rgba(224, 154, 212, 0.55);
+  --gold: #f6d86b;
+  --orange: #7dcea0;
+  --theme-lilac: #c9a0dc;
+  --theme-wash: rgba(28, 36, 48, 0.4);
+  --theme-glow: rgba(246, 216, 107, 0.4);
+  --theme-scene: easter;
 }
 
 html[data-theme='sao-joao'] {
-  --gold: #ffcc33;
-  --orange: #ff6a00;
-  --theme-wash: rgba(110, 36, 0, 0.42);
-  --theme-glow: rgba(255, 106, 0, 0.58);
+  --gold: #ffcc00;
+  --orange: #f15a22;
+  --theme-green: #009c3b;
+  --theme-blue: #1d4ed8;
+  --theme-red: #e23b3b;
+  --theme-wash: rgba(26, 16, 8, 0.45);
+  --theme-glow: rgba(241, 90, 34, 0.5);
+  --theme-scene: festa-junina;
 }
 
 html[data-theme='natal'] .dock__item.is-active,

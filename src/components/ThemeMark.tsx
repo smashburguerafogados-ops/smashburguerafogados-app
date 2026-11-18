@@ -1,18 +1,7 @@
 import { useEffect, type CSSProperties, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { applyDocumentTheme, ThemeContext, useAppliedTheme, useTheme, type ThemeId } from '../lib/theme'
-import {
-  CarnivalFlag,
-  ChristmasBall,
-  ChristmasTree,
-  Confetti,
-  Egg,
-  Gift,
-  Pennant,
-  Rabbit,
-  Sparkles,
-  TheaterMasks,
-} from './ThemeIcons'
+import { juneFlags, themeIcons, ThemeIcon } from './ThemeIcons'
 
 type Piece = {
   x: string
@@ -41,23 +30,21 @@ const LARGE_FLAKES: Piece[] = [
   { x: '27vw', size: '21px', dur: '8.5s', delay: '-7s', opacity: '0.7', drift: '10px' },
 ]
 
-const CONFETTI: Piece[] = [
-  { x: '8vw', size: '22px', dur: '7s', delay: '0s', opacity: '0.9', drift: '18px', color: '#ffd23f' },
-  { x: '24vw', size: '16px', dur: '8.5s', delay: '-2s', opacity: '0.85', drift: '-14px', color: '#c46bff' },
-  { x: '41vw', size: '20px', dur: '6.5s', delay: '-4s', opacity: '0.9', drift: '22px', color: '#3dbe6a' },
-  { x: '58vw', size: '18px', dur: '9s', delay: '-1s', opacity: '0.8', drift: '-18px', color: '#ff4d6d' },
-  { x: '74vw', size: '22px', dur: '7.5s', delay: '-3.5s', opacity: '0.9', drift: '12px', color: '#4cc9f0' },
-  { x: '90vw', size: '16px', dur: '8s', delay: '-5s', opacity: '0.85', drift: '-10px', color: '#ffd23f' },
+const CONFETTI: Array<Piece & { icon: string }> = [
+  { x: '8vw', size: '28px', dur: '7s', delay: '0s', opacity: '0.95', drift: '18px', icon: themeIcons.confettiBall },
+  { x: '24vw', size: '26px', dur: '8.5s', delay: '-2s', opacity: '0.9', drift: '-14px', icon: themeIcons.balloon },
+  { x: '41vw', size: '24px', dur: '6.5s', delay: '-4s', opacity: '0.95', drift: '22px', icon: themeIcons.partyPopper },
+  { x: '58vw', size: '26px', dur: '9s', delay: '-1s', opacity: '0.9', drift: '-18px', icon: themeIcons.umbrella },
+  { x: '74vw', size: '28px', dur: '7.5s', delay: '-3.5s', opacity: '0.95', drift: '12px', icon: themeIcons.drum },
+  { x: '90vw', size: '24px', dur: '8s', delay: '-5s', opacity: '0.9', drift: '-10px', icon: themeIcons.confettiBall },
 ]
 
-const SPARKS: Piece[] = [
-  { x: '10vw', size: '18px', dur: '6s', delay: '0s', opacity: '0.9', drift: '16px', color: '#f6e7a1' },
-  { x: '30vw', size: '14px', dur: '7.5s', delay: '-2s', opacity: '0.75', drift: '-12px', color: '#8fd3ff' },
-  { x: '55vw', size: '20px', dur: '5.5s', delay: '-3s', opacity: '0.95', drift: '20px', color: '#fff6c8' },
-  { x: '78vw', size: '16px', dur: '8s', delay: '-1s', opacity: '0.8', drift: '-16px', color: '#f6e7a1' },
+const SPARKS: Array<Piece & { icon: string }> = [
+  { x: '10vw', size: '26px', dur: '6s', delay: '0s', opacity: '0.95', drift: '16px', icon: themeIcons.fireworks },
+  { x: '30vw', size: '22px', dur: '7.5s', delay: '-2s', opacity: '0.85', drift: '-12px', icon: themeIcons.sparkles },
+  { x: '55vw', size: '28px', dur: '5.5s', delay: '-3s', opacity: '0.95', drift: '20px', icon: themeIcons.partyPopper },
+  { x: '78vw', size: '24px', dur: '8s', delay: '-1s', opacity: '0.9', drift: '-16px', icon: themeIcons.star },
 ]
-
-const FLAG_COLORS = ['#e23b3b', '#ffcc33', '#2f9e44', '#3b82f6', '#ff6a00', '#f2d27a', '#c46bff', '#e23b3b']
 
 function pieceStyle(piece: Piece): CSSProperties {
   return {
@@ -88,16 +75,21 @@ function Snow() {
   )
 }
 
-function Falling({ pieces, mark, icon }: { pieces: Piece[]; mark: string; icon: 'confetti' | 'sparkles' }) {
+function Falling({ pieces, mark }: { pieces: Array<Piece & { icon: string }>; mark: string }) {
   return (
     <div className="theme-fall" {...{ [mark]: '' }}>
       {pieces.map((piece, index) => (
         <span key={index} className="theme-piece" style={pieceStyle(piece)}>
-          {icon === 'confetti' ? <Confetti /> : <Sparkles />}
+          <ThemeIcon src={piece.icon} />
         </span>
       ))}
     </div>
   )
+}
+
+export function ThemeBackdrop({ theme }: { theme: ThemeId }) {
+  if (theme === 'atual') return null
+  return <div className={`theme-bg theme-bg--${theme}`} data-theme-bg={theme} aria-hidden="true" />
 }
 
 function celebrationYear(now = new Date()) {
@@ -113,57 +105,60 @@ export function ThemeDecor({ theme }: { theme: ThemeId }) {
         <>
           <Snow />
           <div className="theme-ornament theme-ornament--tree" data-theme-tree="">
-            <ChristmasTree />
+            <ThemeIcon src={themeIcons.christmasTree} />
           </div>
           <div className="theme-ornament theme-ornament--ball" data-theme-ball="">
-            <ChristmasBall />
+            <ThemeIcon src={themeIcons.snowman} />
           </div>
           <div className="theme-ornament theme-ornament--gift">
-            <Gift />
+            <ThemeIcon src={themeIcons.wrappedGift} />
           </div>
         </>
       ) : null}
       {theme === 'ano-novo' ? (
         <>
-          <Falling pieces={SPARKS} mark="data-theme-sparks" icon="sparkles" />
+          <Falling pieces={SPARKS} mark="data-theme-sparks" />
           <div className="theme-year" data-theme-year="">
-            <Sparkles />
+            <ThemeIcon src={themeIcons.fireworks} />
             <span>{celebrationYear()}</span>
           </div>
         </>
       ) : null}
       {theme === 'carnaval' ? (
         <>
-          <Falling pieces={CONFETTI} mark="data-theme-confetti" icon="confetti" />
+          <Falling pieces={CONFETTI} mark="data-theme-confetti" />
           <div className="theme-ornament theme-ornament--mask" data-theme-mask="">
-            <TheaterMasks />
+            <ThemeIcon src={themeIcons.performingArts} />
           </div>
           <div className="theme-ornament theme-ornament--flag" data-theme-flag="">
-            <CarnivalFlag />
+            <ThemeIcon src={themeIcons.umbrella} />
           </div>
         </>
       ) : null}
       {theme === 'pascoa' ? (
         <>
           <div className="theme-ornament theme-ornament--egg" data-theme-egg="">
-            <Egg />
+            <ThemeIcon src={themeIcons.egg} />
           </div>
           <div className="theme-ornament theme-ornament--egg theme-ornament--egg-b">
-            <Egg />
+            <ThemeIcon src={themeIcons.egg} />
           </div>
           <div className="theme-ornament theme-ornament--bunny" data-theme-bunny="">
-            <Rabbit />
+            <ThemeIcon src={themeIcons.rabbit} />
           </div>
         </>
       ) : null}
       {theme === 'sao-joao' ? (
         <>
           <div className="theme-flags" data-theme-flags="">
-            {FLAG_COLORS.map((color, index) => (
-              <span key={index} style={{ color }}>
-                <Pennant />
+            {juneFlags.map((src, index) => (
+              <span key={index}>
+                <ThemeIcon src={src} />
               </span>
             ))}
+          </div>
+          <div className="theme-ornament theme-ornament--fire" data-theme-fire="">
+            <ThemeIcon src={themeIcons.fire} />
           </div>
           <div className="theme-glow" data-theme-glow="" />
         </>
@@ -183,6 +178,7 @@ export function CustomerTheme({ children }: { children: ReactNode }) {
 
   return (
     <>
+      {admin ? null : <ThemeBackdrop theme={theme} />}
       {admin ? null : <ThemeDecor theme={theme} />}
       {children}
     </>

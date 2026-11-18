@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { readSavedCustomerId } from '../lib/customerId'
 import { applyDocumentTheme, useTheme } from '../lib/theme'
 import { FireBackdrop } from './FireBackdrop'
-import { ThemeDecor } from './ThemeMark'
+import { ThemeBackdrop, ThemeDecor } from './ThemeMark'
 
 const HOLD_MS = 2300
 const LEAVE_MS = 560
@@ -48,6 +48,7 @@ export function Splash({ onDone, ready = true }: SplashProps) {
 
   return (
     <div className={leaving ? 'splash splash--out' : 'splash'} role="status" aria-live="polite">
+      <ThemeBackdrop theme={theme} />
       <ThemeDecor theme={theme} />
       <FireBackdrop />
       <div className="splash__glow" aria-hidden="true" />
