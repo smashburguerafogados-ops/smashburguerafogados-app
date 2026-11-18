@@ -27,7 +27,7 @@ html[data-theme='ano-novo'] .griddle,
 html[data-theme='carnaval'] .griddle,
 html[data-theme='pascoa'] .griddle,
 html[data-theme='sao-joao'] .griddle {
-  background: #10080c;
+  background: #07060a;
 }
 
 html[data-theme='natal'] .griddle__plate,
