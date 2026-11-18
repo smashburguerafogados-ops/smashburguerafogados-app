@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AdminRoute } from './components/AdminRoute'
+import { Griddle } from './components/Griddle'
 import { MenuScreen } from './components/MenuScreen'
 import { Splash } from './components/Splash'
 import { AuthProvider } from './context/AuthContext'
@@ -23,5 +24,10 @@ export function App() {
   const [booting, setBooting] = useState(true)
   const finishBoot = useCallback(() => setBooting(false), [])
 
-  return <AuthProvider>{booting ? <Splash onDone={finishBoot} /> : <AppRoutes />}</AuthProvider>
+  return (
+    <>
+      <Griddle />
+      <AuthProvider>{booting ? <Splash onDone={finishBoot} /> : <AppRoutes />}</AuthProvider>
+    </>
+  )
 }

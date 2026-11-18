@@ -13,44 +13,8 @@
 .menu {
   width: 100%;
   min-height: 100vh;
-  background: #090908;
+  background: transparent;
   color: #f4f5f6;
-}
-
-.menu__night {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse 80% 55% at 50% 42%, transparent 0%, rgba(0, 0, 0, 0.62) 78%),
-    #090908;
-}
-
-.menu__night-gold,
-.menu__night-coals {
-  position: absolute;
-  display: block;
-}
-
-.menu__night-gold {
-  width: 78%;
-  height: 42%;
-  left: 11%;
-  top: -6%;
-  background: radial-gradient(ellipse at center, rgba(227, 177, 90, 0.34), rgba(227, 177, 90, 0.05) 46%, transparent 70%);
-  filter: blur(10px);
-  animation: night-breathe 26s ease-in-out infinite;
-}
-
-.menu__night-coals {
-  left: -8%;
-  right: -8%;
-  bottom: -6%;
-  height: 38%;
-  background: radial-gradient(ellipse 68% 78% at 50% 100%, rgba(231, 103, 44, 0.42), rgba(227, 177, 90, 0.12) 46%, transparent 74%);
-  filter: blur(12px);
 }
 
 .menu__content {
@@ -59,16 +23,6 @@
   width: min(680px, 100%);
   margin: 0 auto;
   padding: 18px 16px 128px;
-}
-
-@keyframes night-breathe {
-  0%,
-  100% {
-    opacity: 0.62;
-  }
-  50% {
-    opacity: 1;
-  }
 }
 
 .menu__top {
@@ -391,8 +345,3 @@
   color: var(--gold);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .menu__night-gold {
-    animation: none;
-  }
-}

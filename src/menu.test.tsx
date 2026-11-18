@@ -4,8 +4,10 @@ import { expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { MenuScreen } from './components/MenuScreen'
+import { Griddle } from './components/Griddle'
 import './index.css'
 import './menu.css'
+import './griddle.css'
 
 function renderMenu() {
   return render(
@@ -102,19 +104,25 @@ it('adds a note and updates the cart count and total', async () => {
   expect(dock.querySelector('.dock__item.is-active .dock__label')).toHaveTextContent('Carrinho')
 })
 
-it('keeps a night atmosphere behind a readable bar', () => {
-  renderMenu()
+it('keeps the griddle behind a readable bar', () => {
+  render(
+    <>
+      <Griddle />
+      <AuthProvider>
+        <MemoryRouter>
+          <MenuScreen />
+        </MemoryRouter>
+      </AuthProvider>
+    </>,
+  )
 
-  const night = document.querySelector('.menu__night')
-  expect(night).not.toBeNull()
-  expect(night).toHaveAttribute('aria-hidden', 'true')
-  const nightStyle = getComputedStyle(night as HTMLElement)
+  const griddle = screen.getByTestId('griddle')
+  expect(griddle).toHaveAttribute('aria-hidden', 'true')
+  const nightStyle = getComputedStyle(griddle)
   expect(nightStyle.position).toBe('fixed')
   expect(nightStyle.pointerEvents).toBe('none')
-  expect(nightStyle.backgroundImage).toContain('radial-gradient')
-  expect(document.querySelector('.menu__night-gold')).not.toBeNull()
-  expect(document.querySelector('.menu__night-coals')).not.toBeNull()
-  expect(document.querySelector('.grill__flame, .grill__grate, .grill__ember')).toBeNull()
+  expect(getComputedStyle(document.querySelector('.menu') as HTMLElement).backgroundColor).toBe('rgba(0, 0, 0, 0)')
+  expect(document.querySelector('.grill__flame, .grill__grate, .grill__ember, .menu__night')).toBeNull()
 
   const dock = screen.getByRole('navigation', { name: 'Atalhos' })
   const dockStyle = getComputedStyle(dock)

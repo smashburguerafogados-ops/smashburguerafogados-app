@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import './index.css'
 import './menu.css'
+import './griddle.css'
 
 const root = document.getElementById('root')
 if (!root) {
