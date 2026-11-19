@@ -46,6 +46,7 @@ export function Overlay({ label, onClose, variant = 'sheet', children }: Overlay
       >
         <CloseButton className="overlay__close" onClick={onClose} />
         {children}
+        {variant !== 'drawer' && <div className="dock-spacer" aria-hidden="true" />}
       </div>
     </div>
   )
