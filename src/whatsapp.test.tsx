@@ -10,6 +10,9 @@ import {
   attendanceMessage,
   broadcastMessage,
   cancelledMessage,
+  isAndroidDevice,
+  openWhatsapp,
+  page,
   refusedMessage,
   sanitizeMessage,
   sentMessage,
@@ -90,9 +93,43 @@ describe('WhatsApp messages', () => {
     const url = String(vi.mocked(window.open).mock.calls[0][0])
     expect(url.startsWith(`https://wa.me/${BUSINESS_WHATSAPP}?text=`)).toBe(true)
     const text = decodeURIComponent(url.split('?text=')[1])
-    expect(text).toContain('Ana Souza')
-    expect(text).toContain('Atendimento da Smash Burger')
+    expect(text).toBe(attendanceMessage('Ana Souza'))
+    expect(text.startsWith(`${SYMBOLS.wave} Olá, Atendimento da Smash Burger! Aqui é Ana Souza.`)).toBe(true)
     expect(text).toContain('\u{1F44B}')
+  })
+
+  it('leaves the name out when the customer has none saved', () => {
+    const text = attendanceMessage('   ')
+    expect(text).toBe(
+      `${SYMBOLS.wave} Olá, Atendimento da Smash Burger!\n${SYMBOLS.burger} Vim pelo cardápio.\n${SYMBOLS.chat} Gostaria de falar com vocês.`,
+    )
+    expect(text).not.toMatch(/Aqui é|Cliente|Visitante/)
+  })
+
+  it('opens the WhatsApp app on Android with the customer name, and keeps wa.me on iPhone', () => {
+    const agent = vi.spyOn(window.navigator, 'userAgent', 'get')
+    const assign = vi.spyOn(page, 'assign').mockImplementation(() => undefined)
+
+    agent.mockReturnValue('Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile')
+    expect(isAndroidDevice()).toBe(true)
+    const android = openWhatsapp(BUSINESS_WHATSAPP, attendanceMessage('Ana Souza'))
+    expect(window.open).not.toHaveBeenCalled()
+    expect(assign).toHaveBeenCalledWith(android)
+    expect(android.startsWith('whatsapp://send?phone=558796619629&text=')).toBe(true)
+    expect(android.startsWith('https://')).toBe(false)
+    expect(decodeURIComponent(android.split('&text=')[1])).toContain('Aqui é Ana Souza.')
+
+    vi.mocked(window.open).mockClear()
+    assign.mockClear()
+    agent.mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148')
+    expect(isAndroidDevice()).toBe(false)
+    const iphone = openWhatsapp(BUSINESS_WHATSAPP, attendanceMessage('Ana Souza'))
+    expect(iphone.startsWith('https://wa.me/558796619629?text=')).toBe(true)
+    expect(String(vi.mocked(window.open).mock.calls[0][0])).toBe(iphone)
+    expect(assign).not.toHaveBeenCalled()
+
+    agent.mockRestore()
+    assign.mockRestore()
   })
 
   it('routes every send point through lib/whatsapp', () => {

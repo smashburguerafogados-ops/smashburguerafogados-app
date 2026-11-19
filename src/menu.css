@@ -1238,7 +1238,9 @@ html .chips .chip.chip--destaque {
   border-radius: 12px;
   background: #1c1d21;
   color: var(--text);
+  font-size: 0.8rem;
   font-weight: 700;
+  line-height: 1.25;
 }
 
 .history {
