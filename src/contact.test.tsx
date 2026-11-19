@@ -91,6 +91,25 @@ function openedTexts(): { number: string; text: string }[] {
   })
 }
 
+it('closes the recipient list on an outside tap and keeps the message field at 16px', async () => {
+  const { user, sheet } = await openBroadcast()
+  const stack = sheet.querySelector('.wa-screen') as HTMLElement
+  expect(parseFloat(getComputedStyle(stack).rowGap || getComputedStyle(stack).gap)).toBeGreaterThanOrEqual(16)
+
+  const message = within(sheet).getByRole('textbox', { name: 'Mensagem' })
+  expect(parseFloat(getComputedStyle(message).fontSize)).toBeGreaterThanOrEqual(16)
+
+  await user.click(within(sheet).getByRole('button', { name: /Todos os cadastrados/ }))
+  expect(within(sheet).getByRole('listbox', { name: 'Para' })).toBeInTheDocument()
+  await user.click(message)
+  expect(within(sheet).queryByRole('listbox', { name: 'Para' })).not.toBeInTheDocument()
+
+  await user.click(within(sheet).getByRole('button', { name: /Todos os cadastrados/ }))
+  expect(within(sheet).getByRole('listbox', { name: 'Para' })).toBeInTheDocument()
+  await user.click(within(sheet).getByText('A mensagem sai com o ícone do Smash e este texto. Todos usa o mesmo texto.'))
+  expect(within(sheet).queryByRole('listbox', { name: 'Para' })).not.toBeInTheDocument()
+})
+
 it('shows each registered number with the name underneath and sends Todos with the Smash icon', async () => {
   const { user, sheet } = await openBroadcast()
   expect(sheet).toHaveTextContent('+55 (87) 9661-9629')

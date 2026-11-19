@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { formatWhatsapp, normalizeWhatsapp } from '../lib/identity'
 import { BUSINESS_WHATSAPP, broadcastMessage, openWhatsapp, openWhatsappTab } from '../lib/whatsapp'
 import type { UserProfile } from '../types'
@@ -23,10 +23,20 @@ export function BroadcastScreen({ people, status, onClose }: BroadcastScreenProp
   const reachable = people.filter((person) => normalizeWhatsapp(person.whatsapp))
   const [target, setTarget] = useState('all')
   const [open, setOpen] = useState(false)
+  const selectRef = useRef<HTMLDivElement>(null)
   const [message, setMessage] = useState('')
   const [left, setLeft] = useState<UserProfile[]>([])
   const [openedName, setOpenedName] = useState('')
   const [sentMany, setSentMany] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    function onPointerDown(event: PointerEvent) {
+      if (!selectRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [open])
 
   const selected = target === 'all' ? null : (reachable.find((person) => person.uid === target) ?? null)
   const recipients = selected ? [selected] : reachable
@@ -88,6 +98,7 @@ export function BroadcastScreen({ people, status, onClose }: BroadcastScreenProp
           <h2>Enviar WhatsApp</h2>
           <CloseButton onClick={onClose} />
         </div>
+        <div className="wa-screen">
         <p className="muted wa-from">Pelo WhatsApp {formatWhatsapp(BUSINESS_WHATSAPP)}</p>
         {status === 'loading' && <p className="muted">Carregando clientes.</p>}
         {status === 'error' && (
@@ -97,7 +108,7 @@ export function BroadcastScreen({ people, status, onClose }: BroadcastScreenProp
         )}
         {status === 'ready' && reachable.length === 0 && <p className="muted">Nenhum cliente com WhatsApp.</p>}
         {status === 'ready' && reachable.length > 0 && (
-          <div className="wa-select">
+          <div className="wa-select" ref={selectRef}>
             <span id="wa-who">Para</span>
             <button
               type="button"
@@ -180,6 +191,7 @@ export function BroadcastScreen({ people, status, onClose }: BroadcastScreenProp
             </button>
           </div>
         )}
+        </div>
       </div>
     </div>
   )

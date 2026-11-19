@@ -1783,6 +1783,25 @@ html .chips .chip.chip--destaque {
   background: rgba(255, 176, 32, 0.14);
 }
 
+.wa-screen {
+  display: grid;
+  gap: 20px;
+}
+
+.wa-screen .field textarea {
+  width: 100%;
+  min-height: 128px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #3a3a3a;
+  background: #141416;
+  color: #f4f5f6;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.4;
+  resize: vertical;
+}
+
 .wa-from {
   margin: 0;
 }
