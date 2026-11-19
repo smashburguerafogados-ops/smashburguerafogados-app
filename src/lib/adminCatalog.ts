@@ -51,6 +51,12 @@ export async function setCategoryDestaque(id: string, destaque: boolean): Promis
   await updateDoc(doc(db, 'categories', id), { destaque })
 }
 
+export async function renameCategory(id: string, name: string): Promise<void> {
+  const clean = name.trim().replace(/\s+/g, ' ')
+  if (!clean) throw new Error('Informe o nome da categoria.')
+  await updateDoc(doc(db, 'categories', id), { name: clean })
+}
+
 export async function deleteCategory(id: string): Promise<void> {
   const using = await getDocs(query(collection(db, 'products'), where('categoryId', '==', id)))
   if (!using.empty) {

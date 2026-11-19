@@ -73,7 +73,7 @@ describe('Produtos', () => {
     const { user, desk } = await openDesk()
 
     await user.click(
-      within(within(desk).getByRole('article', { name: 'Lanches' })).getByRole('button', { name: 'Excluir categoria' }),
+      within(within(desk).getByRole('article', { name: 'Lanches' })).getByRole('button', { name: 'Apagar' }),
     )
     await user.click(within(screen.getByRole('alertdialog', { name: 'Confirmar exclusão' })).getByRole('button', { name: 'Excluir' }))
     expect(await within(desk).findByRole('alert')).toHaveTextContent(
@@ -82,10 +82,34 @@ describe('Produtos', () => {
     expect(firebaseMocks.deleteDoc).not.toHaveBeenCalled()
 
     await user.click(
-      within(within(desk).getByRole('article', { name: 'Bebidas' })).getByRole('button', { name: 'Excluir categoria' }),
+      within(within(desk).getByRole('article', { name: 'Bebidas' })).getByRole('button', { name: 'Apagar' }),
     )
     await user.click(within(screen.getByRole('alertdialog', { name: 'Confirmar exclusão' })).getByRole('button', { name: 'Excluir' }))
     expect(firebaseMocks.deleteDoc).toHaveBeenCalledWith({ path: 'categories/bebidas' })
+  })
+
+  it('edits a category from an icon and can mark it destaque', async () => {
+    const { user, desk } = await openDesk()
+    const card = within(desk).getByRole('article', { name: 'Lanches' })
+    const tools = within(card).getAllByRole('button')
+    expect(tools).toHaveLength(3)
+    for (const button of tools) {
+      expect(button).not.toHaveTextContent('Excluir')
+      expect(button).not.toHaveTextContent('Lanches')
+      expect(button.querySelector('svg')).toBeInTheDocument()
+      expect(parseFloat(getComputedStyle(button).width)).toBeGreaterThanOrEqual(44)
+    }
+
+    await user.click(within(card).getByRole('button', { name: 'Editar' }))
+    const name = within(card).getByRole('textbox', { name: 'Novo nome' })
+    await user.clear(name)
+    await user.type(name, 'Burgers')
+    await user.click(within(card).getByRole('button', { name: 'Salvar nome' }))
+    expect(firebaseMocks.updateDoc).toHaveBeenCalledWith({ path: 'categories/lanches' }, { name: 'Burgers' })
+
+    const drinks = within(desk).getByRole('article', { name: 'Bebidas' })
+    await user.click(within(drinks).getByRole('button', { name: 'Destacar' }))
+    expect(firebaseMocks.updateDoc).toHaveBeenCalledWith({ path: 'categories/bebidas' }, { destaque: true })
   })
 })
 

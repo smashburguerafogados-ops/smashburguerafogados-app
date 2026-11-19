@@ -172,18 +172,14 @@ describe('destaque categories on the menu', () => {
   it('sorts destaque first and pulses their border', async () => {
     expect(sortCategories(categories).map((category) => category.id)).toEqual(['promo', 'lanches'])
 
-    firebaseMocks.getDocs.mockImplementation(async (ref: unknown) => {
-      const path = (ref as { path: string }).path
-      const docs =
-        path === 'categories'
-          ? categories
-          : [
-              { id: 'p1', categoryId: 'lanches', name: 'X-Salada', price: 20, available: true, description: '' },
-              { id: 'p2', categoryId: 'promo', name: 'Combo do dia', price: 30, available: true, description: '' },
-            ]
-      return { docs: docs.map(({ id, ...data }) => ({ id, data: () => data })) }
-    })
     renderApp()
+    await act(async () => {
+      emit('categories', categories)
+      emit('products', [
+        { id: 'p1', categoryId: 'lanches', name: 'X-Salada', price: 20, available: true, description: '' },
+        { id: 'p2', categoryId: 'promo', name: 'Combo do dia', price: 30, available: true, description: '' },
+      ])
+    })
 
     await screen.findByRole('button', { name: 'Promoções' })
     const chips = Array.from(document.querySelectorAll('.chips .chip')) as HTMLElement[]
@@ -194,6 +190,13 @@ describe('destaque categories on the menu', () => {
     expect(lit.borderTopWidth).toBe('2px')
     expect(lit.borderTopColor).toBe('rgb(255, 201, 60)')
     expect(lit.boxShadow).toContain('rgba(255, 140, 40, 0.55)')
+    const sun = chips[0].querySelector('.chip__sun') as HTMLElement
+    expect(sun).not.toBeNull()
+    const sunStyle = getComputedStyle(sun)
+    expect(sunStyle.animationName).toBe('chip-sun')
+    expect(sunStyle.borderRadius).toBe('50%')
+    expect(sunStyle.backgroundImage).toContain('radial-gradient')
+    expect(chips[1].querySelector('.chip__sun')).toBeNull()
     expect(chips[1]).not.toHaveClass('chip--destaque')
     expect(getComputedStyle(chips[1]).borderTopWidth).not.toBe('2px')
     const names = Array.from(document.querySelectorAll('.items .item__name')).map((node) => node.textContent)

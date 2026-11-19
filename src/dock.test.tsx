@@ -5,17 +5,22 @@ import { MemoryRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { MenuScreen } from './components/MenuScreen'
 import { stepDock } from './lib/dockScroll'
+import { emitSeedCatalog } from './test/render'
 import './index.css'
 import './menu.css'
 
 function renderMenu() {
-  return render(
+  const view = render(
     <AuthProvider>
       <MemoryRouter>
         <MenuScreen />
       </MemoryRouter>
     </AuthProvider>,
   )
+  act(() => {
+    emitSeedCatalog()
+  })
+  return view
 }
 
 function setWindowScroll(value: number) {

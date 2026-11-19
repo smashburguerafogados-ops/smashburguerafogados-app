@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
@@ -8,15 +8,20 @@ import { AuthProvider } from './context/AuthContext'
 import { MenuScreen } from './components/MenuScreen'
 import { seedCatalog } from './data/catalog'
 import { filterProducts } from './lib/menu'
+import { emitSeedCatalog } from './test/render'
 
 function renderMenu() {
-  return render(
+  const view = render(
     <AuthProvider>
       <MemoryRouter>
         <MenuScreen />
       </MemoryRouter>
     </AuthProvider>,
   )
+  act(() => {
+    emitSeedCatalog()
+  })
+  return view
 }
 
 function visibleNames(): string[] {

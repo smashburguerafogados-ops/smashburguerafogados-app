@@ -8,6 +8,7 @@ type SideMenuProps = {
   onRevenue: () => void
   onThemes: () => void
   onContact: () => void
+  onWhatsapp: () => void
   onRaffle: () => void
   onCreateProduct: () => void
 }
@@ -20,6 +21,7 @@ export function SideMenu({
   onRevenue,
   onThemes,
   onContact,
+  onWhatsapp,
   onRaffle,
   onCreateProduct,
 }: SideMenuProps) {
@@ -44,6 +46,9 @@ export function SideMenu({
         </button>
         <button type="button" className="drawer__link" onClick={onContact}>
           Contato
+        </button>
+        <button type="button" className="drawer__link" onClick={onWhatsapp}>
+          Enviar WhatsApp
         </button>
         <button type="button" className="drawer__link" onClick={onRaffle}>
           Sorteio Smash Burger

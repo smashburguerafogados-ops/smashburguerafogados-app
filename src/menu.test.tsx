@@ -5,7 +5,8 @@ import { MemoryRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { MenuScreen } from './components/MenuScreen'
 import { Griddle } from './components/Griddle'
-import { customerProfile, signInAs } from './test/render'
+import { customerProfile, emitSeedCatalog, signInAs } from './test/render'
+import { emit } from './test/mocks'
 import './index.css'
 import './menu.css'
 import './griddle.css'
@@ -15,13 +16,17 @@ afterEach(() => {
 })
 
 function renderMenu() {
-  return render(
+  const view = render(
     <AuthProvider>
       <MemoryRouter>
         <MenuScreen />
       </MemoryRouter>
     </AuthProvider>,
   )
+  act(() => {
+    emitSeedCatalog()
+  })
+  return view
 }
 
 it('leaves the title empty until a name exists, then shows the first name', async () => {
@@ -202,6 +207,18 @@ it('confirms an added item with a green border and lets the customer stay on the
   const style = getComputedStyle(added)
   expect(style.borderTopColor).toBe('rgb(34, 227, 107)')
   expect(style.borderTopWidth).toBe('2px')
+  expect(style.top).toBe('auto')
+  expect(style.bottom).toBe('96px')
+  const status = within(added).getByRole('status')
+  expect(getComputedStyle(status).whiteSpace).toBe('normal')
+  expect(parseFloat(getComputedStyle(status).fontSize)).toBeGreaterThanOrEqual(18)
+  for (const name of ['Ir ao carrinho', 'Continuar no cardápio']) {
+    const button = within(added).getByRole('button', { name })
+    const buttonStyle = getComputedStyle(button)
+    expect(buttonStyle.textTransform).toBe('none')
+    expect(parseFloat(buttonStyle.fontSize)).toBeGreaterThanOrEqual(16)
+    expect(parseFloat(buttonStyle.minHeight)).toBeGreaterThanOrEqual(48)
+  }
 
   await act(async () => {
     await vi.advanceTimersByTimeAsync(10000)
@@ -277,6 +294,46 @@ it('fits the item name on one line and does not head the cart with the customer 
   expect(within(cart).getByRole('group', { name: 'Forma de pagamento' })).toBeInTheDocument()
 })
 
+it('hides the sample cardápio until Firestore answers, then follows edits', async () => {
+  render(
+    <AuthProvider>
+      <MemoryRouter>
+        <MenuScreen />
+      </MemoryRouter>
+    </AuthProvider>,
+  )
+  expect(screen.getByText('Carregando o cardápio.')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Acompanhamentos' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Bebidas' })).not.toBeInTheDocument()
+  expect(screen.queryByText('Smash da casa')).not.toBeInTheDocument()
+
+  await act(async () => {
+    emit('categories', [{ id: 'petisco', name: 'Petisco', order: 1, destaque: false }])
+    emit('products', [{ id: 'batata', categoryId: 'petisco', name: 'Batata', description: '', price: 10, available: true, image: '' }])
+  })
+  expect(screen.queryByText('Carregando o cardápio.')).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Petisco' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Batata/ })).toHaveTextContent('R$ 10,00')
+
+  await act(async () => {
+    emit('categories', [{ id: 'petisco', name: 'Porções', order: 1, destaque: true }])
+    emit('products', [
+      { id: 'batata', categoryId: 'petisco', name: 'Batata grande', description: '', price: 12, available: true, image: '' },
+      { id: 'anel', categoryId: 'petisco', name: 'Anel', description: '', price: 8, available: true, image: '' },
+    ])
+  })
+  expect(screen.getByRole('button', { name: 'Porções' })).toHaveClass('chip--destaque')
+  expect(screen.queryByRole('button', { name: 'Petisco' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Batata grande/ })).toHaveTextContent('R$ 12,00')
+  expect(screen.getByRole('button', { name: /Anel/ })).toBeInTheDocument()
+
+  await act(async () => {
+    emit('products', [{ id: 'anel', categoryId: 'petisco', name: 'Anel', description: '', price: 8, available: true, image: '' }])
+  })
+  expect(screen.queryByRole('button', { name: /Batata grande/ })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Anel/ })).toBeInTheDocument()
+})
+
 it('keeps the griddle behind a readable bar', () => {
   render(
     <>
@@ -288,6 +345,9 @@ it('keeps the griddle behind a readable bar', () => {
       </AuthProvider>
     </>,
   )
+  act(() => {
+    emitSeedCatalog()
+  })
 
   const griddle = screen.getByTestId('griddle')
   expect(griddle).toHaveAttribute('aria-hidden', 'true')

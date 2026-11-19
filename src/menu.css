@@ -854,18 +854,19 @@ html[data-theme='sao-joao'] .menu__content {
 
 .added {
   position: fixed;
-  top: 12px;
+  top: auto;
+  bottom: 96px;
   left: 50%;
-  z-index: 80;
+  z-index: 70;
   width: min(420px, calc(100% - 24px));
   display: grid;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 12px;
+  padding: 16px;
   transform: translateX(-50%);
   border: 2px solid #22e36b;
-  border-radius: 16px;
-  background: #0f1712;
-  color: #f4f5f6;
+  border-radius: 18px;
+  background: #102117;
+  color: #f7fff9;
   box-shadow:
     0 0 0 3px rgba(34, 227, 107, 0.22),
     0 14px 36px rgba(0, 0, 0, 0.5);
@@ -874,31 +875,45 @@ html[data-theme='sao-joao'] .menu__content {
 
 .added__text {
   margin: 0;
-  color: #7dffae;
+  color: #f7fff9;
+  font-size: 1.2rem;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.35;
   text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow: visible;
+}
+
+.added__label {
+  display: block;
+  margin-bottom: 2px;
+  color: #5dff9a;
+  font-size: 1rem;
 }
 
 .added__actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 8px;
 }
 
-.added__actions .btn {
+.added__actions .btn,
+.added__actions .btn--ghost {
   width: 100%;
-  padding: 11px 8px;
-  font-size: 0.66rem;
+  min-height: 48px;
+  padding: 14px 16px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: none;
 }
 
 @keyframes added-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -8px);
+    transform: translate(-50%, 12px);
   }
   to {
     opacity: 1;
@@ -1058,11 +1073,34 @@ html[data-theme='sao-joao'] .menu__content {
 }
 
 html .chips .chip.chip--destaque {
+  position: relative;
   border: 2px solid #ffc93c;
   box-shadow:
     0 0 0 2px rgba(255, 201, 60, 0.35),
     0 0 14px rgba(255, 140, 40, 0.55);
   animation: destaque-pulse 1.8s ease-in-out infinite;
+}
+
+.chip__sun {
+  position: absolute;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle at 32% 32%, #fff 0%, #ffe38a 22%, #ff9a1a 52%, #ff3c00 78%);
+  box-shadow:
+    0 0 8px 3px rgba(255, 170, 40, 0.95),
+    0 0 16px 4px rgba(255, 70, 0, 0.6);
+  offset-path: border-box;
+  offset-anchor: center;
+  animation: chip-sun 2.6s linear infinite;
+}
+
+@keyframes chip-sun {
+  to {
+    offset-distance: 100%;
+  }
 }
 
 @keyframes destaque-pulse {
@@ -1692,6 +1730,120 @@ html .chips .chip.chip--destaque {
   gap: 12px;
 }
 
+.catalog__rename {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #3a3a3a;
+  border-radius: 10px;
+  background: #0c0c0d;
+  color: #f4f5f6;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.catalog__tools {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+
+.catalog__tool {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  background: #161618;
+  color: #f4f5f6;
+}
+
+.catalog__tool svg {
+  width: 20px;
+  height: 20px;
+}
+
+.catalog__tool[aria-pressed='true'] {
+  color: #ffb020;
+  border-color: #ffb020;
+  background: rgba(255, 176, 32, 0.14);
+}
+
+.wa-from {
+  margin: 0;
+}
+
+.wa-select {
+  position: relative;
+  display: grid;
+  gap: 6px;
+}
+
+.wa-select__button,
+.wa-select__list button {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  background: #101011;
+  color: inherit;
+  text-align: left;
+}
+
+.wa-select__list {
+  position: absolute;
+  z-index: 3;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 4px 0 0;
+  padding: 6px;
+  list-style: none;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  background: #101011;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.wa-select__list button {
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.wa-select__list button[aria-selected='true'] {
+  background: rgba(227, 177, 90, 0.16);
+}
+
+.wa-option {
+  display: grid;
+  justify-items: start;
+  gap: 1px;
+}
+
+.wa-option__number {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.wa-option__name {
+  font-size: 0.68rem;
+  line-height: 1.2;
+  color: #9a9aa2;
+}
+
+.wa-limit {
+  display: grid;
+  gap: 10px;
+}
+
+.wa-limit p {
+  margin: 0;
+}
+
 .catalog__card-head {
   display: flex;
   align-items: center;
@@ -1774,5 +1926,10 @@ html .chips .chip.chip--destaque {
     box-shadow:
       0 0 0 3px rgba(255, 122, 26, 0.5),
       0 0 16px rgba(255, 140, 40, 0.6);
+  }
+
+  .chip__sun {
+    animation: none;
+    offset-distance: 8%;
   }
 }
