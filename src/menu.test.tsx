@@ -127,6 +127,33 @@ it('opens the detail popup and blocks a sold-out item', async () => {
   expect(screen.getByRole('navigation', { name: 'Atalhos' }).querySelector('.dock__count')).toHaveTextContent('0')
 })
 
+it('enlarges the product photo and returns to the popup without blocking add', async () => {
+  const user = userEvent.setup()
+  renderMenu()
+
+  await user.click(screen.getByRole('button', { name: /Smash da casa/ }))
+  const detail = screen.getByRole('dialog', { name: 'Smash da casa' })
+  const thumb = within(detail).getByRole('button', { name: 'Ampliar foto de Smash da casa' })
+  expect(parseFloat(getComputedStyle(thumb).width)).toBe(96)
+
+  await user.click(thumb)
+  const zoom = screen.getByRole('dialog', { name: 'Foto de Smash da casa' })
+  const big = within(zoom).getByRole('button', { name: 'Foto ampliada' })
+  expect(parseFloat(getComputedStyle(big).width)).toBeGreaterThan(96)
+  expect(within(detail).getByRole('button', { name: 'Adicionar' })).toBeEnabled()
+
+  await user.click(within(zoom).getByRole('button', { name: 'Fechar foto' }))
+  expect(screen.queryByRole('dialog', { name: 'Foto de Smash da casa' })).not.toBeInTheDocument()
+  expect(screen.getByRole('dialog', { name: 'Smash da casa' })).toBe(detail)
+
+  await user.click(within(detail).getByRole('button', { name: 'Ampliar foto de Smash da casa' }))
+  await user.click(screen.getByRole('button', { name: 'Foto ampliada' }))
+  expect(screen.queryByRole('dialog', { name: 'Foto de Smash da casa' })).not.toBeInTheDocument()
+
+  await user.click(within(detail).getByRole('button', { name: 'Adicionar' }))
+  expect(screen.getByRole('navigation', { name: 'Atalhos' }).querySelector('.dock__count')).toHaveTextContent('1')
+})
+
 it('updates the product price live with quantity and add-ons', async () => {
   const user = userEvent.setup()
   renderMenu()

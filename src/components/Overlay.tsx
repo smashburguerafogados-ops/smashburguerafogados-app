@@ -15,9 +15,17 @@ function CloseMark() {
   )
 }
 
-export function CloseButton({ onClick, className = '' }: { onClick: () => void; className?: string }) {
+export function CloseButton({
+  onClick,
+  className = '',
+  label = 'Fechar',
+}: {
+  onClick: () => void
+  className?: string
+  label?: string
+}) {
   return (
-    <button type="button" className={`mark-btn${className ? ` ${className}` : ''}`} aria-label="Fechar" onClick={onClick}>
+    <button type="button" className={`mark-btn${className ? ` ${className}` : ''}`} aria-label={label} onClick={onClick}>
       <CloseMark />
     </button>
   )

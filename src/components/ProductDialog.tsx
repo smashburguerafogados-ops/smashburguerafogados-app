@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Product } from '../data/catalog'
 import { formatPrice, toCents } from '../lib/money'
-import { Overlay } from './Overlay'
+import { CloseButton, Overlay } from './Overlay'
 
 type ProductDialogProps = {
   product: Product
@@ -13,6 +13,7 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
   const [note, setNote] = useState('')
   const [extras, setExtras] = useState<string[]>([])
   const [qty, setQty] = useState(1)
+  const [zoom, setZoom] = useState(false)
   const extraTotal = (product.extras ?? [])
     .filter((extra) => extras.includes(extra.id))
     .reduce((sum, extra) => sum + toCents(extra.price), 0)
@@ -22,10 +23,24 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
     setExtras((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))
   }
 
+  useEffect(() => {
+    if (!zoom) return
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+      setZoom(false)
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [zoom])
+
   return (
     <Overlay label={product.name} onClose={onClose} variant="popup">
       <div className="product">
-        <img src={product.image} alt="" />
+        <button type="button" className="product__zoom" aria-label={`Ampliar foto de ${product.name}`} onClick={() => setZoom(true)}>
+          <img src={product.image} alt="" />
+        </button>
         <div>
           <h2>{product.name}</h2>
           <p>{product.description}</p>
@@ -78,6 +93,14 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
       >
         Adicionar
       </button>
+      {zoom && (
+        <div className="photo-zoom" role="dialog" aria-modal="true" aria-label={`Foto de ${product.name}`}>
+          <CloseButton className="photo-zoom__close" label="Fechar foto" onClick={() => setZoom(false)} />
+          <button type="button" className="photo-zoom__photo" aria-label="Foto ampliada" onClick={() => setZoom(false)}>
+            <img src={product.image} alt="" />
+          </button>
+        </div>
+      )}
     </Overlay>
   )
 }
