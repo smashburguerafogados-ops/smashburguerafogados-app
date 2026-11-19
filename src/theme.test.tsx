@@ -1,5 +1,6 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react'
 import './index.css'
+import indexCss from './index.css?raw'
 import './griddle.css'
 import './menu.css'
 import userEvent from '@testing-library/user-event'
@@ -110,8 +111,11 @@ it('shows customers the confirmed theme and hides the picker', async () => {
   expect(getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()).toBe('#d4af37')
   expect(getComputedStyle(document.documentElement).getPropertyValue('--theme-scene').trim()).toBe('snow-night')
   const search = screen.getByRole('searchbox', { name: 'Buscar' })
-  expect(getComputedStyle(search).borderTopColor).toBe('rgb(255, 255, 255)')
-  expect(getComputedStyle(search).borderTopWidth).toBe('1px')
+  expect(getComputedStyle(search).borderTopColor).toBe('rgba(255, 255, 255, 0.2)')
+  expect(getComputedStyle(search).borderTopColor).not.toBe('rgb(255, 255, 255)')
+  expect(indexCss).toMatch(/border-width:\s*0\.5px/)
+  expect(indexCss).toMatch(/border-color:\s*rgba\(255,\s*255,\s*255,\s*0\.2\)/)
+  expect(indexCss).not.toMatch(/border-color:\s*#ffffff/)
   expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Temas' })).not.toBeInTheDocument()
 
