@@ -155,9 +155,9 @@ html[data-theme='ano-novo'] .tabs button,
 html[data-theme='carnaval'] .tabs button,
 html[data-theme='pascoa'] .tabs button,
 html[data-theme='sao-joao'] .tabs button {
-  border-color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
   border-style: solid;
-  border-width: 1px;
+  border-width: 0.5px;
 }
 
 html[data-theme='natal'] .dock__item.is-active,
