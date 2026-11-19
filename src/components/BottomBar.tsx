@@ -5,6 +5,7 @@ type BottomBarProps = {
   sheet: string | null
   count: number
   totalCents: number
+  away?: boolean
   onOrders: () => void
   onProfile: () => void
   onCart: () => void
@@ -74,7 +75,7 @@ function Rule() {
   return <span className="dock__rule" aria-hidden="true" />
 }
 
-export function BottomBar({ sheet, count, totalCents, onOrders, onProfile, onCart, onWhatsapp }: BottomBarProps) {
+export function BottomBar({ sheet, count, totalCents, away = false, onOrders, onProfile, onCart, onWhatsapp }: BottomBarProps) {
   const itemWord = count === 1 ? 'item' : 'itens'
   const items = [
     {
@@ -111,7 +112,7 @@ export function BottomBar({ sheet, count, totalCents, onOrders, onProfile, onCar
   ]
 
   return (
-    <nav className="dock" aria-label="Atalhos">
+    <nav className={away ? 'dock is-away' : 'dock'} aria-label="Atalhos">
       {items.map((item, index) => (
         <Fragment key={item.key}>
           {index > 0 && <Rule />}

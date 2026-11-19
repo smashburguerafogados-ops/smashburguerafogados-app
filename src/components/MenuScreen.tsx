@@ -17,6 +17,7 @@ import {
 } from '../lib/menu'
 import { formatPrice, toCents } from '../lib/money'
 import { loadRemoteCatalog } from '../lib/remoteCatalog'
+import { scrollTopOf, stepDock } from '../lib/dockScroll'
 import { useShop } from '../lib/shop'
 import { AdminPrompt } from './AdminPrompt'
 import { ClosedScreen } from './ClosedScreen'
@@ -60,7 +61,33 @@ export function MenuScreen() {
   const [adminOpen, setAdminOpen] = useState(false)
   const [linkedId, setLinkedId] = useState(linkedProductId)
   const [notice, setNotice] = useState<{ id: number; text: string } | null>(null)
+  const [dockAway, setDockAway] = useState(false)
   const noticeId = useRef(0)
+
+  useEffect(() => {
+    const anchors = new WeakMap<EventTarget, number>()
+    let away = false
+    let frame = 0
+
+    function onScroll(event: Event) {
+      const target = event.target
+      const top = scrollTopOf(target)
+      if (top === null || !target) return
+      const anchor = anchors.get(target) ?? top
+      const next = stepDock(away, anchor, top)
+      anchors.set(target, next.anchor)
+      if (next.hidden === away) return
+      away = next.hidden
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => setDockAway(away))
+    }
+
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll, { capture: true })
+      cancelAnimationFrame(frame)
+    }
+  }, [])
 
   useEffect(() => {
     document.title = 'Cardápio | Smash Burger'
@@ -227,6 +254,7 @@ export function MenuScreen() {
         sheet={sheet}
         count={count}
         totalCents={total}
+        away={dockAway}
         onOrders={() => toggle('orders')}
         onProfile={() => toggle('profile')}
         onCart={() => toggle('cart')}
