@@ -64,7 +64,8 @@ describe('admin board', () => {
     await user.type(search, 'bruno')
     expect(listNames()).toEqual(['Bruno Lima'])
     const found = screen.getByRole('button', { name: /Bruno Lima/ })
-    expect(found).toHaveTextContent('#00002')
+    expect(found).toHaveTextContent('2× Smash da casa')
+    expect(found).not.toHaveTextContent('#00002')
     expect(found).not.toHaveTextContent('Aceito, em preparo')
 
     await user.clear(search)
@@ -199,16 +200,44 @@ describe('admin board', () => {
     expect(title()).not.toHaveClass('is-blinking')
   })
 
-  it('keeps the order card to the customer name and the order number', async () => {
+  it('shows a spinner while orders load, then the list or the empty state', async () => {
+    signInAs(adminProfile)
+    renderApp('/admin')
+    await screen.findByRole('heading', { name: 'Painel' })
+    const loading = screen.getByRole('status')
+    expect(loading).toHaveTextContent('Carregando pedidos.')
+    expect(loading.querySelector('.board-loading__spin')).toBeTruthy()
+    expect(getComputedStyle(loading.querySelector('.board-loading__spin') as HTMLElement).animationName).toBe('board-spin')
+    expect(screen.queryByText('Nenhum pedido aqui.')).not.toBeInTheDocument()
+    expect(document.querySelector('.order-card')).toBeNull()
+    expect(document.querySelector('.admin')).not.toHaveAttribute('data-theme')
+
+    await act(async () => {
+      emit('orders', [])
+    })
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.getByText('Nenhum pedido aqui.')).toBeInTheDocument()
+    expect(document.querySelector('.order-card')).toBeNull()
+
+    await act(async () => {
+      emit('orders', [novo])
+    })
+    expect(screen.queryByText('Carregando pedidos.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Nenhum pedido aqui.')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Ana Souza/ })).toHaveTextContent('2× Smash da casa')
+  })
+
+  it('shows the customer name and the items on the closed card', async () => {
     await openBoard()
     const card = screen.getByRole('button', { name: /Ana Souza/ })
     expect(card).toHaveTextContent('Ana Souza')
-    expect(card).toHaveTextContent('#00001')
+    expect(card).toHaveTextContent('2× Smash da casa')
+    expect(card).not.toHaveTextContent('#00001')
     expect(card.querySelectorAll('.order-card__name, .order-card__order')).toHaveLength(2)
     expect(card).not.toHaveTextContent('98888')
     expect(card).not.toHaveTextContent('R$')
     expect(card).not.toHaveTextContent('Recebido')
-    expect(card).not.toHaveTextContent('itens')
+    expect(card).not.toHaveTextContent('sem cebola')
     const style = getComputedStyle(card)
     expect(style.display).toBe('grid')
     expect(parseFloat(style.paddingTop)).toBeLessThanOrEqual(12)

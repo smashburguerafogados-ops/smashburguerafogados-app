@@ -3,7 +3,6 @@ import {
   COLUMN_LABEL,
   columnOf,
   orderMatches,
-  shortId,
   watchAllOrders,
   type Order,
   type OrderColumn,
@@ -11,6 +10,11 @@ import {
 import { OrderDialog } from './OrderDialog'
 
 const COLUMNS: OrderColumn[] = ['novos', 'andamento', 'finalizados']
+
+function orderItems(order: Order): string[] {
+  if (order.items.length === 0) return ['Sem itens']
+  return order.items.map((item) => `${item.qty}× ${item.name}`)
+}
 
 export function AdminPanel() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -50,7 +54,7 @@ export function AdminPanel() {
   const open = orders.find((order) => order.id === openId) ?? null
 
   return (
-    <section className="board" aria-label="Pedidos">
+    <section className="board" aria-label="Pedidos" aria-busy={status === 'loading'}>
       <label className="field board__search">
         <span className="sr-only">Buscar pedido</span>
         <input
@@ -80,7 +84,12 @@ export function AdminPanel() {
         })}
       </div>
 
-      {status === 'loading' && <p className="muted">Carregando pedidos.</p>}
+      {status === 'loading' && (
+        <p className="board-loading" role="status">
+          <span className="board-loading__spin" aria-hidden="true" />
+          Carregando pedidos.
+        </p>
+      )}
       {status === 'error' && (
         <p className="alert" role="alert">
           Não foi possível carregar os pedidos.
@@ -90,6 +99,7 @@ export function AdminPanel() {
         <p className="muted">{searching ? 'Nenhum pedido encontrado.' : 'Nenhum pedido aqui.'}</p>
       )}
 
+      {status === 'ready' && visible.length > 0 && (
       <ul className="board__list" aria-label={searching ? 'Resultado da busca' : COLUMN_LABEL[column]}>
         {visible.map((order) => (
           <li key={order.id}>
@@ -99,11 +109,16 @@ export function AdminPanel() {
               onClick={() => setOpenId(order.id)}
             >
               <span className="order-card__name">{order.customerName || 'Sem nome'}</span>
-              <span className="order-card__order">#{shortId(order.id)}</span>
+              <span className="order-card__order">
+                {orderItems(order).map((line, index) => (
+                  <span key={`${line}-${index}`}>{line}</span>
+                ))}
+              </span>
             </button>
           </li>
         ))}
       </ul>
+      )}
 
       {open && <OrderDialog key={open.id} order={open} onClose={() => setOpenId('')} />}
     </section>
