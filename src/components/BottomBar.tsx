@@ -6,6 +6,7 @@ type BottomBarProps = {
   count: number
   totalCents: number
   away?: boolean
+  orderLive?: boolean
   onOrders: () => void
   onProfile: () => void
   onCart: () => void
@@ -75,7 +76,17 @@ function Rule() {
   return <span className="dock__rule" aria-hidden="true" />
 }
 
-export function BottomBar({ sheet, count, totalCents, away = false, onOrders, onProfile, onCart, onWhatsapp }: BottomBarProps) {
+export function BottomBar({
+  sheet,
+  count,
+  totalCents,
+  away = false,
+  orderLive = false,
+  onOrders,
+  onProfile,
+  onCart,
+  onWhatsapp,
+}: BottomBarProps) {
   const itemWord = count === 1 ? 'item' : 'itens'
   const items = [
     {
@@ -83,6 +94,7 @@ export function BottomBar({ sheet, count, totalCents, away = false, onOrders, on
       label: 'Meus pedidos',
       icon: <PageIcon />,
       onClick: onOrders,
+      live: orderLive,
     },
     {
       key: 'profile',
@@ -121,6 +133,7 @@ export function BottomBar({ sheet, count, totalCents, away = false, onOrders, on
             className={[
               'dock__item',
               'wide' in item && item.wide ? 'dock__item--cart' : '',
+              'live' in item && item.live ? 'dock__item--live' : '',
               sheet === item.key ? 'is-active' : '',
             ]
               .filter(Boolean)

@@ -12,7 +12,7 @@ import {
   type CheckoutState,
   type PaymentMethod,
 } from '../lib/checkout'
-import { formatPrice } from '../lib/money'
+import { formatPrice, maskWholeReais } from '../lib/money'
 import { cartCount, cartTotal, type CartLine } from '../lib/menu'
 import { deliveryReady } from '../lib/delivery'
 import { buildOrder, placeOrder, shortId } from '../lib/orders'
@@ -190,19 +190,24 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
               </div>
               {checkout.needsChange === 'sim' && (
                 <>
-                  <label className="field">
-                    <span>Valor em dinheiro (R$)</span>
-                    <input
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      autoComplete="off"
-                      placeholder="Ex.: 50"
-                      value={checkout.cash}
-                      onChange={(event) =>
-                        setCheckout((current) => ({ ...current, cash: cashDigits(event.target.value) }))
-                      }
-                    />
-                  </label>
+                  <div className="field">
+                    <span id="cash-amount">Valor em dinheiro (R$)</span>
+                    <div className="money-join">
+                      <span className="money-join__prefix" aria-hidden="true">
+                        R$
+                      </span>
+                      <input
+                        aria-labelledby="cash-amount"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        placeholder="Ex.: 50"
+                        value={maskWholeReais(checkout.cash)}
+                        onChange={(event) =>
+                          setCheckout((current) => ({ ...current, cash: cashDigits(event.target.value) }))
+                        }
+                      />
+                    </div>
+                  </div>
                   {change !== null && (
                     <p className={change > 0 ? 'pay__change' : 'pay__change is-short'} aria-live="polite">
                       {change > 0

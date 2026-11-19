@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import type { Category } from '../data/catalog'
 import {
   deleteCategory,
-  deleteProduct,
   parsePrice,
   setProductAvailable,
   setProductPrice,
@@ -10,14 +9,14 @@ import {
   watchProducts,
   type ListedProduct,
 } from '../lib/adminCatalog'
-import { formatPrice, toCents } from '../lib/money'
+import { formatPrice, maskPrice, toCents } from '../lib/money'
 import { CloseButton } from './Overlay'
 
 type ProductDeskProps = {
   onClose: () => void
 }
 
-type Pending = { kind: 'product' | 'category'; id: string; name: string }
+type Pending = { id: string; name: string }
 
 export function ProductDesk({ onClose }: ProductDeskProps) {
   const [products, setProducts] = useState<ListedProduct[]>([])
@@ -27,6 +26,7 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
   const [actionError, setActionError] = useState('')
   const [pending, setPending] = useState<Pending | null>(null)
   const [busy, setBusy] = useState(false)
+  const [savedName, setSavedName] = useState('')
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -68,6 +68,7 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
 
   async function savePrice(product: ListedProduct) {
     setActionError('')
+    setSavedName('')
     const value = parsePrice(prices[product.id] ?? '')
     if (value === null) {
       setActionError('Informe um valor válido.')
@@ -77,7 +78,9 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
       await setProductPrice(product.id, value)
     } catch {
       setActionError('Não foi possível salvar o valor.')
+      return
     }
+    setSavedName(product.name)
   }
 
   async function toggleSoldOut(product: ListedProduct) {
@@ -94,8 +97,7 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
     setBusy(true)
     setActionError('')
     try {
-      if (pending.kind === 'product') await deleteProduct(pending.id)
-      else await deleteCategory(pending.id)
+      await deleteCategory(pending.id)
       setPending(null)
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Não foi possível excluir.')
@@ -117,51 +119,55 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
             {loadError}
           </p>
         )}
+        <h3 className="catalog__heading">Itens do cardápio</h3>
         {products.length === 0 ? (
           <p className="muted">Nenhum produto no cardápio.</p>
         ) : (
-          <ul className="catalog">
-            {products.map((product) => (
-              <li key={product.id} className="catalog__row">
-                <div className="catalog__main">
-                  <strong>{product.name}</strong>
-                  {!product.available && <span className="catalog__tag">Esgotado</span>}
-                </div>
-                <div className="catalog__actions">
-                  <label className="catalog__price">
-                    <span className="sr-only">Valor de {product.name}</span>
-                    <input
-                      inputMode="decimal"
-                      value={prices[product.id] ?? ''}
-                      onChange={(event) =>
-                        setPrices((current) => ({
-                          ...current,
-                          [product.id]: event.target.value.replace(/[^\d.,]/g, ''),
-                        }))
-                      }
-                    />
-                  </label>
-                  <button type="button" className="text-btn" onClick={() => void savePrice(product)}>
-                    Salvar {product.name}
-                  </button>
-                  <button
-                    type="button"
-                    className="text-btn"
-                    aria-pressed={!product.available}
-                    onClick={() => void toggleSoldOut(product)}
-                  >
-                    {product.available ? `Marcar ${product.name} esgotado` : `Marcar ${product.name} disponível`}
-                  </button>
-                  <button
-                    type="button"
-                    className="text-btn"
-                    onClick={() => setPending({ kind: 'product', id: product.id, name: product.name })}
-                  >
-                    Excluir {product.name}
-                  </button>
-                </div>
-              </li>
-            ))}
+          <ul className="catalog catalog--cards">
+            {products.map((product) => {
+              const priceId = `price-${product.id}`
+              return (
+                <li key={product.id}>
+                  <article className="catalog__card" aria-labelledby={`name-${product.id}`}>
+                    <header className="catalog__card-head">
+                      <strong id={`name-${product.id}`}>{product.name}</strong>
+                      <span className={product.available ? 'catalog__state' : 'catalog__state is-off'}>
+                        {product.available ? 'Disponível' : 'Esgotado'}
+                      </span>
+                    </header>
+                    <div className="field">
+                      <span id={priceId}>Valor (R$)</span>
+                      <div className="money-join">
+                        <span className="money-join__prefix" aria-hidden="true">
+                          R$
+                        </span>
+                        <input
+                          aria-labelledby={priceId}
+                          inputMode="numeric"
+                          value={prices[product.id] ?? ''}
+                          onChange={(event) =>
+                            setPrices((current) => ({ ...current, [product.id]: maskPrice(event.target.value) }))
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="catalog__actions">
+                      <button type="button" className="btn" onClick={() => void savePrice(product)}>
+                        Salvar valor
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn--ghost"
+                        aria-pressed={!product.available}
+                        onClick={() => void toggleSoldOut(product)}
+                      >
+                        {product.available ? 'Marcar esgotado' : 'Marcar disponível'}
+                      </button>
+                    </div>
+                  </article>
+                </li>
+              )
+            })}
           </ul>
         )}
 
@@ -169,17 +175,19 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
         {categories.length === 0 ? (
           <p className="muted">Nenhuma categoria.</p>
         ) : (
-          <ul className="catalog">
+          <ul className="catalog catalog--cards">
             {categories.map((category) => (
-              <li key={category.id} className="catalog__row">
-                <strong>{category.name}</strong>
-                <button
-                  type="button"
-                  className="text-btn"
-                  onClick={() => setPending({ kind: 'category', id: category.id, name: category.name })}
-                >
-                  Excluir categoria {category.name}
-                </button>
+              <li key={category.id}>
+                <article className="catalog__card catalog__card--row" aria-labelledby={`category-${category.id}`}>
+                  <strong id={`category-${category.id}`}>{category.name}</strong>
+                  <button
+                    type="button"
+                    className="text-btn"
+                    onClick={() => setPending({ id: category.id, name: category.name })}
+                  >
+                    Excluir categoria
+                  </button>
+                </article>
               </li>
             ))}
           </ul>
@@ -187,6 +195,11 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
         {actionError && (
           <p className="alert" role="alert">
             {actionError}
+          </p>
+        )}
+        {savedName && !actionError && (
+          <p className="notice" role="status">
+            Valor de {savedName} salvo.
           </p>
         )}
       </div>

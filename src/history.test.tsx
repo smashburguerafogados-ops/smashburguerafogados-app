@@ -30,6 +30,39 @@ function card(id: string): HTMLElement {
   return screen.getByRole('listitem', { name: `Pedido #${id}` })
 }
 
+describe('orders icon on the dock', () => {
+  it('blinks blue while an order is accepted or out for delivery and stops once finished', async () => {
+    signInAs(customerProfile)
+    renderApp()
+    await waitFor(() => expect(activeListeners('orders')).toHaveLength(1))
+    const button = () => screen.getByRole('button', { name: 'Meus pedidos' })
+
+    await act(async () => {
+      emit('orders', [makeOrder({ id: 'pedido-00001', status: 'novo' })])
+    })
+    expect(button()).not.toHaveClass('dock__item--live')
+
+    await act(async () => {
+      emit('orders', [makeOrder({ id: 'pedido-00001', status: 'andamento' })])
+    })
+    expect(button()).toHaveClass('dock__item--live')
+    const icon = getComputedStyle(button().querySelector('svg') as SVGElement)
+    expect(icon.color).toBe('rgb(59, 156, 255)')
+    expect(icon.animationName).toBe('order-live')
+
+    await act(async () => {
+      emit('orders', [makeOrder({ id: 'pedido-00001', status: 'enviado' })])
+    })
+    expect(button()).toHaveClass('dock__item--live')
+
+    await act(async () => {
+      emit('orders', [makeOrder({ id: 'pedido-00001', status: 'finalizado' })])
+    })
+    expect(button()).not.toHaveClass('dock__item--live')
+    expect(getComputedStyle(button().querySelector('svg') as SVGElement).animationName).not.toBe('order-live')
+  })
+})
+
 describe('customer order history', () => {
   it('lists only this customer, newest first', async () => {
     await openHistory()

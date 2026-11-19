@@ -4,7 +4,7 @@ import {
   drawRaffle,
   eligibleCustomers,
   EMPTY_DRAW_MESSAGE,
-  TITLE_REQUIRED,
+  raffleError,
   type Raffle,
 } from '../lib/raffle'
 import { watchAllOrders, type Order } from '../lib/orders'
@@ -46,7 +46,7 @@ export function RaffleScreen({ onClose }: { onClose: () => void }) {
       await activateRaffle(view, title)
       setNotice('Sorteio de hoje ativado.')
     } catch (caught) {
-      setError(caught instanceof Error && caught.message === TITLE_REQUIRED ? TITLE_REQUIRED : 'Não foi possível ativar.')
+      setError(raffleError(caught, 'Não foi possível ativar.'))
     } finally {
       setBusy(false)
     }
@@ -65,8 +65,8 @@ export function RaffleScreen({ onClose }: { onClose: () => void }) {
         setLocked({ ...view, winnerId: outcome.winnerId, winnerName: outcome.winnerName, drawnAtMs: Date.now() })
       }
       setNotice(`Ganhador: ${outcome.winnerName}`)
-    } catch {
-      setError('Não foi possível sortear.')
+    } catch (caught) {
+      setError(raffleError(caught, 'Não foi possível sortear.'))
     } finally {
       setBusy(false)
     }

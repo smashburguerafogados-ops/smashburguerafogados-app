@@ -101,7 +101,7 @@ describe('cart and checkout', () => {
     renderApp()
     await addToCart(user, /Smash da casa/)
     await addToCart(user, /Batata rústica/)
-    await user.click(screen.getByRole('button', { name: /carrinho/i }))
+    await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
 
     const cart = screen.getByRole('dialog', { name: 'Carrinho' })
     const rows = cart.querySelectorAll('.cart li')
@@ -129,7 +129,7 @@ describe('cart and checkout', () => {
     renderApp()
     await addToCart(user, /Smash da casa/)
     await addToCart(user, /Batata rústica/)
-    await user.click(screen.getByRole('button', { name: /carrinho/i }))
+    await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
     const cart = screen.getByRole('dialog', { name: 'Carrinho' })
     const order = () => within(cart).getByRole('button', { name: 'Fazer Pedido' })
 
@@ -170,6 +170,11 @@ describe('cart and checkout', () => {
     await user.type(cash, ',x0')
     expect(cash).toHaveValue('500')
     expect(cart).toHaveTextContent('Seu troco: R$ 456,00')
+
+    await user.type(cash, '0')
+    expect(cash).toHaveValue('5.000')
+    expect(cart).toHaveTextContent('Seu troco: R$ 4.956,00')
+    expect(cash.parentElement?.querySelector('.money-join__prefix')).toHaveTextContent('R$')
   })
 
   it('saves the order in Firestore with the payment and troco, then clears the cart', async () => {
@@ -180,7 +185,7 @@ describe('cart and checkout', () => {
 
     await addToCart(user, /Smash da casa/)
     await addToCart(user, /Batata rústica/)
-    await user.click(screen.getByRole('button', { name: /carrinho/i }))
+    await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
     const cart = screen.getByRole('dialog', { name: 'Carrinho' })
     await user.click(within(cart).getByRole('radio', { name: 'Dinheiro' }))
     await user.click(within(cart).getByRole('radio', { name: 'Sim' }))
@@ -210,7 +215,7 @@ describe('cart and checkout', () => {
     const user = userEvent.setup()
     renderApp()
     await addToCart(user, /Smash da casa/)
-    await user.click(screen.getByRole('button', { name: /carrinho/i }))
+    await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
     const cart = screen.getByRole('dialog', { name: 'Carrinho' })
     await user.click(within(cart).getByRole('radio', { name: 'Pix' }))
     await user.click(within(cart).getByRole('button', { name: 'Fazer Pedido' }))
@@ -235,7 +240,7 @@ describe('cart and checkout', () => {
     renderApp()
     await waitFor(() => expect(firebaseMocks.getDoc).toHaveBeenCalled())
     await addToCart(user, /Smash da casa/)
-    await user.click(screen.getByRole('button', { name: /carrinho/i }))
+    await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
     const cart = screen.getByRole('dialog', { name: 'Carrinho' })
     await user.click(within(cart).getByRole('radio', { name: 'Pix' }))
     await user.click(within(cart).getByRole('button', { name: 'Fazer Pedido' }))
@@ -272,7 +277,7 @@ describe('cart and checkout', () => {
     renderApp()
     await waitFor(() => expect(firebaseMocks.getDoc).toHaveBeenCalled())
     await addToCart(user, /Smash da casa/)
-    await user.click(screen.getByRole('button', { name: /carrinho/i }))
+    await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
     await user.click(screen.getByRole('radio', { name: 'Pix' }))
     await user.click(screen.getByRole('button', { name: 'Fazer Pedido' }))
 
@@ -324,7 +329,7 @@ describe('cart and checkout', () => {
     renderApp()
     await waitFor(() => expect(firebaseMocks.getDoc).toHaveBeenCalled())
     await addToCart(user, /Smash da casa/)
-    await user.click(screen.getByRole('button', { name: /carrinho/i }))
+    await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
     await user.click(screen.getByRole('radio', { name: 'Pix' }))
     await user.click(screen.getByRole('button', { name: 'Fazer Pedido' }))
 
