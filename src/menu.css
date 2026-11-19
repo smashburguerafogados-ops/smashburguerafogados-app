@@ -1624,26 +1624,28 @@ html .chips .chip.chip--destaque {
 .order-card {
   width: 100%;
   display: grid;
-  gap: 4px;
+  gap: 2px;
   text-align: left;
-  padding: 12px;
+  padding: 10px 12px;
   border: 1px solid rgba(227, 177, 90, 0.25);
   border-radius: 14px;
   background: #161514;
   color: var(--text);
 }
 
-.order-card__head {
-  display: flex;
-  justify-content: space-between;
+.order-card__name {
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.2;
 }
 
-.order-card__meta {
-  color: var(--muted);
-  font-size: 0.84rem;
+.order-card__order {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 0.92rem;
+  line-height: 1.2;
 }
 
-.order-card__total,
 .order-total {
   color: var(--gold);
   font-weight: 700;

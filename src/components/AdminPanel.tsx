@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { formatWhatsapp } from '../lib/identity'
-import { formatPrice } from '../lib/money'
 import {
   COLUMN_LABEL,
-  STATUS_LABEL,
   columnOf,
   orderMatches,
   shortId,
@@ -14,11 +11,6 @@ import {
 import { OrderDialog } from './OrderDialog'
 
 const COLUMNS: OrderColumn[] = ['novos', 'andamento', 'finalizados']
-
-function formatTime(ms: number): string {
-  if (!ms) return ''
-  return new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-}
 
 export function AdminPanel() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -106,18 +98,8 @@ export function AdminPanel() {
               className={`order-card order-card--${order.status}`}
               onClick={() => setOpenId(order.id)}
             >
-              <span className="order-card__head">
-                <strong>#{shortId(order.id)}</strong>
-                <span>{formatTime(order.createdAtMs)}</span>
-              </span>
               <span className="order-card__name">{order.customerName || 'Sem nome'}</span>
-              {order.customerWhatsapp && (
-                <span className="order-card__meta">{formatWhatsapp(order.customerWhatsapp)}</span>
-              )}
-              <span className="order-card__meta">
-                {STATUS_LABEL[order.status]} · {order.items.reduce((sum, item) => sum + item.qty, 0)} itens
-              </span>
-              <span className="order-card__total">{formatPrice(order.totalCents)}</span>
+              <span className="order-card__order">#{shortId(order.id)}</span>
             </button>
           </li>
         ))}
