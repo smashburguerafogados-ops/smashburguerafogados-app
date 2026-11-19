@@ -48,6 +48,21 @@ export function whatsappUrl(number: string, text?: string): string {
   return `${base}?text=${encodeURIComponent(sanitizeMessage(text))}`
 }
 
+export function isAndroidDevice(): boolean {
+  return /Android/i.test(navigator.userAgent)
+}
+
+/**
+ * Opens the installed WhatsApp app. https://wa.me stops on a web page in
+ * Android Chrome before the app. iOS already hands wa.me straight to the app.
+ */
+export function whatsappAppUrl(number: string, text?: string): string {
+  const digits = number.replace(/\D/g, '')
+  const base = `whatsapp://send?phone=${digits}`
+  if (!text) return base
+  return `${base}&text=${encodeURIComponent(sanitizeMessage(text))}`
+}
+
 export function businessWhatsappUrl(text?: string): string {
   return whatsappUrl(BUSINESS_WHATSAPP, text)
 }
@@ -58,6 +73,13 @@ export function customerNumber(order: Pick<Order, 'customerWhatsapp'>): string {
 
 export function broadcastMessage(text: string): string {
   return sanitizeMessage(`${SYMBOLS.burger} ${text}`)
+}
+
+/** Same-tab navigation. Android needs this so the whatsapp:// link reaches the app. */
+export const page = {
+  assign(url: string) {
+    window.location.assign(url)
+  },
 }
 
 /** Opens one chat. Returns false when the browser blocks the window, without leaving the page. */
@@ -74,8 +96,13 @@ export function openWhatsappTab(number: string, text: string): boolean {
 
 /** Call from the click handler itself so mobile browsers treat it as a user action. */
 export function openWhatsapp(number: string, text: string): string {
+  if (isAndroidDevice()) {
+    const app = whatsappAppUrl(number, text)
+    page.assign(app)
+    return app
+  }
   const url = whatsappUrl(number, text)
-  if (!openWhatsappTab(number, text)) window.location.assign(url)
+  if (!openWhatsappTab(number, text)) page.assign(url)
   return url
 }
 
@@ -152,10 +179,9 @@ export function cancelledMessage(order: Order, reason: string): string {
 }
 
 export function attendanceMessage(customerName: string): string {
-  const name = customerName.trim()
-  return [
-    `${SYMBOLS.wave} Olá, Atendimento da ${BUSINESS_NAME}!`,
-    name ? `${SYMBOLS.burger} Aqui é ${name}.` : `${SYMBOLS.burger} Vim pelo cardápio.`,
-    `${SYMBOLS.chat} Gostaria de falar com vocês.`,
-  ].join('\n')
+  const name = customerName.trim().replace(/\s+/g, ' ')
+  const hello = name
+    ? `${SYMBOLS.wave} Olá, Atendimento da ${BUSINESS_NAME}! Aqui é ${name}.`
+    : `${SYMBOLS.wave} Olá, Atendimento da ${BUSINESS_NAME}!`
+  return [hello, `${SYMBOLS.burger} Vim pelo cardápio.`, `${SYMBOLS.chat} Gostaria de falar com vocês.`].join('\n')
 }

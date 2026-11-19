@@ -129,7 +129,7 @@ The WhatsApp button asks "Deseja falar com o Atendimento da Smash Burger?". Sim 
 
 ## WhatsApp
 
-Every message is opened with a `wa.me/{number}?text=` link, the same approach the refrigeração app uses. All builders live in `src/lib/whatsapp.ts`. The text is normalized and broken characters, joiners and variation selectors are removed before sending. Each customer message uses only single code point emoji with default emoji presentation (👋 ✅ ❌ 🔥 🍔 🛵 📍 💰 💵 📸 📝 💬 🙏 📦), which render the same way on iPhone and Android. WhatsApp opens inside the click, before the Firestore update, so mobile browsers do not block it.
+iPhone keeps a `wa.me/{number}?text=` link, which opens the app directly. Android uses `whatsapp://send?phone=&text=` so Chrome does not stop on the WhatsApp web page first. All builders live in `src/lib/whatsapp.ts`. The text is normalized and broken characters, joiners and variation selectors are removed before sending. Each customer message uses only single code point emoji with default emoji presentation (👋 ✅ ❌ 🔥 🍔 🛵 📍 💰 💵 📸 📝 💬 🙏 📦), which render the same way on iPhone and Android. WhatsApp opens inside the click, before the Firestore update, so mobile browsers do not block it.
 
 ## Fire
 
