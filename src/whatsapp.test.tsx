@@ -5,8 +5,10 @@ import type { Order } from './lib/orders'
 import {
   BUSINESS_WHATSAPP,
   SAFE_SYMBOLS,
+  SYMBOLS,
   acceptedMessage,
   attendanceMessage,
+  broadcastMessage,
   cancelledMessage,
   refusedMessage,
   sanitizeMessage,
@@ -42,8 +44,13 @@ describe('WhatsApp messages', () => {
     expect(whatsappUrl('5500000000000')).toBe('https://wa.me/5500000000000')
   })
 
-  it('keeps BUSINESS_WHATSAPP as a named placeholder', () => {
-    expect(BUSINESS_WHATSAPP).toBe('5500000000000')
+  it('uses the shop number +55 87 9661-9629', () => {
+    expect(BUSINESS_WHATSAPP).toBe('558796619629')
+    expect(whatsappUrl(BUSINESS_WHATSAPP)).toBe('https://wa.me/558796619629')
+  })
+
+  it('puts the Smash icon in front of a broadcast', () => {
+    expect(broadcastMessage('Hoje tem combo')).toBe(`${SYMBOLS.burger} Hoje tem combo`)
   })
 
   it('strips broken characters, joiners and variation selectors before sending', () => {
@@ -106,6 +113,7 @@ describe('WhatsApp messages', () => {
     const senders = app.filter(([, code]) => code.includes('openWhatsapp(')).map(([path]) => path).sort()
     expect(senders).toEqual([
       './components/AttendancePrompt.tsx',
+      './components/BroadcastScreen.tsx',
       './components/ContactScreen.tsx',
       './components/OrderDialog.tsx',
       './lib/whatsapp.ts',

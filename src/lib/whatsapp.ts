@@ -3,8 +3,8 @@ import { normalizeWhatsapp } from './identity'
 import { formatPrice } from './money'
 import { photoLink, shortId, type Order } from './orders'
 
-// Placeholder until the shop number is set. Not a secret.
-export const BUSINESS_WHATSAPP = '5500000000000'
+/** Shop WhatsApp. Customers write here, and the admin sends from this account. Not a secret. */
+export const BUSINESS_WHATSAPP = '558796619629'
 
 export const BUSINESS_NAME = 'Smash Burger'
 
@@ -56,19 +56,26 @@ export function customerNumber(order: Pick<Order, 'customerWhatsapp'>): string {
   return normalizeWhatsapp(order.customerWhatsapp) ?? order.customerWhatsapp.replace(/\D/g, '')
 }
 
+export function broadcastMessage(text: string): string {
+  return sanitizeMessage(`${SYMBOLS.burger} ${text}`)
+}
+
+/** Opens one chat. Returns false when the browser blocks the window, without leaving the page. */
+export function openWhatsappTab(number: string, text: string): boolean {
+  const opened = window.open(whatsappUrl(number, text), '_blank')
+  if (!opened) return false
+  try {
+    opened.opener = null
+  } catch {
+    // Some browsers lock opener on cross-origin windows.
+  }
+  return true
+}
+
 /** Call from the click handler itself so mobile browsers treat it as a user action. */
 export function openWhatsapp(number: string, text: string): string {
   const url = whatsappUrl(number, text)
-  const opened = window.open(url, '_blank')
-  if (opened) {
-    try {
-      opened.opener = null
-    } catch {
-      // Some browsers lock opener on cross-origin windows.
-    }
-  } else {
-    window.location.assign(url)
-  }
+  if (!openWhatsappTab(number, text)) window.location.assign(url)
   return url
 }
 

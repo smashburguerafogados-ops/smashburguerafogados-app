@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { seedCatalog, type Catalog, type Product } from '../data/catalog'
+import type { Catalog, Product } from '../data/catalog'
 import { useAuth } from '../context/AuthContext'
 import { useOrders } from '../context/OrdersContext'
 import { isAccepted } from '../lib/orders'
@@ -18,7 +18,7 @@ import {
   type CartLine,
 } from '../lib/menu'
 import { formatPrice, toCents } from '../lib/money'
-import { loadRemoteCatalog } from '../lib/remoteCatalog'
+import { watchRemoteCatalog } from '../lib/remoteCatalog'
 import { scrollTopOf, stepDock } from '../lib/dockScroll'
 import { useShop } from '../lib/shop'
 import { AdminPrompt } from './AdminPrompt'
@@ -55,7 +55,8 @@ export function MenuScreen() {
   const history = useOrders()
   const shop = useShop()
   const navigate = useNavigate()
-  const [catalog, setCatalog] = useState<Catalog>(seedCatalog)
+  const [catalog, setCatalog] = useState<Catalog | null>(null)
+  const [catalogError, setCatalogError] = useState(false)
   const [categoryId, setCategoryId] = useState(readSavedCategory)
   const [search, setSearch] = useState('')
   const [lines, setLines] = useState<CartLine[]>([])
@@ -96,20 +97,20 @@ export function MenuScreen() {
     document.title = 'Cardápio | Smash Burger'
   }, [])
 
-  const reloadCatalog = useCallback(() => {
-    let active = true
-    void loadRemoteCatalog().then((remote) => {
-      if (active && remote) setCatalog(remote)
-    })
-    return () => {
-      active = false
-    }
-  }, [])
-
-  useEffect(() => reloadCatalog(), [reloadCatalog])
+  useEffect(
+    () =>
+      watchRemoteCatalog(
+        (next) => {
+          setCatalog(next)
+          setCatalogError(false)
+        },
+        () => setCatalogError(true),
+      ),
+    [],
+  )
 
   useEffect(() => {
-    if (!linkedId) return
+    if (!linkedId || !catalog) return
     const found = catalog.products.find((item) => item.id === linkedId)
     if (found) {
       setProduct(found)
@@ -117,9 +118,11 @@ export function MenuScreen() {
     }
   }, [catalog, linkedId])
 
-  const categories = sortCategories(catalog.categories)
+  const categories = catalog ? sortCategories(catalog.categories) : []
   const activeCategory = categories.some((category) => category.id === categoryId) ? categoryId : ''
-  const visible = sortProductsByCategory(filterProducts(catalog.products, activeCategory, search), categories)
+  const visible = catalog
+    ? sortProductsByCategory(filterProducts(catalog.products, activeCategory, search), categories)
+    : []
   const count = cartCount(lines)
   const total = cartTotal(lines)
   const isAdmin = session.status === 'ready' && session.profile.role === 'admin'
@@ -183,7 +186,7 @@ export function MenuScreen() {
       {notice && (
         <section key={notice.id} className="added" aria-label="Item adicionado">
           <p className="added__text" role="status">
-            {notice.text}
+            <span className="added__label">Adicionado:</span> {notice.text.replace(/^Adicionado:\s*/, '')}
           </p>
           <div className="added__actions">
             <button
@@ -223,6 +226,15 @@ export function MenuScreen() {
         />
       </label>
 
+      {catalogError && (
+        <p className="alert" role="alert">
+          Não foi possível carregar o cardápio.
+        </p>
+      )}
+      {!catalog && !catalogError && <p className="muted">Carregando o cardápio.</p>}
+
+      {catalog && (
+      <>
       <div className="chips" role="toolbar" aria-label="Categorias">
         {categories.map((category) => {
           const classes = ['chip']
@@ -237,6 +249,7 @@ export function MenuScreen() {
               onClick={() => chooseCategory(category.id)}
             >
               {category.name}
+              {category.destaque && <span className="chip__sun" aria-hidden="true" />}
             </button>
           )
         })}
@@ -263,6 +276,8 @@ export function MenuScreen() {
             </li>
           ))}
         </ul>
+      )}
+      </>
       )}
       </div>
 

@@ -3,6 +3,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { App } from './App'
 import { FIRE_PLAYBACK_RATE } from './components/FireBackdrop'
 import { Splash } from './components/Splash'
+import { emitSeedCatalog } from './test/render'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -34,6 +35,9 @@ it('leaves the splash on the menu, not a login wall', async () => {
   })
   await act(async () => {
     await vi.advanceTimersByTimeAsync(700)
+  })
+  act(() => {
+    emitSeedCatalog()
   })
 
   expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()

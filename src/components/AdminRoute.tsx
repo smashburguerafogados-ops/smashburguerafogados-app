@@ -6,6 +6,7 @@ import { watchRevenue, type RevenueEntry } from '../lib/revenue'
 import { useTheme } from '../lib/theme'
 import type { UserProfile } from '../types'
 import { AdminPanel } from './AdminPanel'
+import { BroadcastScreen } from './BroadcastScreen'
 import { ContactScreen } from './ContactScreen'
 import { ProductDesk } from './ProductDesk'
 import { ProductForm } from './ProductForm'
@@ -98,6 +99,7 @@ export function AdminRoute() {
   const [revenueOpen, setRevenueOpen] = useState(false)
   const [themesOpen, setThemesOpen] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
+  const [broadcastOpen, setBroadcastOpen] = useState(false)
   const [raffleOpen, setRaffleOpen] = useState(false)
   const adminReady = session.status === 'ready' && session.profile.role === 'admin'
   const revenue = useRevenue(adminReady)
@@ -165,6 +167,7 @@ export function AdminRoute() {
             setRevenueOpen(false)
             setThemesOpen(false)
             setContactOpen(false)
+            setBroadcastOpen(false)
             setRaffleOpen(false)
             setShop(true)
           }}
@@ -175,6 +178,7 @@ export function AdminRoute() {
             setRevenueOpen(false)
             setThemesOpen(false)
             setContactOpen(false)
+            setBroadcastOpen(false)
             setRaffleOpen(false)
             setDesk(true)
           }}
@@ -185,6 +189,7 @@ export function AdminRoute() {
             setShop(false)
             setThemesOpen(false)
             setContactOpen(false)
+            setBroadcastOpen(false)
             setRaffleOpen(false)
             setRevenueOpen(true)
           }}
@@ -195,6 +200,7 @@ export function AdminRoute() {
             setShop(false)
             setRevenueOpen(false)
             setContactOpen(false)
+            setBroadcastOpen(false)
             setRaffleOpen(false)
             setThemesOpen(true)
           }}
@@ -205,8 +211,20 @@ export function AdminRoute() {
             setShop(false)
             setRevenueOpen(false)
             setThemesOpen(false)
+            setBroadcastOpen(false)
             setRaffleOpen(false)
             setContactOpen(true)
+          }}
+          onWhatsapp={() => {
+            setMenuOpen(false)
+            setCreating(false)
+            setDesk(false)
+            setShop(false)
+            setRevenueOpen(false)
+            setThemesOpen(false)
+            setContactOpen(false)
+            setRaffleOpen(false)
+            setBroadcastOpen(true)
           }}
           onRaffle={() => {
             setMenuOpen(false)
@@ -216,6 +234,7 @@ export function AdminRoute() {
             setRevenueOpen(false)
             setThemesOpen(false)
             setContactOpen(false)
+            setBroadcastOpen(false)
             setRaffleOpen(true)
           }}
           onCreateProduct={() => {
@@ -225,6 +244,7 @@ export function AdminRoute() {
             setRevenueOpen(false)
             setThemesOpen(false)
             setContactOpen(false)
+            setBroadcastOpen(false)
             setRaffleOpen(false)
             setCreating(true)
           }}
@@ -239,6 +259,9 @@ export function AdminRoute() {
       {themesOpen && <ThemeScreen applied={theme} onClose={() => setThemesOpen(false)} />}
       {contactOpen && (
         <ContactScreen people={contacts.people} status={contacts.status} onClose={() => setContactOpen(false)} />
+      )}
+      {broadcastOpen && (
+        <BroadcastScreen people={contacts.people} status={contacts.status} onClose={() => setBroadcastOpen(false)} />
       )}
       {raffleOpen && <RaffleScreen onClose={() => setRaffleOpen(false)} />}
     </AdminFrame>

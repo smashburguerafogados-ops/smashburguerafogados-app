@@ -117,7 +117,7 @@ The three-line menu is only on the admin screen. It opens Criar Produto: nome, f
 
 Firebase Storage is not enabled on this project, so the photo is resized to a JPEG of at most 640 px and saved on the product document. WhatsApp links can only carry text, so the delivery message links the photo: the public image file for the built-in items, or `…/smashburguerafogados-app/?produto={id}`, which opens that product with its photo, for uploaded photos.
 
-The sample cardápio in `src/data/catalog.ts` is what visitors see until Firestore has categories and products. Prices in Firestore are reais (a number such as `28`). Public reads use `where('available', '==', true)`, so sold-out products stay hidden from customers once the rules are published.
+The sample cardápio in `src/data/catalog.ts` is a test fixture. The customer menu waits for Firestore and does not flash those sample categories. It then follows creates, edits and deletes without a reload. Prices in Firestore are reais (a number such as `28`). Public reads use `where('available', '==', true)`, so sold-out products stay hidden from customers once the rules are published.
 
 ## Bottom bar
 
@@ -125,7 +125,7 @@ A floating pill sits above the bottom edge: Meus pedidos (a page icon), Conta, C
 
 The WhatsApp button asks "Deseja falar com o Atendimento da Smash Burger?". Sim opens WhatsApp with the registered customer name in the message. Não closes the question.
 
-`BUSINESS_WHATSAPP` in `src/lib/whatsapp.ts` is still the named placeholder `5500000000000` because the shop number is not known yet. Replace that constant with the real number. It is not a secret.
+`BUSINESS_WHATSAPP` in `src/lib/whatsapp.ts` is `558796619629` (+55 87 9661-9629). Customers write to that number, and the admin sends from that WhatsApp account. It is not a secret.
 
 ## WhatsApp
 

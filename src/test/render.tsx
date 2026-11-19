@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { act, render } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { AdminRoute } from '../components/AdminRoute'
@@ -7,8 +7,9 @@ import { RaffleProvider } from '../components/RaffleProvider'
 import { CustomerTheme, ThemeFrame } from '../components/ThemeMark'
 import { AuthProvider } from '../context/AuthContext'
 import { OrdersProvider } from '../context/OrdersContext'
+import { seedCatalog } from '../data/catalog'
 import type { Order } from '../lib/orders'
-import { authState, firebaseMocks, type FakeDoc } from './mocks'
+import { authState, emit, firebaseMocks, type FakeDoc } from './mocks'
 
 export const customerProfile = {
   uid: 'cliente-1',
@@ -49,8 +50,20 @@ export function Providers({ children, path = '/' }: { children: ReactNode; path?
   )
 }
 
+/** Pushes the sample cardápio as if Firestore had already answered. */
+export function emitSeedCatalog() {
+  emit(
+    'categories',
+    seedCatalog.categories.map((category) => ({ ...category })),
+  )
+  emit(
+    'products',
+    seedCatalog.products.map((product) => ({ ...product })),
+  )
+}
+
 export function renderApp(path = '/') {
-  return render(
+  const view = render(
     <Providers path={path}>
       <Routes>
         <Route path="/" element={<MenuScreen />} />
@@ -58,6 +71,12 @@ export function renderApp(path = '/') {
       </Routes>
     </Providers>,
   )
+  if (path === '/' || path.startsWith('/?')) {
+    act(() => {
+      emitSeedCatalog()
+    })
+  }
+  return view
 }
 
 export function makeOrder(overrides: Partial<Order> = {}): FakeDoc {
