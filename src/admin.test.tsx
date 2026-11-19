@@ -63,7 +63,9 @@ describe('admin board', () => {
 
     await user.type(search, 'bruno')
     expect(listNames()).toEqual(['Bruno Lima'])
-    expect(screen.getByRole('list', { name: 'Resultado da busca' })).toHaveTextContent('Aceito, em preparo')
+    const found = screen.getByRole('button', { name: /Bruno Lima/ })
+    expect(found).toHaveTextContent('#00002')
+    expect(found).not.toHaveTextContent('Aceito, em preparo')
 
     await user.clear(search)
     await user.type(search, '(11) 91234')
@@ -197,12 +199,32 @@ describe('admin board', () => {
     expect(title()).not.toHaveClass('is-blinking')
   })
 
+  it('keeps the order card to the customer name and the order number', async () => {
+    await openBoard()
+    const card = screen.getByRole('button', { name: /Ana Souza/ })
+    expect(card).toHaveTextContent('Ana Souza')
+    expect(card).toHaveTextContent('#00001')
+    expect(card.querySelectorAll('.order-card__name, .order-card__order')).toHaveLength(2)
+    expect(card).not.toHaveTextContent('98888')
+    expect(card).not.toHaveTextContent('R$')
+    expect(card).not.toHaveTextContent('Recebido')
+    expect(card).not.toHaveTextContent('itens')
+    const style = getComputedStyle(card)
+    expect(style.display).toBe('grid')
+    expect(parseFloat(style.paddingTop)).toBeLessThanOrEqual(12)
+    expect(parseFloat(style.fontSize) * 2 + parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)).toBeLessThan(80)
+  })
+
   it('opens a popup with everything the customer entered', async () => {
     const user = userEvent.setup()
     await openBoard()
-    await user.click(screen.getByRole('button', { name: /Ana Souza/ }))
+    const card = screen.getByRole('button', { name: /Ana Souza/ })
+    expect(card).not.toHaveTextContent('Rua das Flores')
+    await user.click(card)
 
     const dialog = screen.getByRole('dialog', { name: 'Pedido #00001' })
+    expect(dialog).toHaveTextContent('Recebido')
+    expect(dialog).toHaveTextContent('#00001')
     expect(dialog).toHaveTextContent('Ana Souza')
     expect(dialog).toHaveTextContent('+55 (87) 98888-7777')
     expect(dialog).toHaveTextContent('Rua das Flores, 120')
