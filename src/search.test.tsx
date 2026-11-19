@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
+import './index.css'
+import './menu.css'
 import { AuthProvider } from './context/AuthContext'
 import { MenuScreen } from './components/MenuScreen'
 import { seedCatalog } from './data/catalog'
@@ -26,6 +28,13 @@ function expectedNames(query: string): string[] {
 }
 
 describe('menu search', () => {
+  it('rounds the search field on the current theme', () => {
+    renderMenu()
+    const box = screen.getByRole('searchbox', { name: 'Buscar' })
+    expect(getComputedStyle(box).borderRadius).toBe('8px')
+    expect(getComputedStyle(box).borderTopWidth).not.toBe('0px')
+  })
+
   it('filters the cardápio after every typed letter', async () => {
     const user = userEvent.setup()
     renderMenu()

@@ -454,6 +454,10 @@ html[data-theme='sao-joao'] .menu__content {
   margin-top: 14px;
 }
 
+.menu__search input {
+  border-radius: 8px;
+}
+
 .chips {
   display: flex;
   gap: 8px;

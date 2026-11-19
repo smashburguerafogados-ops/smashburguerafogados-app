@@ -113,6 +113,7 @@ it('shows customers the confirmed theme and hides the picker', async () => {
   const search = screen.getByRole('searchbox', { name: 'Buscar' })
   expect(getComputedStyle(search).borderTopColor).toBe('rgba(255, 255, 255, 0.2)')
   expect(getComputedStyle(search).borderTopColor).not.toBe('rgb(255, 255, 255)')
+  expect(getComputedStyle(search).borderRadius).toBe('8px')
   expect(indexCss).toMatch(/border-width:\s*0\.5px/)
   expect(indexCss).toMatch(/border-color:\s*rgba\(255,\s*255,\s*255,\s*0\.2\)/)
   expect(indexCss).not.toMatch(/border-color:\s*#ffffff/)
