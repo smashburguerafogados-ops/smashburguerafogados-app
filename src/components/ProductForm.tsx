@@ -5,9 +5,11 @@ import {
   createProduct,
   parsePrice,
   setCategoryDestaque,
+  updateProduct,
   watchCategories,
+  type ListedProduct,
 } from '../lib/adminCatalog'
-import { maskPrice } from '../lib/money'
+import { formatPrice, maskPrice, toCents } from '../lib/money'
 import { readPhoto } from '../lib/photo'
 import { ChoiceList } from './ChoiceList'
 import { CloseButton } from './Overlay'
@@ -15,24 +17,38 @@ import { CloseButton } from './Overlay'
 type ProductFormProps = {
   onClose: () => void
   onSaved: () => void
+  product?: ListedProduct
 }
 
-type ExtraDraft = { key: number; name: string; price: string }
+type ExtraDraft = { key: number; id?: string; name: string; price: string }
+
+function reaisField(reais: number): string {
+  return formatPrice(toCents(reais)).replace('R$ ', '')
+}
 
 const NEW_CATEGORY = '__nova__'
 
-export function ProductForm({ onClose, onSaved }: ProductFormProps) {
+export function ProductForm({ onClose, onSaved, product }: ProductFormProps) {
+  const editing = Boolean(product)
   const [categories, setCategories] = useState<Category[]>([])
   const [categoriesError, setCategoriesError] = useState('')
-  const [name, setName] = useState('')
-  const [photo, setPhoto] = useState('')
-  const [categoryId, setCategoryId] = useState('')
+  const [name, setName] = useState(product?.name ?? '')
+  const [photo, setPhoto] = useState(product?.image ?? '')
+  const [categoryId, setCategoryId] = useState(product?.categoryId ?? '')
   const [newCategory, setNewCategory] = useState('')
   const [newDestaque, setNewDestaque] = useState(false)
-  const [price, setPrice] = useState('')
-  const [description, setDescription] = useState('')
-  const [extras, setExtras] = useState<ExtraDraft[]>([])
-  const [nextKey, setNextKey] = useState(1)
+  const [price, setPrice] = useState(product ? reaisField(product.price) : '')
+  const [description, setDescription] = useState(product?.description ?? '')
+  const [available, setAvailable] = useState(product?.available !== false)
+  const [extras, setExtras] = useState<ExtraDraft[]>(() =>
+    (product?.extras ?? []).map((extra, index) => ({
+      key: index + 1,
+      id: extra.id,
+      name: extra.name,
+      price: reaisField(extra.price),
+    })),
+  )
+  const [nextKey, setNextKey] = useState(() => (product?.extras.length ?? 0) + 1)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
@@ -117,25 +133,32 @@ export function ProductForm({ onClose, onSaved }: ProductFormProps) {
       if (!extra.name.trim() || extraPrice === null) {
         return setError('Cada adicional precisa de nome e valor.')
       }
-      cleanExtras.push({ id: `extra-${extra.key}`, name: extra.name.trim(), price: extraPrice })
+      cleanExtras.push({ id: extra.id ?? `extra-${extra.key}`, name: extra.name.trim(), price: extraPrice })
+    }
+
+    const draft = {
+      name,
+      categoryId: selected.id,
+      price: value,
+      description,
+      image: photo,
+      extras: cleanExtras,
     }
 
     setBusy(true)
     try {
-      await createProduct({
-        name,
-        categoryId: selected.id,
-        price: value,
-        description,
-        image: photo,
-        extras: cleanExtras,
-      })
-      setSaved(`${name.trim()} salvo no cardápio.`)
-      setName('')
-      setPhoto('')
-      setPrice('')
-      setDescription('')
-      setExtras([])
+      if (product) {
+        await updateProduct(product.id, { ...draft, available })
+        setSaved(`${name.trim()} atualizado no cardápio.`)
+      } else {
+        await createProduct(draft)
+        setSaved(`${name.trim()} salvo no cardápio.`)
+        setName('')
+        setPhoto('')
+        setPrice('')
+        setDescription('')
+        setExtras([])
+      }
       onSaved()
     } catch {
       setError('Não foi possível salvar o produto.')
@@ -145,10 +168,10 @@ export function ProductForm({ onClose, onSaved }: ProductFormProps) {
   }
 
   return (
-    <div className="product-screen" role="dialog" aria-modal="true" aria-label="Criar Produto">
+    <div className="product-screen" role="dialog" aria-modal="true" aria-label={editing ? 'Editar produto' : 'Criar Produto'}>
       <div className="product-screen__inner">
       <div className="product-screen__bar">
-        <h2>Criar Produto</h2>
+        <h2>{editing ? 'Editar produto' : 'Criar Produto'}</h2>
         <CloseButton onClick={onClose} />
       </div>
       <form className="product-form" onSubmit={onSubmit} noValidate>
@@ -251,6 +274,13 @@ export function ProductForm({ onClose, onSaved }: ProductFormProps) {
             />
           </div>
         </div>
+
+        {editing && (
+          <label className="check">
+            <input type="checkbox" checked={available} onChange={(event) => setAvailable(event.target.checked)} />
+            <span>Disponível</span>
+          </label>
+        )}
 
         <label className="field">
           <span>Descrição</span>

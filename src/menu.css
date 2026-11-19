@@ -136,9 +136,13 @@
 .theme-decor {
   position: fixed;
   inset: 0;
-  z-index: 2;
+  z-index: 0;
   overflow: hidden;
   color: var(--gold);
+}
+
+.theme-decor * {
+  pointer-events: none;
 }
 
 .theme-snow,
@@ -477,9 +481,9 @@ html[data-theme='sao-joao'] .menu__content {
 }
 
 .chip.is-active {
-  background: var(--orange);
-  border-color: var(--orange);
-  color: #fff;
+  background: rgba(227, 177, 90, 0.16);
+  border-color: rgba(227, 177, 90, 0.45);
+  color: #f4f5f6;
 }
 
 .items {
@@ -1070,6 +1074,11 @@ html[data-theme='sao-joao'] .menu__content {
 .menu__burger svg {
   width: 22px;
   height: 22px;
+}
+
+html .chips .chip.is-active {
+  background-color: rgba(227, 177, 90, 0.16);
+  color: #f4f5f6;
 }
 
 html .chips .chip.chip--destaque {
@@ -1883,6 +1892,10 @@ html .chips .chip.chip--destaque {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+.catalog__actions .catalog__edit {
+  grid-column: 1 / -1;
 }
 
 .catalog__actions .btn,

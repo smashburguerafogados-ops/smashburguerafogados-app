@@ -13,6 +13,7 @@ import {
 } from '../lib/adminCatalog'
 import { formatPrice, maskPrice, toCents } from '../lib/money'
 import { CloseButton } from './Overlay'
+import { ProductForm } from './ProductForm'
 
 type ProductDeskProps = {
   onClose: () => void
@@ -74,16 +75,18 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
   const [savedName, setSavedName] = useState('')
   const [editingId, setEditingId] = useState('')
   const [draftName, setDraftName] = useState('')
+  const [editingProduct, setEditingProduct] = useState<ListedProduct | null>(null)
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key !== 'Escape') return
+      if (editingProduct) return
       if (pending) setPending(null)
       else onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, pending])
+  }, [onClose, pending, editingProduct])
 
   useEffect(
     () =>
@@ -224,6 +227,9 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
                       </div>
                     </div>
                     <div className="catalog__actions">
+                      <button type="button" className="btn btn--ghost catalog__edit" onClick={() => setEditingProduct(product)}>
+                        Editar
+                      </button>
                       <button type="button" className="btn" onClick={() => void savePrice(product)}>
                         Salvar valor
                       </button>
@@ -310,6 +316,9 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
           </p>
         )}
       </div>
+      {editingProduct && (
+        <ProductForm product={editingProduct} onClose={() => setEditingProduct(null)} onSaved={() => undefined} />
+      )}
       {pending && (
         <div className="confirm-screen" role="alertdialog" aria-modal="true" aria-label="Confirmar exclusão">
           <div className="confirm-screen__box">

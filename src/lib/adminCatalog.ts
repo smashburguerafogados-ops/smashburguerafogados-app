@@ -71,6 +71,16 @@ export type ListedProduct = {
   categoryId: string
   price: number
   available: boolean
+  description: string
+  image: string
+  extras: Extra[]
+}
+
+function readExtra(value: unknown): Extra | null {
+  if (!value || typeof value !== 'object') return null
+  const extra = value as Record<string, unknown>
+  if (typeof extra.id !== 'string' || typeof extra.name !== 'string' || typeof extra.price !== 'number') return null
+  return { id: extra.id, name: extra.name, price: extra.price }
 }
 
 export function watchProducts(onNext: (products: ListedProduct[]) => void, onError: () => void): () => void {
@@ -81,12 +91,18 @@ export function watchProducts(onNext: (products: ListedProduct[]) => void, onErr
       snapshot.docs.forEach((entry) => {
         const data = entry.data() as Record<string, unknown>
         if (typeof data.name !== 'string') return
+        const extras = Array.isArray(data.extras)
+          ? data.extras.map(readExtra).filter((item): item is Extra => item !== null)
+          : []
         products.push({
           id: entry.id,
           name: data.name,
           categoryId: typeof data.categoryId === 'string' ? data.categoryId : '',
           price: typeof data.price === 'number' ? data.price : 0,
           available: data.available !== false,
+          description: typeof data.description === 'string' ? data.description : '',
+          image: typeof data.image === 'string' ? data.image : '',
+          extras,
         })
       })
       products.sort((a, b) => a.name.localeCompare(b.name, 'pt'))
@@ -121,6 +137,22 @@ export function parsePrice(input: string): number | null {
   if (!/^\d{1,5}([.,]\d{1,2})?$/.test(clean)) return null
   const value = Number(clean.replace(',', '.'))
   return value > 0 ? value : null
+}
+
+export async function updateProduct(id: string, product: NewProduct & { available: boolean }): Promise<void> {
+  if (!product.name.trim()) throw new Error('Informe o nome do produto.')
+  if (!product.categoryId) throw new Error('Escolha uma categoria.')
+  if (!(product.price > 0)) throw new Error('Informe um valor válido.')
+  if (!product.image) throw new Error('Escolha uma foto.')
+  await updateDoc(doc(db, 'products', id), {
+    name: product.name.trim(),
+    categoryId: product.categoryId,
+    price: product.price,
+    description: product.description.trim(),
+    image: product.image,
+    extras: product.extras,
+    available: product.available,
+  })
 }
 
 export async function createProduct(product: NewProduct): Promise<string> {

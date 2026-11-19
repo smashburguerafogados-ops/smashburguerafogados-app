@@ -1,13 +1,28 @@
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('./lib/photo', () => ({
+  readPhoto: vi.fn(async () => 'data:image/jpeg;base64,QUJD'),
+}))
 import { DEFAULT_CLOSED_MESSAGE } from './lib/shop'
 import { activeListeners, emit, emitDoc, firebaseMocks } from './test/mocks'
 import { adminProfile, renderApp, signInAs } from './test/render'
 import './index.css'
 import './menu.css'
 
-const products = [{ id: 'smash', name: 'Smash da casa', categoryId: 'lanches', price: 28, available: true }]
+const products = [
+  {
+    id: 'smash',
+    name: 'Smash da casa',
+    categoryId: 'lanches',
+    price: 28,
+    available: true,
+    description: 'Blend 80g.',
+    image: 'data:image/jpeg;base64,QUJD',
+    extras: [{ id: 'extra-bacon', name: 'Bacon', price: 4 }],
+  },
+]
 const categories = [
   { id: 'lanches', name: 'Lanches', order: 1, destaque: false },
   { id: 'bebidas', name: 'Bebidas', order: 2, destaque: false },
@@ -53,6 +68,58 @@ describe('Produtos', () => {
     expect(card).toHaveTextContent('Disponível')
     await user.click(within(card).getByRole('button', { name: 'Marcar esgotado' }))
     expect(firebaseMocks.updateDoc).toHaveBeenCalledWith({ path: 'products/smash' }, { available: false })
+  })
+
+  it('edits name, price, category, photo, extras and availability from the product card', async () => {
+    const { user, desk } = await openDesk()
+    const card = within(desk).getByRole('article', { name: 'Smash da casa' })
+    await user.click(within(card).getByRole('button', { name: 'Editar' }))
+    const form = await screen.findByRole('dialog', { name: 'Editar produto' })
+    await waitFor(() => expect(activeListeners('categories').length).toBeGreaterThan(1))
+    await act(async () => {
+      emit('categories', categories)
+    })
+    expect(within(form).getByRole('textbox', { name: 'Nome' })).toHaveValue('Smash da casa')
+    expect(within(form).getByRole('textbox', { name: 'Valor (R$)' })).toHaveValue('28,00')
+    expect(within(form).getByRole('textbox', { name: 'Descrição' })).toHaveValue('Blend 80g.')
+    expect(within(form).getByRole('img', { name: 'Prévia da foto' })).toHaveAttribute('src', 'data:image/jpeg;base64,QUJD')
+    expect(within(form).getByRole('checkbox', { name: 'Disponível' })).toBeChecked()
+    expect(within(form).getByRole('textbox', { name: 'Adicional 1' })).toHaveValue('Bacon')
+
+    const name = within(form).getByRole('textbox', { name: 'Nome' })
+    await user.clear(name)
+    await user.type(name, 'Smash duplo')
+    const price = within(form).getByRole('textbox', { name: 'Valor (R$)' })
+    await user.clear(price)
+    await user.type(price, '3250')
+    await user.click(within(form).getByRole('button', { name: 'Categoria' }))
+    await user.click(within(within(form).getByRole('listbox', { name: 'Categoria' })).getByRole('option', { name: 'Bebidas' }))
+    await user.upload(
+      within(form).getByLabelText('Escolher foto da galeria'),
+      new File(['foto'], 'smash.jpg', { type: 'image/jpeg' }),
+    )
+    const description = within(form).getByRole('textbox', { name: 'Descrição' })
+    await user.clear(description)
+    await user.type(description, 'Dois blends.')
+    const extraPrice = within(form).getByRole('textbox', { name: 'Valor do adicional 1' })
+    await user.clear(extraPrice)
+    await user.type(extraPrice, '500')
+    await user.click(within(form).getByRole('checkbox', { name: 'Disponível' }))
+    await user.click(within(form).getByRole('button', { name: 'Salvar produto' }))
+
+    expect(await within(form).findByRole('status')).toHaveTextContent('Smash duplo atualizado no cardápio.')
+    expect(firebaseMocks.updateDoc).toHaveBeenCalledWith(
+      { path: 'products/smash' },
+      {
+        name: 'Smash duplo',
+        categoryId: 'bebidas',
+        price: 32.5,
+        description: 'Dois blends.',
+        image: 'data:image/jpeg;base64,QUJD',
+        extras: [{ id: 'extra-bacon', name: 'Bacon', price: 5 }],
+        available: false,
+      },
+    )
   })
 
   it('has no delete button on products', async () => {

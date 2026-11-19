@@ -96,6 +96,16 @@ it('shows customers the confirmed theme and hides the picker', async () => {
   expect(getComputedStyle(document.querySelector('[data-theme-bg="natal"]')!).pointerEvents).toBe('none')
   expect(getComputedStyle(document.querySelector('[data-theme-snow]')!).pointerEvents).toBe('none')
   expect(getComputedStyle(document.querySelector('[data-theme-fall]')!).pointerEvents).toBe('none')
+  const fallIcon = document.querySelector('[data-theme-fall] img') as HTMLElement
+  expect(getComputedStyle(fallIcon).pointerEvents).toBe('none')
+  const decor = document.querySelector('.theme-decor') as HTMLElement
+  const menu = document.querySelector('.menu__content') as HTMLElement
+  const dock = document.querySelector('.dock') as HTMLElement
+  expect(Number(getComputedStyle(decor).zIndex)).toBeLessThan(Number(getComputedStyle(menu).zIndex))
+  expect(Number(getComputedStyle(decor).zIndex)).toBeLessThan(Number(getComputedStyle(dock).zIndex))
+  expect(Number(getComputedStyle(document.querySelector('.theme-flags, .theme-pin')!).zIndex) || 0).toBeLessThanOrEqual(
+    Number(getComputedStyle(decor).zIndex) || 0,
+  )
   const natalKinds = new Set(
     [...document.querySelectorAll('[data-theme-ornament="natal"] [data-fall-kind]')].map((node) => node.getAttribute('data-fall-kind')),
   )
