@@ -81,6 +81,21 @@ export function shortId(id: string): string {
   return id.slice(-5).toUpperCase()
 }
 
+function plain(text: string): string {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+}
+
+/** Admin search: customer name, WhatsApp digits, or the order number shown as #XXXXX. */
+export function orderMatches(order: Pick<Order, 'id' | 'customerName' | 'customerWhatsapp'>, query: string): boolean {
+  const text = plain(query.trim())
+  if (!text) return true
+  if (plain(order.customerName).includes(text)) return true
+  const code = text.replace(/^#/, '').replace(/\s/g, '')
+  if (code && (shortId(order.id).toLowerCase().includes(code) || order.id.toLowerCase().includes(code))) return true
+  const digits = text.replace(/\D/g, '')
+  return digits.length >= 3 && order.customerWhatsapp.replace(/\D/g, '').includes(digits)
+}
+
 /** Only public http(s) images are kept on an order; inline photos stay on the product. */
 export function publicImage(src: string): string {
   if (/^https?:\/\//i.test(src)) return src

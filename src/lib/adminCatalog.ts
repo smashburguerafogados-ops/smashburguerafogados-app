@@ -90,10 +90,6 @@ export function watchProducts(onNext: (products: ListedProduct[]) => void, onErr
   )
 }
 
-export async function deleteProduct(id: string): Promise<void> {
-  await deleteDoc(doc(db, 'products', id))
-}
-
 export async function setProductPrice(id: string, price: number): Promise<void> {
   if (!(price > 0)) throw new Error('Informe um valor válido.')
   await updateDoc(doc(db, 'products', id), { price })
@@ -112,9 +108,10 @@ export type NewProduct = {
   extras: Extra[]
 }
 
-/** Accepts "28", "28,5" or "28.50" and returns reais, or null when it is not a price. */
+/** Accepts "28", "28,5", "28.50" or "1.234,56" and returns reais, or null when it is not a price. */
 export function parsePrice(input: string): number | null {
-  const clean = input.trim().replace(/\s/g, '').replace(/^R\$/i, '')
+  let clean = input.trim().replace(/\s/g, '').replace(/^R\$/i, '')
+  if (/^\d{1,3}(\.\d{3})+,\d{1,2}$/.test(clean)) clean = clean.replace(/\./g, '')
   if (!/^\d{1,5}([.,]\d{1,2})?$/.test(clean)) return null
   const value = Number(clean.replace(',', '.'))
   return value > 0 ? value : null

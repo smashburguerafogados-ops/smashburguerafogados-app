@@ -29,33 +29,37 @@ async function openDesk() {
 }
 
 describe('Produtos', () => {
-  it('saves a new price', async () => {
+  it('shows each product as a card and saves a masked price', async () => {
     const { user, desk } = await openDesk()
-    const price = within(desk).getByRole('textbox', { name: 'Valor de Smash da casa' })
+    const card = within(desk).getByRole('article', { name: 'Smash da casa' })
+    expect(card).toHaveClass('catalog__card')
+    expect(within(card).getAllByText('Smash da casa')).toHaveLength(1)
+    for (const button of within(card).getAllByRole('button')) {
+      expect(button).not.toHaveTextContent('Smash da casa')
+    }
+    const price = within(card).getByRole('textbox', { name: 'Valor (R$)' })
     expect(price).toHaveValue('28,00')
     await user.clear(price)
-    await user.type(price, '32,50')
-    await user.click(within(desk).getByRole('button', { name: 'Salvar Smash da casa' }))
+    await user.type(price, '3250')
+    expect(price).toHaveValue('32,50')
+    await user.click(within(card).getByRole('button', { name: 'Salvar valor' }))
     expect(firebaseMocks.updateDoc).toHaveBeenCalledWith({ path: 'products/smash' }, { price: 32.5 })
+    expect(await within(desk).findByRole('status')).toHaveTextContent('Valor de Smash da casa salvo.')
   })
 
   it('marks a product esgotado', async () => {
     const { user, desk } = await openDesk()
-    await user.click(within(desk).getByRole('button', { name: 'Marcar Smash da casa esgotado' }))
+    const card = within(desk).getByRole('article', { name: 'Smash da casa' })
+    expect(card).toHaveTextContent('Disponível')
+    await user.click(within(card).getByRole('button', { name: 'Marcar esgotado' }))
     expect(firebaseMocks.updateDoc).toHaveBeenCalledWith({ path: 'products/smash' }, { available: false })
   })
 
-  it('asks before deleting a product', async () => {
-    const { user, desk } = await openDesk()
-    await user.click(within(desk).getByRole('button', { name: 'Excluir Smash da casa' }))
-    const confirm = screen.getByRole('alertdialog', { name: 'Confirmar exclusão' })
-    expect(confirm).toHaveTextContent('Excluir Smash da casa?')
-    await user.click(within(confirm).getByRole('button', { name: 'Cancelar' }))
-    expect(firebaseMocks.deleteDoc).not.toHaveBeenCalled()
-
-    await user.click(within(desk).getByRole('button', { name: 'Excluir Smash da casa' }))
-    await user.click(within(screen.getByRole('alertdialog', { name: 'Confirmar exclusão' })).getByRole('button', { name: 'Excluir' }))
-    expect(firebaseMocks.deleteDoc).toHaveBeenCalledWith({ path: 'products/smash' })
+  it('has no delete button on products', async () => {
+    const { desk } = await openDesk()
+    const card = within(desk).getByRole('article', { name: 'Smash da casa' })
+    expect(within(card).queryByRole('button', { name: /Excluir/ })).not.toBeInTheDocument()
+    expect(within(desk).queryByRole('button', { name: /Excluir Smash/ })).not.toBeInTheDocument()
   })
 
   it('asks before deleting a category and blocks the delete while products use it', async () => {
@@ -68,14 +72,18 @@ describe('Produtos', () => {
     })
     const { user, desk } = await openDesk()
 
-    await user.click(within(desk).getByRole('button', { name: 'Excluir categoria Lanches' }))
+    await user.click(
+      within(within(desk).getByRole('article', { name: 'Lanches' })).getByRole('button', { name: 'Excluir categoria' }),
+    )
     await user.click(within(screen.getByRole('alertdialog', { name: 'Confirmar exclusão' })).getByRole('button', { name: 'Excluir' }))
     expect(await within(desk).findByRole('alert')).toHaveTextContent(
       'Esta categoria ainda tem produtos. Exclua esses produtos antes.',
     )
     expect(firebaseMocks.deleteDoc).not.toHaveBeenCalled()
 
-    await user.click(within(desk).getByRole('button', { name: 'Excluir categoria Bebidas' }))
+    await user.click(
+      within(within(desk).getByRole('article', { name: 'Bebidas' })).getByRole('button', { name: 'Excluir categoria' }),
+    )
     await user.click(within(screen.getByRole('alertdialog', { name: 'Confirmar exclusão' })).getByRole('button', { name: 'Excluir' }))
     expect(firebaseMocks.deleteDoc).toHaveBeenCalledWith({ path: 'categories/bebidas' })
   })
@@ -136,7 +144,7 @@ describe('shop hours', () => {
     expect(screen.getByRole('img', { name: 'Smash Burger' })).toBeInTheDocument()
     expect(document.querySelector('video.fire__video')).toHaveAttribute('src', expect.stringContaining('fire.mp4'))
     expect(screen.queryByRole('searchbox', { name: 'Buscar' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /carrinho/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Carrinho,/ })).not.toBeInTheDocument()
   })
 
   it('stays open when the shop listener fails', async () => {

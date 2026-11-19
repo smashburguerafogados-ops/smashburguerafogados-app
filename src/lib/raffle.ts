@@ -7,6 +7,15 @@ export const EMPTY_DRAW_MESSAGE = 'Ninguém com pedido finalizado hoje para sort
 export const WAITING_MESSAGE = 'aguardando sorteio'
 export const TITLE_REQUIRED = 'Informe o que será sorteado.'
 export const RAFFLE_DAYS = 3
+export const RULES_MISSING =
+  'O Firestore recusou o sorteio. As regras publicadas ainda não liberam settings/raffle. Publique o firestore.rules do repositório no Firebase (Firestore → Regras) e tente de novo.'
+
+export function raffleError(caught: unknown, fallback: string): string {
+  if (caught instanceof Error && caught.message === TITLE_REQUIRED) return TITLE_REQUIRED
+  const code = typeof caught === 'object' && caught !== null && 'code' in caught ? (caught as { code: unknown }).code : ''
+  if (code === 'permission-denied') return RULES_MISSING
+  return fallback
+}
 
 export type Raffle = {
   title: string

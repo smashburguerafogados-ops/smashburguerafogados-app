@@ -44,6 +44,44 @@ function lastUpdate(): { path: string; patch: Record<string, unknown> } {
 }
 
 describe('admin board', () => {
+  it('finds orders by customer name, WhatsApp number, or order number', async () => {
+    signInAs(adminProfile)
+    const user = userEvent.setup()
+    renderApp('/admin')
+    await screen.findByRole('heading', { name: 'Painel' })
+    await waitFor(() => expect(activeListeners('orders')).toHaveLength(1))
+    await act(async () => {
+      emit('orders', [
+        novo,
+        { ...andamento, customerWhatsapp: '5511912345678' },
+        enviado,
+        { ...finalizado, id: 'pedido-ab7k9' },
+      ])
+    })
+    const search = screen.getByRole('searchbox', { name: 'Buscar pedido' })
+    expect(listNames()).toEqual(['Ana Souza'])
+
+    await user.type(search, 'bruno')
+    expect(listNames()).toEqual(['Bruno Lima'])
+    expect(screen.getByRole('list', { name: 'Resultado da busca' })).toHaveTextContent('Aceito, em preparo')
+
+    await user.clear(search)
+    await user.type(search, '(11) 91234')
+    expect(listNames()).toEqual(['Bruno Lima'])
+
+    await user.clear(search)
+    await user.type(search, '#AB7K9')
+    expect(listNames()).toEqual(['Davi Reis'])
+
+    await user.clear(search)
+    await user.type(search, 'clã')
+    expect(screen.getByText('Nenhum pedido encontrado.')).toBeInTheDocument()
+
+    await user.clear(search)
+    expect(listNames()).toEqual(['Ana Souza'])
+    expect(document.documentElement).not.toHaveAttribute('data-theme')
+  })
+
   it('shows the hamburger only on the admin screen', async () => {
     await openBoard()
     const burger = screen.getByRole('button', { name: 'Abrir menu' })

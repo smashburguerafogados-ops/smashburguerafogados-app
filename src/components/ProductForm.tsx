@@ -7,6 +7,7 @@ import {
   setCategoryDestaque,
   watchCategories,
 } from '../lib/adminCatalog'
+import { maskPrice } from '../lib/money'
 import { readPhoto } from '../lib/photo'
 import { ChoiceList } from './ChoiceList'
 import { CloseButton } from './Overlay'
@@ -235,15 +236,21 @@ export function ProductForm({ onClose, onSaved }: ProductFormProps) {
           </div>
         )}
 
-        <label className="field">
-          <span>Valor (R$)</span>
-          <input
-            inputMode="decimal"
-            placeholder="Ex.: 28,90"
-            value={price}
-            onChange={(event) => setPrice(event.target.value.replace(/[^\d.,]/g, ''))}
-          />
-        </label>
+        <div className="field">
+          <span id="product-price">Valor (R$)</span>
+          <div className="money-join">
+            <span className="money-join__prefix" aria-hidden="true">
+              R$
+            </span>
+            <input
+              aria-labelledby="product-price"
+              inputMode="numeric"
+              placeholder="0,00"
+              value={price}
+              onChange={(event) => setPrice(maskPrice(event.target.value))}
+            />
+          </div>
+        </div>
 
         <label className="field">
           <span>Descrição</span>
@@ -266,13 +273,18 @@ export function ProductForm({ onClose, onSaved }: ProductFormProps) {
                 value={extra.name}
                 onChange={(event) => updateExtra(extra.key, { name: event.target.value })}
               />
-              <input
-                aria-label={`Valor do adicional ${index + 1}`}
-                inputMode="decimal"
-                placeholder="Valor"
-                value={extra.price}
-                onChange={(event) => updateExtra(extra.key, { price: event.target.value.replace(/[^\d.,]/g, '') })}
-              />
+              <div className="money-join">
+                <span className="money-join__prefix" aria-hidden="true">
+                  R$
+                </span>
+                <input
+                  aria-label={`Valor do adicional ${index + 1}`}
+                  inputMode="numeric"
+                  placeholder="0,00"
+                  value={extra.price}
+                  onChange={(event) => updateExtra(extra.key, { price: maskPrice(event.target.value) })}
+                />
+              </div>
               <button
                 type="button"
                 className="text-btn"

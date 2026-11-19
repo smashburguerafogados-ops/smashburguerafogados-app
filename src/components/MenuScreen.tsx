@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { seedCatalog, type Catalog, type Product } from '../data/catalog'
 import { useAuth } from '../context/AuthContext'
+import { useOrders } from '../context/OrdersContext'
+import { isAccepted } from '../lib/orders'
 import { useLongPress } from '../lib/longPress'
 import {
   addCartLine,
@@ -50,6 +52,7 @@ function linkedProductId(): string {
 
 export function MenuScreen() {
   const { session } = useAuth()
+  const history = useOrders()
   const shop = useShop()
   const navigate = useNavigate()
   const [catalog, setCatalog] = useState<Catalog>(seedCatalog)
@@ -93,12 +96,6 @@ export function MenuScreen() {
     document.title = 'Cardápio | Smash Burger'
   }, [])
 
-  useEffect(() => {
-    if (!notice) return
-    const timer = window.setTimeout(() => setNotice(null), 3000)
-    return () => window.clearTimeout(timer)
-  }, [notice])
-
   const reloadCatalog = useCallback(() => {
     let active = true
     void loadRemoteCatalog().then((remote) => {
@@ -126,6 +123,7 @@ export function MenuScreen() {
   const count = cartCount(lines)
   const total = cartTotal(lines)
   const isAdmin = session.status === 'ready' && session.profile.role === 'admin'
+  const orderLive = history.status === 'ready' && history.orders.some((order) => isAccepted(order.status))
 
   function chooseCategory(id: string) {
     const next = activeCategory === id ? '' : id
@@ -176,15 +174,33 @@ export function MenuScreen() {
   }
 
   function toggle(next: Sheet) {
+    setNotice(null)
     setSheet((current) => (current === next ? null : next))
   }
 
   return (
     <main className="menu">
       {notice && (
-        <p className="toast" role="status">
-          {notice.text}
-        </p>
+        <section key={notice.id} className="added" aria-label="Item adicionado">
+          <p className="added__text" role="status">
+            {notice.text}
+          </p>
+          <div className="added__actions">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                setNotice(null)
+                setSheet('cart')
+              }}
+            >
+              Ir ao carrinho
+            </button>
+            <button type="button" className="btn btn--ghost" onClick={() => setNotice(null)}>
+              Continuar no cardápio
+            </button>
+          </div>
+        </section>
       )}
       <div className="menu__content">
       <header className="menu__top">
@@ -255,6 +271,7 @@ export function MenuScreen() {
         count={count}
         totalCents={total}
         away={dockAway}
+        orderLive={orderLive}
         onOrders={() => toggle('orders')}
         onProfile={() => toggle('profile')}
         onCart={() => toggle('cart')}

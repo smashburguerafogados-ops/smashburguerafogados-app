@@ -61,7 +61,7 @@ it('slides the bar away when the page scrolls down and brings it back when scrol
 it('hides the bar when the cart sheet scrolls down', async () => {
   const user = userEvent.setup()
   renderMenu()
-  await user.click(screen.getByRole('button', { name: /Carrinho/ }))
+  await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
   const panel = document.querySelector('.sheet__panel') as HTMLElement
   panel.scrollTop = 0
   panel.dispatchEvent(new Event('scroll'))
@@ -96,7 +96,7 @@ it('leaves room under the address, product, cart and account buttons', async () 
   expect(add.compareDocumentPosition(productSpacer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   await user.click(within(product).getByRole('button', { name: 'Fechar' }))
 
-  await user.click(screen.getByRole('button', { name: /Carrinho/ }))
+  await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
   const cart = screen.getByRole('dialog', { name: 'Carrinho' })
   expect(cart.querySelector('.dock-spacer')).toBeTruthy()
   expect(parseFloat(getComputedStyle(cart.querySelector('.dock-spacer') as HTMLElement).height)).toBe(108)

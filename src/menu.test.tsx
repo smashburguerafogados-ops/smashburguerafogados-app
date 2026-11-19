@@ -157,7 +157,7 @@ it('adds the chosen quantity, then another product as its own line', async () =>
 
   await user.click(screen.getByRole('button', { name: /Batata rústica/ }))
   await user.click(within(screen.getByRole('dialog', { name: 'Batata rústica' })).getByRole('button', { name: 'Adicionar' }))
-  await user.click(screen.getByRole('button', { name: /carrinho/i }))
+  await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
 
   const cart = screen.getByRole('dialog', { name: 'Carrinho' })
   const rows = cart.querySelectorAll('.cart li')
@@ -180,7 +180,7 @@ it('adds a note and updates the cart count and total', async () => {
   expect(dock.querySelector('.dock__sum')).toHaveTextContent('R$ 28,00')
   expect(dock.querySelector('.dock__label')).toBeNull()
 
-  await user.click(screen.getByRole('button', { name: /carrinho/i }))
+  await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
   const cart = screen.getByRole('dialog', { name: 'Carrinho' })
   expect(cart).toHaveTextContent('sem cebola')
   expect(cart).toHaveTextContent('Smash da casa')
@@ -189,28 +189,43 @@ it('adds a note and updates the cart count and total', async () => {
   expect(dock.querySelector('.dock__item.is-active')).not.toBeNull()
 })
 
-it('shows a thin toast when a product is added and clears it after 3 seconds', async () => {
+it('confirms an added item with a green border and lets the customer stay on the menu', async () => {
   vi.useFakeTimers()
   renderMenu()
 
   fireEvent.click(screen.getByRole('button', { name: /Smash da casa/ }))
   fireEvent.click(within(screen.getByRole('dialog', { name: 'Smash da casa' })).getByRole('button', { name: 'Adicionar' }))
 
-  const toast = screen.getByRole('status')
-  expect(toast).toHaveTextContent('Adicionado: Smash da casa')
-  expect(toast).toHaveClass('toast')
-  expect(toast.closest('[role="dialog"]')).toBeNull()
-  expect(getComputedStyle(toast).pointerEvents).toBe('none')
+  const added = screen.getByRole('region', { name: 'Item adicionado' })
+  expect(within(added).getByRole('status')).toHaveTextContent('Adicionado: Smash da casa')
+  expect(added.closest('[role="dialog"]')).toBeNull()
+  const style = getComputedStyle(added)
+  expect(style.borderTopColor).toBe('rgb(34, 227, 107)')
+  expect(style.borderTopWidth).toBe('2px')
 
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(2999)
+    await vi.advanceTimersByTimeAsync(10000)
   })
-  expect(screen.getByRole('status')).toHaveTextContent('Adicionado: Smash da casa')
+  expect(screen.getByRole('region', { name: 'Item adicionado' })).toBeInTheDocument()
 
-  await act(async () => {
-    await vi.advanceTimersByTimeAsync(1)
-  })
-  expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  fireEvent.click(within(added).getByRole('button', { name: 'Continuar no cardápio' }))
+  expect(screen.queryByRole('region', { name: 'Item adicionado' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('dialog', { name: 'Carrinho' })).not.toBeInTheDocument()
+})
+
+it('opens the cart from the added-item confirmation', async () => {
+  const user = userEvent.setup()
+  renderMenu()
+
+  await user.click(screen.getByRole('button', { name: /Smash da casa/ }))
+  await user.click(within(screen.getByRole('dialog', { name: 'Smash da casa' })).getByRole('button', { name: 'Adicionar' }))
+  const added = screen.getByRole('region', { name: 'Item adicionado' })
+  await user.click(within(added).getByRole('button', { name: 'Ir ao carrinho' }))
+
+  expect(screen.queryByRole('region', { name: 'Item adicionado' })).not.toBeInTheDocument()
+  const cart = screen.getByRole('dialog', { name: 'Carrinho' })
+  expect(cart).toHaveTextContent('Smash da casa')
+  expect(cart).toHaveTextContent('R$ 28,00')
 })
 
 it('fits the item name on one line and does not head the cart with the customer name', async () => {
@@ -223,7 +238,7 @@ it('fits the item name on one line and does not head the cart with the customer 
   const detail = screen.getByRole('dialog', { name: 'Smash da casa' })
   await user.click(within(detail).getByRole('checkbox', { name: /Cheddar/ }))
   await user.click(within(detail).getByRole('button', { name: 'Adicionar' }))
-  await user.click(screen.getByRole('button', { name: /carrinho/i }))
+  await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
 
   const cart = screen.getByRole('dialog', { name: 'Carrinho' })
   expect(within(cart).queryByRole('heading', { name: 'Ana' })).not.toBeInTheDocument()
@@ -342,7 +357,7 @@ it('hides the hamburger and shows history with short dividers on the customer ba
   expect(whatsapp.querySelector('svg')).toHaveAttribute('data-icon', 'whatsapp')
 
   const items = Array.from(dock.querySelectorAll('.dock__item')) as HTMLElement[]
-  const cart = screen.getByRole('button', { name: /Carrinho/ })
+  const cart = screen.getByRole('button', { name: /^Carrinho,/ })
   expect(cart.querySelector('.dock__count')).not.toBeNull()
   expect(cart.querySelector('.dock__sum')).not.toBeNull()
   for (const item of items) {

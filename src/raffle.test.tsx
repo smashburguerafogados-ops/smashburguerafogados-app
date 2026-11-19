@@ -1,8 +1,8 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { CartSheet } from './components/CartSheet'
-import { EMPTY_RAFFLE, activateRaffle, drawRaffle, eligibleCustomers, localDay, showHourglass, TITLE_REQUIRED } from './lib/raffle'
+import { EMPTY_RAFFLE, activateRaffle, drawRaffle, eligibleCustomers, localDay, showHourglass, TITLE_REQUIRED, RULES_MISSING } from './lib/raffle'
 import type { Order } from './lib/orders'
 import { activeListeners, emit, emitDoc, firebaseMocks } from './test/mocks'
 import { adminProfile, customerProfile, Providers, renderApp, signInAs } from './test/render'
@@ -185,6 +185,23 @@ it('shows aguardando sorteio, then the winner, and dismisses only after the draw
     { path: `raffleDismissals/cliente-1_${today}` },
     { customerId: 'cliente-1', day: today },
   )
+})
+
+it('explains that the published Firestore rules refuse settings/raffle', async () => {
+  firebaseMocks.setDoc.mockRejectedValueOnce(Object.assign(new Error('Missing or insufficient permissions.'), {
+    code: 'permission-denied',
+  }))
+  signInAs(adminProfile)
+  const user = userEvent.setup()
+  renderApp('/admin')
+  await screen.findByRole('heading', { name: 'Painel' })
+  await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
+  await user.click(screen.getByRole('button', { name: 'Sorteio Smash Burger' }))
+  const sheet = screen.getByRole('dialog', { name: 'Sorteio Smash Burger' })
+  await user.type(screen.getByRole('textbox'), 'Batata grande')
+  await user.click(screen.getByRole('button', { name: 'Ativar sorteio de hoje' }))
+  expect(await within(sheet).findByText(RULES_MISSING)).toBeInTheDocument()
+  expect(sheet).not.toHaveTextContent('Não foi possível ativar.')
 })
 
 it('blocks an empty title, reports nobody eligible, and does not redraw', async () => {
