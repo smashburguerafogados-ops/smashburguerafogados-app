@@ -202,4 +202,35 @@ describe('destaque categories on the menu', () => {
     const names = Array.from(document.querySelectorAll('.items .item__name')).map((node) => node.textContent)
     expect(names).toEqual(['Combo do dia', 'X-Salada'])
   })
+
+  it('fills every selected category with a very soft gold', async () => {
+    document.documentElement.dataset.theme = 'pascoa'
+    const user = userEvent.setup()
+    renderApp()
+    await act(async () => {
+      emit('categories', [
+        { id: 'lanches', name: 'Lanches', order: 1, destaque: false },
+        { id: 'promo', name: 'Promoções', order: 2, destaque: true },
+        { id: 'bebidas', name: 'Bebidas', order: 3, destaque: true },
+      ])
+      emit('products', [
+        { id: 'p1', categoryId: 'lanches', name: 'X-Salada', price: 20, available: true, description: '' },
+        { id: 'p2', categoryId: 'promo', name: 'Combo do dia', price: 30, available: true, description: '' },
+      ])
+    })
+
+    const plain = await screen.findByRole('button', { name: 'Lanches' })
+    await user.click(plain)
+    expect(plain).toHaveClass('is-active')
+    expect(plain).not.toHaveClass('chip--destaque')
+    expect(getComputedStyle(plain).backgroundColor).toBe('rgba(227, 177, 90, 0.16)')
+
+    const featured = screen.getByRole('button', { name: 'Promoções' })
+    await user.click(featured)
+    expect(featured).toHaveClass('is-active')
+    expect(featured).toHaveClass('chip--destaque')
+    expect(getComputedStyle(featured).backgroundColor).toBe('rgba(227, 177, 90, 0.16)')
+    expect(getComputedStyle(featured).backgroundColor).not.toBe('rgb(125, 206, 160)')
+    delete document.documentElement.dataset.theme
+  })
 })
