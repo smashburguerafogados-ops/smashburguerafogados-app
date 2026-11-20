@@ -86,6 +86,42 @@ describe('customer order history', () => {
     expect(getComputedStyle(card('00001')).backgroundColor).toBe(BLUE)
   })
 
+  it('says a pickup is ready for pickup and hides the delivery fee', async () => {
+    await openHistory([
+      makeOrder({
+        id: 'pedido-00011',
+        status: 'andamento',
+        fulfillment: 'retirada',
+        deliveryFeeCents: 500,
+        totalCents: 2800,
+        address: null,
+      }),
+      makeOrder({
+        id: 'pedido-00012',
+        status: 'enviado',
+        fulfillment: 'retirada',
+        deliveryFeeCents: 0,
+        totalCents: 2800,
+        address: null,
+      }),
+      makeOrder({
+        id: 'pedido-00013',
+        status: 'enviado',
+        fulfillment: 'entrega',
+        deliveryFeeCents: 500,
+        totalCents: 3300,
+      }),
+    ])
+    expect(card('00011')).toHaveTextContent('Aceito, em preparo')
+    expect(card('00011')).not.toHaveTextContent('Saiu para entrega')
+    expect(card('00011')).not.toHaveTextContent('Taxa de entrega')
+    expect(card('00012')).toHaveTextContent('Pronto para retirada')
+    expect(card('00012')).not.toHaveTextContent('Saiu para entrega')
+    expect(card('00012')).not.toHaveTextContent('Taxa de entrega')
+    expect(card('00013')).toHaveTextContent('Saiu para entrega')
+    expect(card('00013')).toHaveTextContent('Taxa de entrega: R$ 5,00')
+  })
+
   it('keeps the refusal reason on the history card', async () => {
     await openHistory()
     expect(card('00003')).toHaveTextContent('Recusado')

@@ -104,7 +104,7 @@ describe('delivery fee', () => {
     expect(payload).toMatchObject({ deliveryFeeCents: 500, totalCents: 3300 })
   })
 
-  it('charges no fee on pickup and keeps the line visible at zero', async () => {
+  it('charges no fee on pickup and hides the delivery line', async () => {
     signInAs(customerProfile)
     const user = userEvent.setup()
     renderApp()
@@ -117,8 +117,8 @@ describe('delivery fee', () => {
 
     await user.click(within(cart).getByRole('radio', { name: 'Retirada' }))
     const box = summary(cart)
-    expect(box).toHaveTextContent('Taxa de entrega')
-    expect(box).toHaveTextContent('R$ 0,00')
+    expect(box).not.toHaveTextContent('Taxa de entrega')
+    expect(box).toHaveTextContent('Subtotal')
     expect(within(box).getByTestId('cart-total')).toHaveTextContent('R$ 28,00')
 
     await user.click(within(cart).getByRole('radio', { name: 'Pix' }))
@@ -173,5 +173,38 @@ describe('delivery fee', () => {
     expect(message).toContain('Taxa de entrega: R$ 5,00')
     expect(message).toContain('Total: R$ 61,00')
     expect(message).toBe(sentMessage(stored))
+  })
+
+  it('hides the fee on a pickup order and says it is ready for pickup', async () => {
+    const stored = makeOrder({
+      id: 'pedido-00021',
+      status: 'andamento',
+      fulfillment: 'retirada',
+      address: null,
+      deliveryFeeCents: 0,
+      totalCents: 5600,
+    }) as unknown as Order
+    signInAs(adminProfile)
+    const user = userEvent.setup()
+    renderApp('/admin')
+    await screen.findByRole('heading', { name: 'Painel' })
+    await waitFor(() => expect(activeListeners('orders')).toHaveLength(1))
+    await act(async () => {
+      emit('orders', [stored])
+    })
+    await user.click(screen.getByRole('tab', { name: /Em Andamento/ }))
+    await user.click(screen.getByRole('button', { name: /Ana Souza/ }))
+    const dialog = screen.getByRole('dialog', { name: 'Pedido #00021' })
+    expect(dialog).toHaveTextContent('Aceito, em preparo')
+    expect(within(dialog).queryByText('Taxa de entrega')).not.toBeInTheDocument()
+    expect(within(dialog).getByText('Total').parentElement).toHaveTextContent('R$ 56,00')
+
+    await user.click(within(dialog).getByRole('button', { name: 'Pronto para retirada' }))
+    const url = String(vi.mocked(window.open).mock.calls.at(-1)?.[0])
+    const message = decodeURIComponent(url.split('text=')[1] ?? '')
+    expect(message).not.toContain('Taxa de entrega')
+    expect(message).toContain('está pronto para retirada')
+    expect(message).toContain('Total: R$ 56,00')
+    expect(message).not.toContain('saiu para entrega')
   })
 })

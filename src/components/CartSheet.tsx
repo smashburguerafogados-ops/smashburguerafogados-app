@@ -296,9 +296,11 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
             <p>
               Subtotal <strong>{formatPrice(itemsTotal)}</strong>
             </p>
-            <p>
-              Taxa de entrega <strong>{formatPrice(fee)}</strong>
-            </p>
+            {fulfillment === 'entrega' && (
+              <p>
+                Taxa de entrega <strong>{formatPrice(fee)}</strong>
+              </p>
+            )}
             <p className="cart__total">
               Total <strong data-testid="cart-total">{formatPrice(total)}</strong>
             </p>

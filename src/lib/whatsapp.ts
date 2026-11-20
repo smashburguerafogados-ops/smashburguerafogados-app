@@ -136,14 +136,21 @@ export function paymentLine(order: Pick<Order, 'payment' | 'fulfillment'>): stri
   return `${label}, troco para ${formatPrice(payment.cashCents)} (troco ${formatPrice(change)})`
 }
 
+function feeLine(order: Order): string | null {
+  if (order.fulfillment === 'retirada') return null
+  return `${SYMBOLS.scooter} Taxa de entrega: ${formatPrice(order.deliveryFeeCents)}`
+}
+
 export function acceptedMessage(order: Order): string {
   return [
     `${SYMBOLS.check} ${greeting(order.customerName)} Seu pedido #${shortId(order.id)} na ${BUSINESS_NAME} foi aceito.`,
     `${SYMBOLS.fire} Já estamos preparando.`,
-    `${SYMBOLS.scooter} Taxa de entrega: ${formatPrice(order.deliveryFeeCents)}`,
+    feeLine(order),
     `${SYMBOLS.money} Total: ${formatPrice(order.totalCents)}`,
     `${SYMBOLS.pray} Obrigado pela preferência!`,
-  ].join('\n')
+  ]
+    .filter((line): line is string => line !== null)
+    .join('\n')
 }
 
 export function refusedMessage(order: Order, reason: string): string {
@@ -167,8 +174,9 @@ export function sentMessage(order: Order): string {
     lines.push(`${SYMBOLS.burger} ${item.qty}x ${item.name} - ${formatPrice(item.priceCents * item.qty)}`)
     lines.push(`${SYMBOLS.camera} Foto: ${photoLink(item)}`)
   }
+  const fee = feeLine(order)
+  if (fee) lines.push(fee)
   lines.push(
-    `${SYMBOLS.scooter} Taxa de entrega: ${formatPrice(order.deliveryFeeCents)}`,
     `${SYMBOLS.money} Total: ${formatPrice(order.totalCents)}`,
     `${SYMBOLS.cash} Pagamento: ${paymentLine(order)}`,
     `${SYMBOLS.pin} ${pickup ? 'Retirada' : 'Endereço'}: ${formatAddress(order)}`,

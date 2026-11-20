@@ -155,7 +155,9 @@ describe('phone before the order', () => {
 
     await user.click(screen.getByRole('button', { name: 'Voltar ao cardápio' }))
     const pickup = await openCheckout(user, 'Retirada')
-    expect(within(pickup).getByRole('group', { name: 'Resumo do pedido' })).toHaveTextContent('R$ 0,00')
+    const pickupSummary = within(pickup).getByRole('group', { name: 'Resumo do pedido' })
+    expect(pickupSummary).not.toHaveTextContent('Taxa de entrega')
+    expect(within(pickupSummary).getByTestId('cart-total')).toHaveTextContent('R$ 28,00')
     await user.click(within(pickup).getByRole('button', { name: 'Fazer Pedido' }))
     expect(await screen.findByText('Pedido enviado')).toBeInTheDocument()
     expect(firebaseMocks.signInWithEmailAndPassword).not.toHaveBeenCalled()

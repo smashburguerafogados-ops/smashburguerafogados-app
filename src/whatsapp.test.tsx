@@ -69,6 +69,17 @@ describe('WhatsApp messages', () => {
     expect(sanitizeMessage(text)).toBe(text)
   })
 
+  it('keeps the delivery fee on a delivery message and leaves it off a pickup', () => {
+    const pickup = { ...order, fulfillment: 'retirada' as const, address: null, deliveryFeeCents: 0 }
+    expect(acceptedMessage(order)).toContain('Taxa de entrega')
+    expect(sentMessage(order)).toContain('Taxa de entrega')
+    expect(sentMessage(order)).toContain('saiu para entrega')
+    expect(acceptedMessage(pickup)).not.toContain('Taxa de entrega')
+    expect(sentMessage(pickup)).not.toContain('Taxa de entrega')
+    expect(sentMessage(pickup)).toContain('está pronto para retirada')
+    expect(sentMessage(pickup)).not.toContain('saiu para entrega')
+  })
+
   it('names the Smash Burger in every customer message', () => {
     for (const text of Object.values(messages)) expect(text).toContain('Smash Burger')
   })
