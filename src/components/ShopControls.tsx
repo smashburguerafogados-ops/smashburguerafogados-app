@@ -25,10 +25,12 @@ export function ShopScreen({ onClose }: { onClose: () => void }) {
 }
 
 function ShopControls(): ReactNode {
-  const [shop, setShop] = useState<ShopSettings>({ online: true, message: DEFAULT_CLOSED_MESSAGE })
+  const [shop, setShop] = useState<ShopSettings>({ online: true, message: DEFAULT_CLOSED_MESSAGE, hours: '' })
   const [draft, setDraft] = useState(DEFAULT_CLOSED_MESSAGE)
+  const [hoursDraft, setHoursDraft] = useState('')
   const [error, setError] = useState('')
   const dirty = useRef(false)
+  const hoursDirty = useRef(false)
 
   useEffect(
     () =>
@@ -36,6 +38,7 @@ function ShopControls(): ReactNode {
         (next) => {
           setShop(next)
           if (!dirty.current) setDraft(next.message)
+          if (!hoursDirty.current) setHoursDraft(next.hours)
         },
         () => setError('Não foi possível carregar o status da loja.'),
       ),
@@ -44,7 +47,7 @@ function ShopControls(): ReactNode {
 
   async function toggle() {
     setError('')
-    const next = { online: !shop.online, message: draft }
+    const next = { online: !shop.online, message: draft, hours: hoursDraft }
     setShop(next)
     try {
       await saveShop(next)
@@ -55,13 +58,25 @@ function ShopControls(): ReactNode {
 
   async function saveMessage() {
     setError('')
-    const next = { online: shop.online, message: draft }
+    const next = { online: shop.online, message: draft, hours: hoursDraft }
     dirty.current = false
     setShop(next)
     try {
       await saveShop(next)
     } catch {
       setError('Não foi possível salvar a mensagem.')
+    }
+  }
+
+  async function saveHours() {
+    setError('')
+    const next = { online: shop.online, message: draft, hours: hoursDraft }
+    hoursDirty.current = false
+    setShop(next)
+    try {
+      await saveShop(next)
+    } catch {
+      setError('Não foi possível salvar o horário.')
     }
   }
 
@@ -73,6 +88,21 @@ function ShopControls(): ReactNode {
           <span className="shop-controls__knob" />
         </button>
       </div>
+      <label className="field">
+        <span>Horário de funcionamento</span>
+        <input
+          value={hoursDraft}
+          maxLength={120}
+          placeholder="Ex.: Quarta a domingo, 18h às 23h"
+          onChange={(event) => {
+            hoursDirty.current = true
+            setHoursDraft(event.target.value)
+          }}
+        />
+      </label>
+      <button type="button" className="btn btn--ghost" onClick={() => void saveHours()}>
+        Salvar horário
+      </button>
       <label className="field">
         <span>Mensagem de fechado</span>
         <textarea

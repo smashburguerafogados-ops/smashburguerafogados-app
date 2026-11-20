@@ -53,6 +53,25 @@
   text-align: center;
 }
 
+.menu__hours {
+  margin: 0 0 12px;
+  padding: 0 4px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #f4f5f6;
+  animation: hours-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes hours-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
 .menu__title {
   margin: 2px 0 0;
   font-size: 1.45rem;
@@ -326,6 +345,21 @@ html[data-theme='sao-joao'] .menu__content {
   width: 26px;
   height: 26px;
   animation: raffle-spin 1.4s linear infinite;
+}
+
+.raffle-winners {
+  display: grid;
+  gap: 6px;
+}
+
+.raffle-winners ol {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.product__note-hint {
+  margin: -4px 0 8px;
+  font-size: 0.85rem;
 }
 
 .raffle-note {
@@ -1682,6 +1716,12 @@ html .chips .chip.chip--destaque {
   font-weight: 700;
   font-size: 1rem;
   line-height: 1.2;
+}
+
+.order-card__mode {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f4f5f6;
 }
 
 .order-card__order {

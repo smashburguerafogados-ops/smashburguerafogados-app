@@ -14,9 +14,10 @@ import {
 } from '../lib/checkout'
 import { formatPrice, maskWholeReais } from '../lib/money'
 import { cartCount, cartTotal, type CartLine } from '../lib/menu'
-import { deliveryReady } from '../lib/delivery'
-import { buildOrder, placeOrder, shortId } from '../lib/orders'
+import { contactReady, deliveryReady } from '../lib/delivery'
+import { buildOrder, placeOrder, shortId, type Fulfillment, FULFILLMENT_LABEL } from '../lib/orders'
 import { DeliveryForm } from './DeliveryForm'
+import { PickupForm } from './PickupForm'
 import { Overlay } from './Overlay'
 import { useRaffle } from './RaffleProvider'
 import { localDay } from '../lib/raffle'
@@ -29,6 +30,8 @@ const EMPTY_CUSTOMER: UserProfile = {
   address: null,
   role: 'customer',
 }
+
+const FULFILLMENTS: Fulfillment[] = ['entrega', 'retirada']
 
 function MinusMark() {
   return (
@@ -50,10 +53,12 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
   const raffle = useRaffle()
   const raffleToday = raffle.active && raffle.day === localDay(Date.now())
   const [checkout, setCheckout] = useState<CheckoutState>(emptyCheckout)
+  const [fulfillment, setFulfillment] = useState<Fulfillment>('entrega')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [placedId, setPlacedId] = useState('')
   const [needsDelivery, setNeedsDelivery] = useState(false)
+  const [needsPickup, setNeedsPickup] = useState(false)
 
   const total = cartTotal(lines)
   const count = cartCount(lines)
@@ -74,7 +79,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
     setBusy(true)
     setError('')
     try {
-      const id = await placeOrder(buildOrder(profile, lines, checkout, total))
+      const id = await placeOrder(buildOrder(profile, lines, checkout, total, fulfillment))
       setPlacedId(id)
       setCheckout(emptyCheckout)
       onPlaced()
@@ -87,8 +92,18 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
 
   async function submit() {
     if (!ready || busy) return
-    if (session.status === 'ready' && session.profile.role === 'customer' && deliveryReady(session.profile)) {
-      await send(session.profile)
+    if (session.status === 'ready' && session.profile.role === 'customer') {
+      if (fulfillment === 'retirada' && contactReady(session.profile)) {
+        await send(session.profile)
+        return
+      }
+      if (fulfillment === 'entrega' && deliveryReady(session.profile)) {
+        await send(session.profile)
+        return
+      }
+    }
+    if (fulfillment === 'retirada') {
+      setNeedsPickup(true)
       return
     }
     setNeedsDelivery(true)
@@ -144,6 +159,24 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
       {lines.length > 0 && (
         <>
           <fieldset className="pay">
+            <legend>Como prefere receber</legend>
+            <div className="pay__options">
+              {FULFILLMENTS.map((mode) => (
+                <label key={mode} className={fulfillment === mode ? 'pay__option is-active' : 'pay__option'}>
+                  <input
+                    type="radio"
+                    name="fulfillment"
+                    value={mode}
+                    checked={fulfillment === mode}
+                    onChange={() => setFulfillment(mode)}
+                  />
+                  <span>{FULFILLMENT_LABEL[mode]}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="pay">
             <legend>Forma de pagamento</legend>
             <div className="pay__options">
               {PAYMENT_METHODS.map((method) => (
@@ -159,7 +192,11 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
                 </label>
               ))}
             </div>
-            <p className="pay__notice">Os pagamentos são feitos ao entregador.</p>
+            <p className="pay__notice">
+              {fulfillment === 'retirada'
+                ? 'Os pagamentos são feitos na retirada.'
+                : 'Os pagamentos são feitos ao entregador.'}
+            </p>
           </fieldset>
 
           {checkout.method === 'dinheiro' && (
@@ -237,6 +274,15 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
             session.status === 'ready' && session.profile.role === 'customer' ? session.profile : EMPTY_CUSTOMER
           }
           onClose={() => setNeedsDelivery(false)}
+          onSaved={(profile) => void send(profile)}
+        />
+      )}
+      {needsPickup && (
+        <PickupForm
+          profile={
+            session.status === 'ready' && session.profile.role === 'customer' ? session.profile : EMPTY_CUSTOMER
+          }
+          onClose={() => setNeedsPickup(false)}
           onSaved={(profile) => void send(profile)}
         />
       )}

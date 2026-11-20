@@ -1,7 +1,15 @@
 import { useState } from 'react'
 import { formatWhatsapp } from '../lib/identity'
 import { formatPrice } from '../lib/money'
-import { STATUS_LABEL, finalizeOrder, setOrderStatus, shortId, type Order, type OrderStatus } from '../lib/orders'
+import {
+  FULFILLMENT_LABEL,
+  STATUS_LABEL,
+  finalizeOrder,
+  setOrderStatus,
+  shortId,
+  type Order,
+  type OrderStatus,
+} from '../lib/orders'
 import {
   acceptedMessage,
   cancelledMessage,
@@ -76,7 +84,11 @@ export function OrderDialog({ order, onClose }: OrderDialogProps) {
           <dd>{formatWhatsapp(order.customerWhatsapp)}</dd>
         </div>
         <div>
-          <dt>Endereço</dt>
+          <dt>Tipo</dt>
+          <dd>{FULFILLMENT_LABEL[order.fulfillment]}</dd>
+        </div>
+        <div>
+          <dt>{order.fulfillment === 'retirada' ? 'Retirada' : 'Endereço'}</dt>
           <dd>{formatAddress(order)}</dd>
         </div>
         {order.address?.cep && (
@@ -176,7 +188,7 @@ export function OrderDialog({ order, onClose }: OrderDialogProps) {
                 disabled={busy}
                 onClick={() => void act('enviado', sentMessage(order))}
               >
-                Enviar pedido
+                {order.fulfillment === 'retirada' ? 'Pronto para retirada' : 'Enviar pedido'}
               </button>
               <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => setMode('cancel')}>
                 Cancelar
@@ -185,7 +197,11 @@ export function OrderDialog({ order, onClose }: OrderDialogProps) {
           )}
           {order.status === 'enviado' && (
             <>
-              <p className="muted">Saiu para entrega. O cliente confirma o recebimento em Meus pedidos.</p>
+              <p className="muted">
+                {order.fulfillment === 'retirada'
+                  ? 'Pronto para retirada. O cliente confirma o recebimento em Meus pedidos.'
+                  : 'Saiu para entrega. O cliente confirma o recebimento em Meus pedidos.'}
+              </p>
               <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => void finish()}>
                 Concluir
               </button>

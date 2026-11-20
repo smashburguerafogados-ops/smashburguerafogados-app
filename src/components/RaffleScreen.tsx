@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   activateRaffle,
+  clearRaffle,
   drawRaffle,
-  eligibleCustomers,
   EMPTY_DRAW_MESSAGE,
+  NO_REMAINING_MESSAGE,
   raffleError,
+  remainingCustomers,
   type Raffle,
 } from '../lib/raffle'
 import { watchAllOrders, type Order } from '../lib/orders'
@@ -18,6 +20,7 @@ export function RaffleScreen({ onClose }: { onClose: () => void }) {
   const [orders, setOrders] = useState<Order[]>([])
   const [locked, setLocked] = useState<Raffle | null>(null)
   const [busy, setBusy] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
@@ -37,7 +40,8 @@ export function RaffleScreen({ onClose }: { onClose: () => void }) {
   )
 
   const view = locked && locked.day === saved.day ? { ...saved, ...locked } : saved
-  const entrants = view.day ? eligibleCustomers(orders, view.day) : []
+  const remaining = view.day ? remainingCustomers(orders, view.day, view.winners) : []
+  const hasRaffle = Boolean(view.active || view.title || view.winners.length > 0 || view.winnerId)
 
   async function activate() {
     setBusy(true)
@@ -58,15 +62,36 @@ export function RaffleScreen({ onClose }: { onClose: () => void }) {
     try {
       const outcome = await drawRaffle(view, orders)
       if (outcome.kind === 'empty') {
-        setNotice(EMPTY_DRAW_MESSAGE)
+        setNotice(view.winners.length > 0 ? NO_REMAINING_MESSAGE : EMPTY_DRAW_MESSAGE)
         return
       }
-      if (outcome.kind === 'drawn') {
-        setLocked({ ...view, winnerId: outcome.winnerId, winnerName: outcome.winnerName, drawnAtMs: Date.now() })
-      }
+      setLocked({
+        ...view,
+        winnerId: outcome.winnerId,
+        winnerName: outcome.winnerName,
+        drawnAtMs: Date.now(),
+        winners: outcome.winners,
+      })
       setNotice(`Ganhador: ${outcome.winnerName}`)
     } catch (caught) {
       setError(raffleError(caught, 'Não foi possível sortear.'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function endRaffle() {
+    setBusy(true)
+    setError('')
+    try {
+      await clearRaffle()
+      setLocked(null)
+      setTitle('')
+      seeded.current = false
+      setConfirmClear(false)
+      setNotice('Sorteio encerrado e zerado.')
+    } catch (caught) {
+      setError(raffleError(caught, 'Não foi possível encerrar.'))
     } finally {
       setBusy(false)
     }
@@ -88,13 +113,50 @@ export function RaffleScreen({ onClose }: { onClose: () => void }) {
         </button>
         {view.active && (
           <p className="muted">
-            Ativo hoje: {view.title}. {entrants.length === 1 ? '1 pessoa' : `${entrants.length} pessoas`} com pedido finalizado.
+            Ativo hoje: {view.title}.{' '}
+            {remaining.length === 1 ? '1 pessoa restante' : `${remaining.length} pessoas restantes`} para sortear.
           </p>
         )}
-        {view.winnerName && <p>Ganhador: {view.winnerName}</p>}
+        {view.winners.length > 0 && (
+          <div className="raffle-winners">
+            <p>Ganhadores de hoje:</p>
+            <ol>
+              {view.winners.map((person) => (
+                <li key={person.id}>{person.name}</li>
+              ))}
+            </ol>
+          </div>
+        )}
+        {view.winnerName && view.winners.length === 0 && <p>Ganhador: {view.winnerName}</p>}
         <button type="button" className="btn" disabled={busy || !view.active} onClick={() => void draw()}>
           Sortear
         </button>
+        {hasRaffle && (
+          <button
+            type="button"
+            className="btn btn--ghost"
+            disabled={busy}
+            onClick={() => {
+              setConfirmClear(true)
+              setError('')
+            }}
+          >
+            Encerrar
+          </button>
+        )}
+        {confirmClear && (
+          <div className="reason-box" role="group" aria-label="Confirmar encerramento">
+            <p>Deseja limpar e zerar o sorteio?</p>
+            <div className="actions">
+              <button type="button" className="btn" disabled={busy} onClick={() => void endRaffle()}>
+                Confirmar
+              </button>
+              <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => setConfirmClear(false)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
         {notice && <p role="status">{notice}</p>}
         {error && (
           <p className="alert" role="alert">

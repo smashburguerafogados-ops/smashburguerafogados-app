@@ -71,11 +71,12 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
         <input
           value={note}
           maxLength={140}
-          placeholder="Ex.: sem cebola, ponto da carne"
+          placeholder="Ex.: tirar cebola, ponto da carne"
           onChange={(event) => setNote(event.target.value)}
           disabled={!product.available}
         />
       </label>
+      <p className="muted product__note-hint">Exemplo: tirar cebola, sem molho, bem passado.</p>
       <div className="stepper" role="group" aria-label="Quantidade">
         <button type="button" aria-label="Diminuir" disabled={!product.available || qty <= 1} onClick={() => setQty((current) => Math.max(1, current - 1))}>
           −

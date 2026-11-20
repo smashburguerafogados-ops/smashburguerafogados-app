@@ -233,7 +233,8 @@ describe('admin board', () => {
     expect(card).toHaveTextContent('Ana Souza')
     expect(card).toHaveTextContent('2× Smash da casa')
     expect(card).not.toHaveTextContent('#00001')
-    expect(card.querySelectorAll('.order-card__name, .order-card__order')).toHaveLength(2)
+    expect(card.querySelectorAll('.order-card__name, .order-card__mode, .order-card__order')).toHaveLength(3)
+    expect(card).toHaveTextContent('Entrega')
     expect(card).not.toHaveTextContent('98888')
     expect(card).not.toHaveTextContent('R$')
     expect(card).not.toHaveTextContent('Recebido')
@@ -256,6 +257,7 @@ describe('admin board', () => {
     expect(dialog).toHaveTextContent('#00001')
     expect(dialog).toHaveTextContent('Ana Souza')
     expect(dialog).toHaveTextContent('+55 (87) 98888-7777')
+    expect(dialog).toHaveTextContent('Entrega')
     expect(dialog).toHaveTextContent('Rua das Flores, 120')
     expect(dialog).toHaveTextContent('Centro - Petrolina - PE')
     expect(dialog).toHaveTextContent('Perto da praça')
@@ -264,6 +266,33 @@ describe('admin board', () => {
     expect(dialog).toHaveTextContent('Obs.: sem cebola')
     expect(dialog).toHaveTextContent('R$ 56,00')
     expect(dialog).toHaveTextContent('Dinheiro, troco para R$ 100,00 (troco R$ 44,00)')
+  })
+
+  it('shows pickup on the card and in the dialog without an address', async () => {
+    const user = userEvent.setup()
+    signInAs(adminProfile)
+    renderApp('/admin')
+    await screen.findByRole('heading', { name: 'Painel' })
+    await waitFor(() => expect(activeListeners('orders')).toHaveLength(1))
+    await act(async () => {
+      emit('orders', [
+        makeOrder({
+          id: 'pedido-00011',
+          status: 'novo',
+          fulfillment: 'retirada',
+          address: null,
+          customerName: 'Bruno Lima',
+        }),
+      ])
+    })
+    const card = screen.getByRole('button', { name: /Bruno Lima/ })
+    expect(card).toHaveTextContent('Retirada')
+    expect(card).not.toHaveTextContent('Entrega')
+    await user.click(card)
+    const dialog = screen.getByRole('dialog', { name: 'Pedido #00011' })
+    expect(dialog).toHaveTextContent('Retirada')
+    expect(dialog).toHaveTextContent('Retirada no balcão')
+    expect(dialog).not.toHaveTextContent('Rua das Flores')
   })
 
   it('Aceitar sends the accepted WhatsApp first, then moves the order to Em Andamento', async () => {

@@ -2,7 +2,19 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { CartSheet } from './components/CartSheet'
-import { EMPTY_RAFFLE, activateRaffle, drawRaffle, eligibleCustomers, localDay, showHourglass, TITLE_REQUIRED, RULES_MISSING } from './lib/raffle'
+import {
+  EMPTY_RAFFLE,
+  NO_REMAINING_MESSAGE,
+  activateRaffle,
+  clearRaffle,
+  drawRaffle,
+  eligibleCustomers,
+  localDay,
+  remainingCustomers,
+  showHourglass,
+  TITLE_REQUIRED,
+  RULES_MISSING,
+} from './lib/raffle'
 import type { Order } from './lib/orders'
 import { activeListeners, emit, emitDoc, firebaseMocks } from './test/mocks'
 import { adminProfile, customerProfile, Providers, renderApp, signInAs } from './test/render'
@@ -15,6 +27,7 @@ function order(patch: Partial<Order> & Pick<Order, 'id' | 'status' | 'customerId
     customerName: 'Ana Souza',
     customerWhatsapp: '5587988887777',
     address: null,
+    fulfillment: 'entrega',
     items: [],
     totalCents: 2800,
     payment: { method: 'pix', needsChange: false, cashCents: null, changeCents: null },
@@ -56,21 +69,75 @@ it('counts only customers with a finalized order that day', () => {
   expect(eligibleCustomers(orders, day).map((person) => person.id)).toEqual(['cliente-1', 'cliente-4'])
 })
 
-it('keeps the first winner and refuses an empty draw', async () => {
-  const orders = [order({ id: 'hoje', status: 'finalizado', customerId: 'cliente-1' })]
+it('draws at random among remaining people and skips anyone who already won today', async () => {
+  const orders = [
+    order({ id: 'hoje', status: 'finalizado', customerId: 'cliente-1', customerName: 'Ana Souza' }),
+    order({ id: 'outro', status: 'finalizado', customerId: 'cliente-4', customerName: 'Davi Nunes' }),
+  ]
   const raffle = { ...EMPTY_RAFFLE, active: true, day, title: 'Batata' }
   firebaseMocks.setDoc.mockClear()
   const drawn = await drawRaffle(raffle, [], () => 0)
   expect(drawn.kind).toBe('empty')
   expect(firebaseMocks.setDoc).not.toHaveBeenCalled()
 
-  const first = await drawRaffle(raffle, orders, () => 0.99)
+  const first = await drawRaffle(raffle, orders, () => 0)
   expect(first).toMatchObject({ kind: 'drawn', winnerId: 'cliente-1', winnerName: 'Ana Souza' })
+  expect(first.kind === 'drawn' && first.winners).toEqual([{ id: 'cliente-1', name: 'Ana Souza' }])
+  expect(firebaseMocks.setDoc).toHaveBeenCalledWith(
+    { path: 'settings/raffle' },
+    expect.objectContaining({
+      winnerId: 'cliente-1',
+      winners: [{ id: 'cliente-1', name: 'Ana Souza' }],
+    }),
+    { merge: true },
+  )
+
+  const afterFirst = {
+    ...raffle,
+    winnerId: 'cliente-1',
+    winnerName: 'Ana Souza',
+    winners: [{ id: 'cliente-1', name: 'Ana Souza' }],
+  }
+  expect(remainingCustomers(orders, day, afterFirst.winners).map((person) => person.id)).toEqual(['cliente-4'])
   firebaseMocks.setDoc.mockClear()
-  const again = await drawRaffle({ ...raffle, winnerId: 'cliente-1', winnerName: 'Ana Souza' }, orders, () => 0)
-  expect(again).toMatchObject({ kind: 'kept', winnerId: 'cliente-1' })
+  const second = await drawRaffle(afterFirst, orders, () => 0.99)
+  expect(second).toMatchObject({ kind: 'drawn', winnerId: 'cliente-4', winnerName: 'Davi Nunes' })
+  expect(second.kind === 'drawn' && second.winners.map((person) => person.id)).toEqual(['cliente-1', 'cliente-4'])
+
+  firebaseMocks.setDoc.mockClear()
+  const none = await drawRaffle(
+    {
+      ...afterFirst,
+      winnerId: 'cliente-4',
+      winnerName: 'Davi Nunes',
+      winners: [
+        { id: 'cliente-1', name: 'Ana Souza' },
+        { id: 'cliente-4', name: 'Davi Nunes' },
+      ],
+    },
+    orders,
+    () => 0,
+  )
+  expect(none.kind).toBe('empty')
   expect(firebaseMocks.setDoc).not.toHaveBeenCalled()
   await expect(activateRaffle(EMPTY_RAFFLE, '   ')).rejects.toThrow(TITLE_REQUIRED)
+})
+
+it('clears the raffle back to zero', async () => {
+  firebaseMocks.setDoc.mockClear()
+  await clearRaffle()
+  expect(firebaseMocks.setDoc).toHaveBeenCalledWith(
+    { path: 'settings/raffle' },
+    {
+      title: '',
+      active: false,
+      day: '',
+      winnerId: '',
+      winnerName: '',
+      drawnAtMs: 0,
+      winners: [],
+    },
+  )
 })
 
 it('hides the hourglass after dismiss or three days, and skips anyone without a finalized order', () => {
@@ -204,7 +271,7 @@ it('explains that the published Firestore rules refuse settings/raffle', async (
   expect(sheet).not.toHaveTextContent('Não foi possível ativar.')
 })
 
-it('blocks an empty title, reports nobody eligible, and does not redraw', async () => {
+it('blocks an empty title, draws again excluding winners, and ends the raffle', async () => {
   signInAs(adminProfile)
   const user = userEvent.setup()
   renderApp('/admin')
@@ -221,7 +288,13 @@ it('blocks an empty title, reports nobody eligible, and does not redraw', async 
   await user.click(screen.getByRole('button', { name: 'Ativar sorteio de hoje' }))
   expect(firebaseMocks.setDoc).toHaveBeenCalledWith(
     { path: 'settings/raffle' },
-    expect.objectContaining({ title: 'Batata grande', active: true, day: localDay(Date.now()), winnerId: '' }),
+    expect.objectContaining({
+      title: 'Batata grande',
+      active: true,
+      day: localDay(Date.now()),
+      winnerId: '',
+      winners: [],
+    }),
     { merge: true },
   )
   await act(async () => {
@@ -232,6 +305,7 @@ it('blocks an empty title, reports nobody eligible, and does not redraw', async 
       winnerId: '',
       winnerName: '',
       drawnAtMs: 0,
+      winners: [],
     })
     emit('orders', [
       {
@@ -264,6 +338,16 @@ it('blocks an empty title, reports nobody eligible, and does not redraw', async 
         items: [],
       },
       {
+        id: 'outro',
+        customerId: 'cliente-4',
+        customerName: 'Davi Nunes',
+        status: 'finalizado',
+        createdAtMs: Date.now(),
+        totalCents: 1600,
+        payment: { method: 'pix' },
+        items: [],
+      },
+      {
         id: 'caminho',
         customerId: 'cliente-2',
         customerName: 'Bruno Lima',
@@ -278,11 +362,90 @@ it('blocks an empty title, reports nobody eligible, and does not redraw', async 
   await user.click(screen.getByRole('button', { name: 'Sortear' }))
   expect(firebaseMocks.setDoc).toHaveBeenCalledWith(
     { path: 'settings/raffle' },
-    expect.objectContaining({ winnerId: 'cliente-1', winnerName: 'Ana Souza' }),
+    expect.objectContaining({
+      winnerId: expect.stringMatching(/^cliente-/),
+      winners: expect.arrayContaining([expect.objectContaining({ id: expect.stringMatching(/^cliente-/) })]),
+    }),
     { merge: true },
   )
+  const firstWrite = firebaseMocks.setDoc.mock.calls.at(-1)?.[1] as {
+    winnerId: string
+    winnerName: string
+    winners: { id: string; name: string }[]
+  }
+  await act(async () => {
+    emitDoc('settings/raffle', {
+      title: 'Batata grande',
+      active: true,
+      day: localDay(Date.now()),
+      winnerId: firstWrite.winnerId,
+      winnerName: firstWrite.winnerName,
+      drawnAtMs: Date.now(),
+      winners: firstWrite.winners,
+    })
+  })
+  expect(sheet).toHaveTextContent('Ganhadores de hoje:')
+  expect(sheet).toHaveTextContent(firstWrite.winnerName)
+
   firebaseMocks.setDoc.mockClear()
   await user.click(screen.getByRole('button', { name: 'Sortear' }))
-  expect(sheet).toHaveTextContent('Ganhador: Ana Souza')
+  expect(firebaseMocks.setDoc).toHaveBeenCalledWith(
+    { path: 'settings/raffle' },
+    expect.objectContaining({
+      winners: expect.arrayContaining([
+        expect.objectContaining({ id: firstWrite.winnerId }),
+        expect.objectContaining({ id: expect.not.stringMatching(new RegExp(`^${firstWrite.winnerId}$`)) }),
+      ]),
+    }),
+    { merge: true },
+  )
+  const secondWrite = firebaseMocks.setDoc.mock.calls.at(-1)?.[1] as {
+    winnerId: string
+    winnerName: string
+    winners: { id: string; name: string }[]
+  }
+  await act(async () => {
+    emitDoc('settings/raffle', {
+      title: 'Batata grande',
+      active: true,
+      day: localDay(Date.now()),
+      winnerId: secondWrite.winnerId,
+      winnerName: secondWrite.winnerName,
+      drawnAtMs: Date.now(),
+      winners: secondWrite.winners,
+    })
+  })
+  firebaseMocks.setDoc.mockClear()
+  await user.click(screen.getByRole('button', { name: 'Sortear' }))
+  expect(sheet).toHaveTextContent(NO_REMAINING_MESSAGE)
   expect(firebaseMocks.setDoc).not.toHaveBeenCalled()
+
+  await user.click(screen.getByRole('button', { name: 'Encerrar' }))
+  expect(sheet).toHaveTextContent('Deseja limpar e zerar o sorteio?')
+  await user.click(within(sheet).getByRole('button', { name: 'Confirmar' }))
+  expect(firebaseMocks.setDoc).toHaveBeenCalledWith(
+    { path: 'settings/raffle' },
+    {
+      title: '',
+      active: false,
+      day: '',
+      winnerId: '',
+      winnerName: '',
+      drawnAtMs: 0,
+      winners: [],
+    },
+  )
+  await act(async () => {
+    emitDoc('settings/raffle', {
+      title: '',
+      active: false,
+      day: '',
+      winnerId: '',
+      winnerName: '',
+      drawnAtMs: 0,
+      winners: [],
+    })
+  })
+  expect(sheet).toHaveTextContent('Sorteio encerrado e zerado.')
+  expect(within(sheet).queryByRole('button', { name: 'Encerrar' })).not.toBeInTheDocument()
 })

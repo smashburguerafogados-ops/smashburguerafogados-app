@@ -4,6 +4,7 @@ import type { Order } from './orders'
 
 export const RAFFLE_DOC = 'settings/raffle'
 export const EMPTY_DRAW_MESSAGE = 'Ninguém com pedido finalizado hoje para sortear.'
+export const NO_REMAINING_MESSAGE = 'Todos os elegíveis de hoje já ganharam.'
 export const WAITING_MESSAGE = 'aguardando sorteio'
 export const TITLE_REQUIRED = 'Informe o que será sorteado.'
 export const RAFFLE_DAYS = 3
@@ -17,6 +18,8 @@ export function raffleError(caught: unknown, fallback: string): string {
   return fallback
 }
 
+export type Entrant = { id: string; name: string }
+
 export type Raffle = {
   title: string
   active: boolean
@@ -24,6 +27,8 @@ export type Raffle = {
   winnerId: string
   winnerName: string
   drawnAtMs: number
+  /** Ganhadores já sorteados no dia. Quem está aqui não entra de novo. */
+  winners: Entrant[]
 }
 
 export const EMPTY_RAFFLE: Raffle = {
@@ -33,14 +38,12 @@ export const EMPTY_RAFFLE: Raffle = {
   winnerId: '',
   winnerName: '',
   drawnAtMs: 0,
+  winners: [],
 }
 
-export type Entrant = { id: string; name: string }
-
 export type DrawOutcome =
-  | { kind: 'kept'; winnerId: string; winnerName: string }
   | { kind: 'empty' }
-  | { kind: 'drawn'; winnerId: string; winnerName: string }
+  | { kind: 'drawn'; winnerId: string; winnerName: string; winners: Entrant[] }
 
 export function localDay(ms: number): string {
   const date = new Date(ms)
@@ -63,15 +66,37 @@ function asString(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
 
+function readWinners(data: Record<string, unknown>): Entrant[] {
+  const raw = data.winners
+  const listed: Entrant[] = []
+  if (Array.isArray(raw)) {
+    for (const entry of raw) {
+      if (!entry || typeof entry !== 'object') continue
+      const row = entry as Record<string, unknown>
+      const id = asString(row.id).trim()
+      if (!id) continue
+      listed.push({ id, name: asString(row.name).trim() || 'Cliente' })
+    }
+  }
+  const winnerId = asString(data.winnerId).trim()
+  if (winnerId && !listed.some((person) => person.id === winnerId)) {
+    listed.push({ id: winnerId, name: asString(data.winnerName).trim() || 'Cliente' })
+  }
+  return listed
+}
+
 export function readRaffle(data: Record<string, unknown> | undefined): Raffle {
   if (!data) return EMPTY_RAFFLE
+  const winners = readWinners(data)
+  const latest = winners[winners.length - 1]
   return {
     title: asString(data.title),
     active: data.active === true,
     day: asString(data.day),
-    winnerId: asString(data.winnerId),
-    winnerName: asString(data.winnerName),
+    winnerId: asString(data.winnerId) || latest?.id || '',
+    winnerName: asString(data.winnerName) || latest?.name || '',
     drawnAtMs: typeof data.drawnAtMs === 'number' ? data.drawnAtMs : 0,
+    winners,
   }
 }
 
@@ -86,6 +111,12 @@ export function eligibleCustomers(orders: Order[], day: string): Entrant[] {
   return [...names.entries()]
     .map(([id, name]) => ({ id, name }))
     .sort((a, b) => a.id.localeCompare(b.id))
+}
+
+/** Eligible customers who have not already won today. */
+export function remainingCustomers(orders: Order[], day: string, winners: Entrant[]): Entrant[] {
+  const taken = new Set(winners.map((person) => person.id))
+  return eligibleCustomers(orders, day).filter((person) => !taken.has(person.id))
 }
 
 export function customerBought(orders: Order[], customerId: string, day: string): boolean {
@@ -143,6 +174,7 @@ export async function activateRaffle(current: Raffle, title: string, now = Date.
       winnerId: sameDay ? current.winnerId : '',
       winnerName: sameDay ? current.winnerName : '',
       drawnAtMs: sameDay ? current.drawnAtMs : 0,
+      winners: sameDay ? current.winners : [],
     },
     { merge: true },
   )
@@ -154,19 +186,40 @@ export async function drawRaffle(
   random: () => number = Math.random,
   now = Date.now(),
 ): Promise<DrawOutcome> {
-  if (raffle.winnerId) return { kind: 'kept', winnerId: raffle.winnerId, winnerName: raffle.winnerName }
-  const people = eligibleCustomers(orders, raffle.day)
-  if (people.length === 0) return { kind: 'empty' }
-  const index = Math.min(people.length - 1, Math.floor(random() * people.length))
+  const people = remainingCustomers(orders, raffle.day, raffle.winners)
+  if (people.length === 0) {
+    return { kind: 'empty' }
+  }
+  const roll = random()
+  const index = Math.min(people.length - 1, Math.max(0, Math.floor(roll * people.length)))
   const winner = people[index]
+  const winners = [...raffle.winners, winner]
   await setDoc(
     doc(db, 'settings', 'raffle'),
-    { winnerId: winner.id, winnerName: winner.name, drawnAtMs: now },
+    {
+      winnerId: winner.id,
+      winnerName: winner.name,
+      drawnAtMs: now,
+      winners,
+    },
     { merge: true },
   )
-  return { kind: 'drawn', winnerId: winner.id, winnerName: winner.name }
+  return { kind: 'drawn', winnerId: winner.id, winnerName: winner.name, winners }
 }
 
 export async function dismissRaffle(customerId: string, day: string): Promise<void> {
   await setDoc(doc(db, 'raffleDismissals', `${customerId}_${day}`), { customerId, day })
+}
+
+/** Apaga o sorteio do dia e volta ao zero, como se nenhum tivesse sido feito. */
+export async function clearRaffle(): Promise<void> {
+  await setDoc(doc(db, 'settings', 'raffle'), {
+    title: '',
+    active: false,
+    day: '',
+    winnerId: '',
+    winnerName: '',
+    drawnAtMs: 0,
+    winners: [],
+  })
 }

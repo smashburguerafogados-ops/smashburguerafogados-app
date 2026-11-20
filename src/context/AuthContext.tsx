@@ -41,12 +41,28 @@ export type DeliveryInput = {
   address: Address
 }
 
+export type ContactInput = {
+  nome: string
+  whatsapp: string
+}
+
+const EMPTY_ADDRESS: Address = {
+  cep: '',
+  street: '',
+  number: '',
+  neighborhood: '',
+  city: '',
+  state: '',
+  reference: '',
+}
+
 type AuthContextValue = {
   session: Session
   login: (whatsapp: string, password: string) => Promise<void>
   loginWithEmail: (email: string, password: string) => Promise<void>
   register: (input: RegisterInput) => Promise<void>
   saveDelivery: (input: DeliveryInput) => Promise<UserProfile>
+  saveContact: (input: ContactInput) => Promise<UserProfile>
   logout: () => Promise<void>
 }
 
@@ -256,6 +272,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             await setDoc(doc(db, 'users', profile.uid), {
               ...profile,
+              createdAt: serverTimestamp(),
+            })
+          } catch (error) {
+            await deleteUser(credential.user).catch(() => undefined)
+            throw error
+          }
+          saveCustomerId(profile.uid)
+          setSession({ status: 'ready', profile })
+          return profile
+        } catch (error) {
+          if (error instanceof Error && error.message.startsWith('Informe')) throw error
+          throw new Error(mapAuthError(error))
+        } finally {
+          suspendListener.current = false
+        }
+      },
+      async saveContact(input) {
+        const nome = input.nome.trim().replace(/\s+/g, ' ')
+        const whatsapp = normalizeWhatsapp(input.whatsapp)
+        if (!nome) throw new Error('Informe seu nome.')
+        if (!whatsapp) throw new Error('Informe o telefone.')
+
+        if (session.status === 'ready' && session.profile.role === 'customer') {
+          const profile: UserProfile = { ...session.profile, nome, whatsapp }
+          await updateDoc(doc(db, 'users', profile.uid), {
+            nome: profile.nome,
+            whatsapp: profile.whatsapp,
+          })
+          setSession({ status: 'ready', profile })
+          return profile
+        }
+
+        const email = whatsappToEmail(whatsapp)
+        if (!email) throw new Error('Informe o telefone.')
+        suspendListener.current = true
+        try {
+          const credential = await createUserWithEmailAndPassword(auth, email, freshCustomerPassword())
+          const profile: UserProfile = {
+            uid: credential.user.uid,
+            nome,
+            whatsapp,
+            address: null,
+            role: 'customer',
+          }
+          try {
+            await setDoc(doc(db, 'users', profile.uid), {
+              ...profile,
+              address: EMPTY_ADDRESS,
               createdAt: serverTimestamp(),
             })
           } catch (error) {

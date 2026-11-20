@@ -16,6 +16,12 @@ import { recordRevenue } from './revenue'
 
 export type OrderStatus = 'novo' | 'andamento' | 'enviado' | 'recusado' | 'cancelado' | 'finalizado'
 export type OrderColumn = 'novos' | 'andamento' | 'finalizados'
+export type Fulfillment = 'entrega' | 'retirada'
+
+export const FULFILLMENT_LABEL: Record<Fulfillment, string> = {
+  entrega: 'Entrega',
+  retirada: 'Retirada',
+}
 
 export type OrderItem = {
   productId: string
@@ -39,6 +45,7 @@ export type Order = {
   customerName: string
   customerWhatsapp: string
   address: Address | null
+  fulfillment: Fulfillment
   items: OrderItem[]
   totalCents: number
   payment: OrderPayment
@@ -66,6 +73,7 @@ export const COLUMN_LABEL: Record<OrderColumn, string> = {
 
 const STATUSES: OrderStatus[] = ['novo', 'andamento', 'enviado', 'recusado', 'cancelado', 'finalizado']
 const METHODS: PaymentMethod[] = ['pix', 'cartao', 'dinheiro']
+const FULFILLMENTS: Fulfillment[] = ['entrega', 'retirada']
 
 export function columnOf(status: OrderStatus): OrderColumn {
   if (status === 'novo') return 'novos'
@@ -117,6 +125,7 @@ export function buildOrder(
   lines: CartLine[],
   checkout: CheckoutState,
   totalCents: number,
+  fulfillment: Fulfillment = 'entrega',
   now = Date.now(),
 ): NewOrder {
   if (!checkout.method) throw new Error('Escolha a forma de pagamento.')
@@ -126,7 +135,8 @@ export function buildOrder(
     customerId: profile.uid,
     customerName: profile.nome,
     customerWhatsapp: profile.whatsapp,
-    address: profile.address,
+    address: fulfillment === 'retirada' ? null : profile.address,
+    fulfillment,
     items: lines.map((line) => ({
       productId: line.productId,
       name: line.name,
@@ -189,12 +199,14 @@ export function parseOrder(id: string, data: unknown): Order | null {
           note: asString(item.note),
         }))
     : []
+  const fulfillment = FULFILLMENTS.find((value) => value === raw.fulfillment) ?? 'entrega'
   return {
     id,
     customerId: raw.customerId,
     customerName: asString(raw.customerName),
     customerWhatsapp: asString(raw.customerWhatsapp),
-    address: parseAddress(raw.address),
+    address: fulfillment === 'retirada' ? null : parseAddress(raw.address),
+    fulfillment,
     items,
     totalCents: asNumber(raw.totalCents),
     payment: {
