@@ -67,6 +67,17 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
   finalizado: 'Finalizado',
 }
 
+const PICKUP_STATUS: Partial<Record<OrderStatus, string>> = {
+  andamento: 'Aceito, em preparo',
+  enviado: 'Pronto para retirada',
+}
+
+/** Customer-facing status. Pickup ready is not "out for delivery". */
+export function customerStatus(order: Pick<Order, 'status' | 'fulfillment'>): string {
+  if (order.fulfillment === 'retirada') return PICKUP_STATUS[order.status] ?? STATUS_LABEL[order.status]
+  return STATUS_LABEL[order.status]
+}
+
 export const COLUMN_LABEL: Record<OrderColumn, string> = {
   novos: 'Novos',
   andamento: 'Em Andamento',

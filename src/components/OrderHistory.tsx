@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useOrders } from '../context/OrdersContext'
 import { PAYMENT_LABELS } from '../lib/checkout'
 import { formatPrice } from '../lib/money'
-import { STATUS_LABEL, finalizeOrder, isAccepted, shortId, type Order } from '../lib/orders'
+import { customerStatus, finalizeOrder, isAccepted, shortId, type Order } from '../lib/orders'
 
 function formatWhen(ms: number): string {
   if (!ms) return ''
@@ -31,7 +31,7 @@ function HistoryCard({ order }: { order: Order }) {
     <li className={classes.join(' ')} data-status={order.status} aria-label={`Pedido #${shortId(order.id)}`}>
       <div className="history__head">
         <strong>#{shortId(order.id)}</strong>
-        <span className="history__status">{STATUS_LABEL[order.status]}</span>
+        <span className="history__status">{customerStatus(order)}</span>
       </div>
       <p className="history__when">{formatWhen(order.createdAtMs)}</p>
       <ul className="history__items">
@@ -42,7 +42,9 @@ function HistoryCard({ order }: { order: Order }) {
           </li>
         ))}
       </ul>
-      <p className="history__fee">Taxa de entrega: {formatPrice(order.deliveryFeeCents)}</p>
+      {order.fulfillment === 'entrega' && (
+        <p className="history__fee">Taxa de entrega: {formatPrice(order.deliveryFeeCents)}</p>
+      )}
       <p className="history__total">
         {PAYMENT_LABELS[order.payment.method]} · <strong>{formatPrice(order.totalCents)}</strong>
       </p>

@@ -3,7 +3,7 @@ import { formatWhatsapp } from '../lib/identity'
 import { formatPrice } from '../lib/money'
 import {
   FULFILLMENT_LABEL,
-  STATUS_LABEL,
+  customerStatus,
   finalizeOrder,
   setOrderStatus,
   shortId,
@@ -72,7 +72,7 @@ export function OrderDialog({ order, onClose }: OrderDialogProps) {
 
   return (
     <Overlay label={`Pedido #${shortId(order.id)}`} onClose={onClose} variant="popup">
-      <p className="eyebrow">{STATUS_LABEL[order.status]}</p>
+      <p className="eyebrow">{customerStatus(order)}</p>
       <h2>Pedido #{shortId(order.id)}</h2>
       <dl className="details order-details">
         <div>
@@ -117,10 +117,12 @@ export function OrderDialog({ order, onClose }: OrderDialogProps) {
             </ul>
           </dd>
         </div>
-        <div>
-          <dt>Taxa de entrega</dt>
-          <dd>{formatPrice(order.deliveryFeeCents)}</dd>
-        </div>
+        {order.fulfillment === 'entrega' && (
+          <div>
+            <dt>Taxa de entrega</dt>
+            <dd>{formatPrice(order.deliveryFeeCents)}</dd>
+          </div>
+        )}
         <div>
           <dt>Total</dt>
           <dd className="order-total">{formatPrice(order.totalCents)}</dd>
