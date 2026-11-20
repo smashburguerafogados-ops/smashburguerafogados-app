@@ -15,6 +15,16 @@ export const listeners: Listener[] = []
 
 export const authState: { user: { uid: string } | null } = { user: null }
 
+type AuthListener = (user: { uid: string } | null) => void
+
+export const authListeners = new Set<AuthListener>()
+
+/** Mirrors Firebase: the signed-in user stays available to the next page load. */
+export function emitAuth(user: { uid: string } | null): void {
+  authState.user = user
+  for (const listener of authListeners) listener(user)
+}
+
 export const firebaseMocks = {
   signInWithEmailAndPassword: vi.fn<AnyFn>(async () => {
     throw Object.assign(new Error('auth/invalid-credential'), { code: 'auth/invalid-credential' })
@@ -76,6 +86,7 @@ export function emitDoc(path: string, data: Record<string, unknown> | null): num
 
 export function resetFirebaseMocks(): void {
   listeners.length = 0
+  authListeners.clear()
   authState.user = null
   firebaseMocks.getDocs.mockReset()
   firebaseMocks.getDocs.mockResolvedValue({ empty: true, docs: [] })

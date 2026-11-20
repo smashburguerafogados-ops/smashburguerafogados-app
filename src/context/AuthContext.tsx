@@ -89,20 +89,45 @@ function authCode(error: unknown): string {
   return typeof code === 'string' ? code : ''
 }
 
-/** The recovery login wins: it only exists because the first one could not be opened. */
+/** Lets a failed attempt's sign-out land before we decide the session stuck. */
+function flushAuth(): Promise<void> {
+  return new Promise((resolve) => {
+    queueMicrotask(() => {
+      setTimeout(resolve, 0)
+    })
+  })
+}
+
+/**
+ * The recovery login wins: it only exists because the first one could not be opened.
+ * A failed attempt can clear the browser session after a later success, so the
+ * login that worked is written again when that happens.
+ */
 async function signInCustomer(whatsapp: string): Promise<User | null> {
   const key = customerAccessKey(whatsapp)
   if (!key) return null
-  for (const email of [whatsappToRecoveryEmail(whatsapp), whatsappToEmail(whatsapp)]) {
-    if (!email) continue
+  await authReady.catch(() => undefined)
+  const emails = [whatsappToRecoveryEmail(whatsapp), whatsappToEmail(whatsapp)].filter(
+    (email): email is string => Boolean(email),
+  )
+  let chosen: { email: string; user: User } | null = null
+  for (const email of emails) {
     try {
       const credential = await signInWithEmailAndPassword(auth, email, key)
-      if (credential?.user) return credential.user
+      if (credential?.user) {
+        chosen = { email, user: credential.user }
+        break
+      }
     } catch (error) {
       if (!NOT_THIS_LOGIN.has(authCode(error))) throw error
     }
   }
-  return null
+  if (!chosen) return null
+  await flushAuth()
+  if (auth.currentUser?.uid === chosen.user.uid) return auth.currentUser
+  const again = await signInWithEmailAndPassword(auth, chosen.email, key)
+  await flushAuth()
+  return again.user ?? chosen.user
 }
 
 /**
@@ -160,11 +185,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let unsubscribe = () => {}
 
     authReady
+      .catch(() => undefined)
+      .then(() => (typeof auth.authStateReady === 'function' ? auth.authStateReady() : Promise.resolve()))
+      .catch(() => undefined)
       .then(() => {
         if (!active) return
         unsubscribe = onAuthStateChanged(auth, (user) => {
           if (suspendListener.current) return
           if (!user) {
+            if (auth.currentUser) return
             generation.current += 1
             clearSavedCustomerId()
             setSession({ status: 'signedOut' })
