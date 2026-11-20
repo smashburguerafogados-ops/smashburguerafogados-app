@@ -794,15 +794,16 @@ html[data-theme='sao-joao'] .menu__content {
 }
 
 .product {
-  display: flex;
-  gap: 12px;
+  display: grid;
+  justify-items: start;
+  gap: 8px;
   margin-bottom: 14px;
 }
 
 .product__zoom {
   flex: none;
-  width: 96px;
-  height: 96px;
+  width: 72px;
+  height: 72px;
   padding: 0;
   border: 0;
   border-radius: 14px;
@@ -861,9 +862,39 @@ html[data-theme='sao-joao'] .menu__content {
 }
 
 .product__price {
-  margin-top: 8px;
+  margin: 0;
   color: var(--gold);
   font-weight: 700;
+}
+
+.product__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.product__item {
+  color: #f4f5f6;
+  font-style: italic;
+  font-weight: 300;
+  line-height: 1.35;
+}
+
+.product__buy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 12px;
+}
+
+.product__total {
+  margin: 0;
+  color: var(--gold);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .extras {

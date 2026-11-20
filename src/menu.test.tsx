@@ -4,6 +4,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { MenuScreen } from './components/MenuScreen'
+import { descriptionItems } from './components/ProductDialog'
 import { Griddle } from './components/Griddle'
 import { customerProfile, emitSeedCatalog, signInAs } from './test/render'
 import { emit } from './test/mocks'
@@ -182,6 +183,51 @@ it('opens the detail popup and blocks a sold-out item', async () => {
   expect(screen.getByRole('navigation', { name: 'Atalhos' }).querySelector('.dock__count')).toHaveTextContent('0')
 })
 
+it('keeps each stored description line as a light italic item', async () => {
+  const stored = '1 X-Bacon: pão brioche, carne 100g, bacon, queijo cheddar, tomate, alface e molho\r\n1 batata P: 190g\n1 Coca lata'
+  expect(descriptionItems(stored)).toEqual([
+    '1 X-Bacon: pão brioche, carne 100g, bacon, queijo cheddar, tomate, alface e molho',
+    '1 batata P: 190g',
+    '1 Coca lata',
+  ])
+  expect(descriptionItems('Pão brioche, blend 80g, queijo cheddar e molho da casa.')).toEqual([
+    'Pão brioche, blend 80g, queijo cheddar e molho da casa.',
+  ])
+
+  const user = userEvent.setup()
+  render(
+    <AuthProvider>
+      <MemoryRouter>
+        <MenuScreen />
+      </MemoryRouter>
+    </AuthProvider>,
+  )
+  await act(async () => {
+    emit('categories', [{ id: 'lanches', name: 'Lanches', order: 1, destaque: false }])
+    emit('products', [
+      {
+        id: 'combo',
+        categoryId: 'lanches',
+        name: 'Combo da casa',
+        description: stored,
+        price: 30,
+        available: true,
+        image: '',
+      },
+    ])
+  })
+  await user.click(screen.getByRole('button', { name: /Combo da casa/ }))
+  const detail = screen.getByRole('dialog', { name: 'Combo da casa' })
+  const lines = within(detail).getAllByRole('listitem')
+  expect(lines.map((line) => line.textContent)).toEqual(descriptionItems(stored))
+  for (const line of lines) {
+    expect(line).toHaveClass('product__item')
+    const style = getComputedStyle(line)
+    expect(style.fontStyle).toBe('italic')
+    expect(Number(style.fontWeight)).toBeLessThanOrEqual(300)
+  }
+})
+
 it('enlarges the product photo and returns to the popup without blocking add', async () => {
   const user = userEvent.setup()
   renderMenu()
@@ -189,12 +235,12 @@ it('enlarges the product photo and returns to the popup without blocking add', a
   await user.click(screen.getByRole('button', { name: /Smash da casa/ }))
   const detail = screen.getByRole('dialog', { name: 'Smash da casa' })
   const thumb = within(detail).getByRole('button', { name: 'Ampliar foto de Smash da casa' })
-  expect(parseFloat(getComputedStyle(thumb).width)).toBe(96)
+  expect(parseFloat(getComputedStyle(thumb).width)).toBe(72)
 
   await user.click(thumb)
   const zoom = screen.getByRole('dialog', { name: 'Foto de Smash da casa' })
   const big = within(zoom).getByRole('button', { name: 'Foto ampliada' })
-  expect(parseFloat(getComputedStyle(big).width)).toBeGreaterThan(96)
+  expect(parseFloat(getComputedStyle(big).width)).toBeGreaterThan(72)
   expect(within(detail).getByRole('button', { name: 'Adicionar' })).toBeEnabled()
 
   await user.click(within(zoom).getByRole('button', { name: 'Fechar foto' }))
@@ -215,7 +261,7 @@ it('updates the product price live with quantity and add-ons', async () => {
 
   await user.click(screen.getByRole('button', { name: /Smash da casa/ }))
   const detail = screen.getByRole('dialog', { name: 'Smash da casa' })
-  const price = () => within(detail).getByText(/^R\$ /)
+  const price = () => detail.querySelector('.product__total') as HTMLElement
 
   expect(price()).toHaveTextContent('R$ 28,00')
   await user.click(within(detail).getByRole('button', { name: 'Aumentar' }))
