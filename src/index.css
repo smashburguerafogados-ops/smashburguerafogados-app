@@ -5,10 +5,10 @@
   --text: #f4f5f6;
   --muted: #b4b3b8;
   --line: rgba(255, 255, 255, 0.12);
-  --orange: #e7672c;
-  --orange-hot: #ff7d45;
+  --orange: #e3b15a;
+  --orange-hot: #f4f5f6;
   --gold: #e3b15a;
-  --danger: #ffb1a1;
+  --danger: #e3b15a;
   --font-body: 'Manrope', 'Segoe UI', sans-serif;
   --font-display: 'Unbounded', 'Manrope', sans-serif;
   color-scheme: dark;
@@ -32,13 +32,12 @@ body {
   background: #0b0b0a;
 }
 
-/* Looked-up festival colors. The page is a soft dark gradient of those colors. Text, borders, and icons keep the same palette.
+/* Festival scenes only. Falling icons and the page wash keep these colors.
+   Buttons, borders, text, alerts, and status stay black, gold, and white.
    Natal: red, green, gold. Ano Novo: black, gold, silver.
    Carnaval: gold, green, pink, blue, yellow (Mangueira green and pink; frevo yellow, green, and blue).
    Páscoa: yellow, green, lilac. São João: red, yellow, green, blue, orange. */
 html[data-theme='natal'] {
-  --gold: #d4af37;
-  --orange: #c8102e;
   --theme-green: #146c43;
   --theme-wash: rgba(7, 21, 37, 0.55);
   --theme-glow: rgba(212, 175, 55, 0.4);
@@ -46,16 +45,12 @@ html[data-theme='natal'] {
 }
 
 html[data-theme='ano-novo'] {
-  --gold: #f2c14e;
-  --orange: #e6e6e6;
   --theme-wash: rgba(7, 6, 10, 0.5);
   --theme-glow: rgba(242, 193, 78, 0.45);
   --theme-scene: fireworks-night;
 }
 
 html[data-theme='carnaval'] {
-  --gold: #e6b325;
-  --orange: #ff4f9a;
   --theme-green: #009c3b;
   --theme-blue: #2f6fed;
   --theme-yellow: #ffe14d;
@@ -66,8 +61,6 @@ html[data-theme='carnaval'] {
 }
 
 html[data-theme='pascoa'] {
-  --gold: #f6d86b;
-  --orange: #7dcea0;
   --theme-lilac: #c9a0dc;
   --theme-wash: rgba(28, 36, 48, 0.4);
   --theme-glow: rgba(246, 216, 107, 0.4);
@@ -75,8 +68,6 @@ html[data-theme='pascoa'] {
 }
 
 html[data-theme='sao-joao'] {
-  --gold: #ffcc00;
-  --orange: #f15a22;
   --theme-green: #009c3b;
   --theme-blue: #1d4ed8;
   --theme-red: #e23b3b;
@@ -448,8 +439,8 @@ form {
 }
 
 .alert {
-  background: rgba(255, 90, 60, 0.1);
-  border: 1px solid rgba(255, 141, 122, 0.55);
+  background: rgba(227, 177, 90, 0.12);
+  border: 1px solid rgba(227, 177, 90, 0.55);
   color: var(--danger);
   padding: 10px 12px;
   font-size: 0.92rem;
@@ -582,7 +573,7 @@ form {
   position: absolute;
   width: 340px;
   height: 220px;
-  background: radial-gradient(circle, rgba(231, 103, 44, 0.28), rgba(227, 177, 90, 0.04) 58%, transparent 72%);
+  background: radial-gradient(circle, rgba(227, 177, 90, 0.28), rgba(227, 177, 90, 0.04) 58%, transparent 72%);
   filter: blur(10px);
   opacity: 0.55;
   animation: ember 1.8s ease-in-out infinite;
@@ -675,7 +666,7 @@ form {
   display: block;
   height: 100%;
   width: 40%;
-  background: linear-gradient(90deg, var(--gold), var(--orange));
+  background: linear-gradient(90deg, var(--gold), #f4f5f6);
   animation: scan 1.15s ease-in-out infinite;
 }
 

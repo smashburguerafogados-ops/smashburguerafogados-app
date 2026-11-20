@@ -6,7 +6,7 @@ import { adminProfile, customerProfile, makeOrder, renderApp, signInAs } from '.
 import './index.css'
 import './menu.css'
 
-const BLUE = 'rgb(23, 64, 139)'
+const GOLD = 'rgb(227, 177, 90)'
 
 async function openHistory(orders = [
   makeOrder({ id: 'pedido-00001', status: 'novo', createdAtMs: 4 }),
@@ -31,7 +31,7 @@ function card(id: string): HTMLElement {
 }
 
 describe('orders icon on the dock', () => {
-  it('blinks blue while an order is accepted or out for delivery and stops once finished', async () => {
+  it('blinks gold while an order is accepted or out for delivery and stops once finished', async () => {
     signInAs(customerProfile)
     renderApp()
     await waitFor(() => expect(activeListeners('orders')).toHaveLength(1))
@@ -47,7 +47,7 @@ describe('orders icon on the dock', () => {
     })
     expect(button()).toHaveClass('dock__item--live')
     const icon = getComputedStyle(button().querySelector('svg') as SVGElement)
-    expect(icon.color).toBe('rgb(59, 156, 255)')
+    expect(icon.color).toBe(GOLD)
     expect(icon.animationName).toBe('order-live')
 
     await act(async () => {
@@ -72,18 +72,19 @@ describe('customer order history', () => {
     expect(ids).toEqual(['#00001', '#00002', '#00003', '#00004'])
   })
 
-  it('turns the card blue once the admin accepts the order', async () => {
+  it('marks an accepted order with a gold border and drops it when the order is finished', async () => {
     await openHistory()
-    expect(getComputedStyle(card('00002')).backgroundColor).toBe(BLUE)
+    expect(getComputedStyle(card('00002')).backgroundColor).toBe('rgb(0, 0, 0)')
+    expect(getComputedStyle(card('00002')).borderTopColor).toBe(GOLD)
     expect(card('00002')).toHaveTextContent('Aceito, em preparo')
-    expect(getComputedStyle(card('00004')).backgroundColor).toBe(BLUE)
-    expect(getComputedStyle(card('00001')).backgroundColor).not.toBe(BLUE)
-    expect(getComputedStyle(card('00003')).backgroundColor).not.toBe(BLUE)
+    expect(getComputedStyle(card('00004')).borderTopColor).toBe(GOLD)
+    expect(getComputedStyle(card('00001')).borderTopColor).not.toBe(GOLD)
+    expect(getComputedStyle(card('00003')).borderTopColor).not.toBe(GOLD)
 
     await act(async () => {
       emit('orders', [makeOrder({ id: 'pedido-00001', status: 'andamento' })])
     })
-    expect(getComputedStyle(card('00001')).backgroundColor).toBe(BLUE)
+    expect(getComputedStyle(card('00001')).borderTopColor).toBe(GOLD)
   })
 
   it('says a pickup is ready for pickup and hides the delivery fee', async () => {

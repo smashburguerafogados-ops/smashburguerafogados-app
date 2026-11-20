@@ -118,7 +118,7 @@ it('shows customers the confirmed theme and hides the picker', async () => {
   expect(natalIcons.size).toBeGreaterThan(4)
   const natalBg = getComputedStyle(document.querySelector('[data-theme-bg="natal"]')!)
   expectSoftGradient(natalBg, ['200, 16, 46', '20, 108, 67', '212, 175, 55'])
-  expect(getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()).toBe('#d4af37')
+  expect(getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()).toBe('#e3b15a')
   expect(getComputedStyle(document.documentElement).getPropertyValue('--theme-scene').trim()).toBe('snow-night')
   const search = screen.getByRole('searchbox', { name: 'Buscar' })
   expect(getComputedStyle(search).borderTopColor).toBe('rgba(255, 255, 255, 0.2)')
@@ -145,10 +145,12 @@ it('shows customers the confirmed theme and hides the picker', async () => {
   expect(document.querySelector('[data-theme-mask] img')).toBeInTheDocument()
   expect(document.querySelector('[data-theme-flag] img')).toBeInTheDocument()
   const carnaval = getComputedStyle(document.documentElement)
-  const carnivalColors = ['--gold', '--orange', '--theme-green', '--theme-blue', '--theme-yellow', '--theme-pink'].map((name) =>
+  expect(carnaval.getPropertyValue('--gold').trim().toLowerCase()).toBe('#e3b15a')
+  expect(carnaval.getPropertyValue('--orange').trim().toLowerCase()).toBe('#e3b15a')
+  const carnivalColors = ['--theme-green', '--theme-blue', '--theme-yellow', '--theme-pink'].map((name) =>
     carnaval.getPropertyValue(name).trim().toLowerCase(),
   )
-  expect(carnivalColors).toEqual(['#e6b325', '#ff4f9a', '#009c3b', '#2f6fed', '#ffe14d', '#ff4f9a'])
+  expect(carnivalColors).toEqual(['#009c3b', '#2f6fed', '#ffe14d', '#ff4f9a'])
   expect(carnivalColors.join(' ')).not.toMatch(/c46bff|7c3aed|purple/)
   expect(carnaval.getPropertyValue('--theme-wash')).not.toMatch(/72,\s*8,\s*96|196,\s*107,\s*255/)
   expect(carnaval.getPropertyValue('--theme-scene').trim()).toBe('carnival-pattern')

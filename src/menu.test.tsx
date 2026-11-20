@@ -226,7 +226,7 @@ it('adds a note and updates the cart count and total', async () => {
   expect(dock.querySelector('.dock__item.is-active')).not.toBeNull()
 })
 
-it('confirms an added item with a green border and lets the customer stay on the menu', async () => {
+it('confirms an added item with a gold border and lets the customer stay on the menu', async () => {
   vi.useFakeTimers()
   renderMenu()
 
@@ -237,7 +237,7 @@ it('confirms an added item with a green border and lets the customer stay on the
   expect(within(added).getByRole('status')).toHaveTextContent('Adicionado: Smash da casa')
   expect(added.closest('[role="dialog"]')).toBeNull()
   const style = getComputedStyle(added)
-  expect(style.borderTopColor).toBe('rgb(34, 227, 107)')
+  expect(style.borderTopColor).toBe('rgb(227, 177, 90)')
   expect(style.borderTopWidth).toBe('2px')
   expect(style.top).toBe('auto')
   expect(style.bottom).toBe('96px')
