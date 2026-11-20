@@ -9,7 +9,7 @@ import {
   checkoutProblem,
   type CheckoutState,
 } from './lib/checkout'
-import { joinPhone, phoneRest } from './lib/delivery'
+import { joinPhone, phoneRest, splitPhone } from './lib/delivery'
 import { firebaseMocks } from './test/mocks'
 import { customerProfile, renderApp, signInAs } from './test/render'
 import './index.css'
@@ -24,7 +24,13 @@ describe('telefone 87 9', () => {
     expect(joinPhone('88887777')).toBe('5587988887777')
     expect(joinPhone('8888-7777')).toBe('5587988887777')
     expect(joinPhone('8888777')).toBeNull()
+    expect(joinPhone('88887777', '81')).toBe('5581988887777')
+    expect(joinPhone('88887777', '8')).toBeNull()
     expect(phoneRest('5587988887777')).toBe('88887777')
+    expect(phoneRest('5581911112222')).toBe('')
+    expect(splitPhone('5587988887777')).toEqual({ ddd: '87', rest: '88887777' })
+    expect(splitPhone('5581911112222')).toEqual({ ddd: '81', rest: '11112222' })
+    expect(splitPhone('')).toEqual({ ddd: '87', rest: '' })
   })
 })
 
