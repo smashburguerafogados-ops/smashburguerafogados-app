@@ -7,25 +7,45 @@ afterEach(() => {
   cleanup()
 })
 
-vi.mock('../lib/firebase', () => ({
-  auth: {},
-  db: {},
-  authReady: Promise.resolve(),
-}))
+vi.mock('../lib/firebase', async () => {
+  const { authState } = await import('./mocks')
+  return {
+    auth: {
+      get currentUser() {
+        return authState.user
+      },
+    },
+    db: {},
+    authReady: Promise.resolve(),
+  }
+})
 
 vi.mock('firebase/auth', async () => {
-  const { firebaseMocks: mocks, authState } = await import('./mocks')
+  const { firebaseMocks: mocks, authListeners, authState, emitAuth } = await import('./mocks')
   return {
     getAuth: vi.fn(),
     setPersistence: vi.fn(async () => undefined),
     browserLocalPersistence: {},
     onAuthStateChanged: (_auth: unknown, callback: (user: { uid: string } | null) => void) => {
+      authListeners.add(callback)
       callback(authState.user)
-      return () => {}
+      return () => authListeners.delete(callback)
     },
-    signInWithEmailAndPassword: (...args: unknown[]) => mocks.signInWithEmailAndPassword(...args),
-    createUserWithEmailAndPassword: (...args: unknown[]) => mocks.createUserWithEmailAndPassword(...args),
-    signOut: (...args: unknown[]) => mocks.signOut(...args),
+    signInWithEmailAndPassword: async (...args: unknown[]) => {
+      const result = (await mocks.signInWithEmailAndPassword(...args)) as { user?: { uid: string } | null } | undefined
+      if (result?.user) emitAuth(result.user)
+      return result
+    },
+    createUserWithEmailAndPassword: async (...args: unknown[]) => {
+      const result = (await mocks.createUserWithEmailAndPassword(...args)) as { user?: { uid: string } | null } | undefined
+      if (result?.user) emitAuth(result.user)
+      return result
+    },
+    signOut: async (...args: unknown[]) => {
+      const result = await mocks.signOut(...args)
+      emitAuth(null)
+      return result
+    },
     deleteUser: vi.fn(),
   }
 })

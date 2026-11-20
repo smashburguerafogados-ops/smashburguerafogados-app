@@ -2,11 +2,13 @@ import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { AUTH_EMAIL_DOMAIN, customerAccessKey } from './lib/identity'
-import { activeListeners, emitDoc, firebaseMocks } from './test/mocks'
+import { activeListeners, authState, emitDoc, firebaseMocks } from './test/mocks'
 import { customerProfile, renderApp, signInAs } from './test/render'
 import type { UserProfile } from './types'
 
 const NUMBER = '5587988887777'
+const PRIMARY = `${NUMBER}@${AUTH_EMAIL_DOMAIN}`
+const RECOVERY = `${NUMBER}.r@${AUTH_EMAIL_DOMAIN}`
 const saved: UserProfile = {
   uid: 'cliente-antigo',
   role: 'customer',
@@ -129,6 +131,96 @@ describe('phone before the order', () => {
     expect(screen.queryByRole('dialog', { name: 'Dados para entrega' })).not.toBeInTheDocument()
     expect(firebaseMocks.signInWithEmailAndPassword).toHaveBeenCalledTimes(lookups)
     expect(firebaseMocks.addDoc).toHaveBeenCalledTimes(2)
+  })
+
+  it('persists a successful phone lookup so the next visit does not ask again', async () => {
+    firebaseMocks.signInWithEmailAndPassword.mockImplementation(async (...args: unknown[]) => {
+      const [, email, key] = args as [unknown, string, string]
+      if (email === RECOVERY) {
+        setTimeout(() => {
+          authState.user = null
+        }, 0)
+        throw authError('auth/invalid-credential')
+      }
+      if (email === PRIMARY && key === customerAccessKey(NUMBER)) return { user: { uid: saved.uid } }
+      throw authError('auth/invalid-credential')
+    })
+    firebaseMocks.getDoc.mockImplementation(async (...args: unknown[]) => {
+      const [ref] = args as [{ path: string }]
+      const data = ref.path === `users/${saved.uid}` ? saved : undefined
+      return { exists: () => Boolean(data), data: () => data }
+    })
+    const user = userEvent.setup()
+    const first = renderApp()
+    const cart = await openCheckout(user)
+    await user.click(within(cart).getByRole('button', { name: 'Fazer Pedido' }))
+    await user.type(
+      within(screen.getByRole('dialog', { name: 'Dados para entrega' })).getByRole('textbox', { name: 'Telefone' }),
+      '88887777',
+    )
+
+    expect(await screen.findByText('Pedido enviado')).toBeInTheDocument()
+    expect(firebaseMocks.signOut).not.toHaveBeenCalled()
+    await waitFor(() => expect(authState.user?.uid).toBe(saved.uid))
+    expect(localStorage.getItem('smash.customerId')).toBe(saved.uid)
+    const lookups = firebaseMocks.signInWithEmailAndPassword.mock.calls.length
+
+    first.unmount()
+    renderApp()
+    expect(await screen.findByRole('heading', { name: 'Jameson' })).toBeInTheDocument()
+    const again = await openCheckout(user, 'Retirada')
+    await user.click(within(again).getByRole('button', { name: 'Fazer Pedido' }))
+
+    expect(await screen.findByText('Pedido enviado')).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Telefone' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Dados para entrega' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Dados para retirada' })).not.toBeInTheDocument()
+    expect(firebaseMocks.signInWithEmailAndPassword).toHaveBeenCalledTimes(lookups)
+    expect(firebaseMocks.signOut).not.toHaveBeenCalled()
+    const [, pickedUp] = firebaseMocks.addDoc.mock.calls[1] as [unknown, Record<string, unknown>]
+    expect(pickedUp).toMatchObject({ customerId: saved.uid, fulfillment: 'retirada', customerName: 'Jameson' })
+  })
+
+  it('persists the recovery login the same way', async () => {
+    const recovered = { ...saved, uid: 'cliente-recuperado' }
+    firebaseMocks.signInWithEmailAndPassword.mockImplementation(async (...args: unknown[]) => {
+      const [, email, key] = args as [unknown, string, string]
+      if (email === PRIMARY) {
+        setTimeout(() => {
+          authState.user = null
+        }, 0)
+        throw authError('auth/invalid-credential')
+      }
+      if (email === RECOVERY && key === customerAccessKey(NUMBER)) return { user: { uid: recovered.uid } }
+      throw authError('auth/invalid-credential')
+    })
+    firebaseMocks.getDoc.mockImplementation(async (...args: unknown[]) => {
+      const [ref] = args as [{ path: string }]
+      const data = ref.path === `users/${recovered.uid}` ? recovered : undefined
+      return { exists: () => Boolean(data), data: () => data }
+    })
+    const user = userEvent.setup()
+    const first = renderApp()
+    const cart = await openCheckout(user, 'Retirada')
+    await user.click(within(cart).getByRole('button', { name: 'Fazer Pedido' }))
+    await user.type(
+      within(screen.getByRole('dialog', { name: 'Dados para retirada' })).getByRole('textbox', { name: 'Telefone' }),
+      '88887777',
+    )
+
+    expect(await screen.findByText('Pedido enviado')).toBeInTheDocument()
+    await waitFor(() => expect(authState.user?.uid).toBe(recovered.uid))
+    expect(firebaseMocks.signOut).not.toHaveBeenCalled()
+    const lookups = firebaseMocks.signInWithEmailAndPassword.mock.calls.length
+
+    first.unmount()
+    renderApp()
+    expect(await screen.findByRole('heading', { name: 'Jameson' })).toBeInTheDocument()
+    const again = await openCheckout(user)
+    await user.click(within(again).getByRole('button', { name: 'Fazer Pedido' }))
+    expect(await screen.findByText('Pedido enviado')).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Telefone' })).not.toBeInTheDocument()
+    expect(firebaseMocks.signInWithEmailAndPassword).toHaveBeenCalledTimes(lookups)
   })
 
   it('lets a signed-in customer order again without the phone, and pickup stays free', async () => {
