@@ -2,6 +2,10 @@ import type { Category, Product } from '../data/catalog'
 
 const CATEGORY_KEY = 'smash.category'
 
+/** All-products view. Not a Firestore category. */
+export const HOME_CATEGORY = ''
+export const HOME_LABEL = 'Início'
+
 export type CartLine = {
   key: string
   productId: string

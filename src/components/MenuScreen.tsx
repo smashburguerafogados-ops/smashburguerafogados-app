@@ -10,6 +10,7 @@ import {
   cartCount,
   cartTotal,
   filterProducts,
+  HOME_LABEL,
   readSavedCategory,
   removeCartLine,
   saveCategory,
@@ -242,6 +243,14 @@ export function MenuScreen() {
       {catalog && (
       <>
       <div className="chips" role="toolbar" aria-label="Categorias">
+        <button
+          type="button"
+          className={activeCategory ? 'chip' : 'chip is-active'}
+          aria-pressed={!activeCategory}
+          onClick={() => chooseCategory('')}
+        >
+          {HOME_LABEL}
+        </button>
         {categories.map((category) => {
           const classes = ['chip']
           if (category.destaque) classes.push('chip--destaque')

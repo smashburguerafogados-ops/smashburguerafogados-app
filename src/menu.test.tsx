@@ -61,8 +61,15 @@ it('shows only the first name in the header once the customer has one', async ()
   expect(screen.getByRole('button', { name: 'Smash Burger' })).toBeInTheDocument()
 })
 
-it('shows every category by default and has no Geral chip', () => {
+it('opens on Início and lists products from every category', () => {
   renderMenu()
+  const chips = within(screen.getByRole('toolbar', { name: 'Categorias' })).getAllByRole('button')
+  expect(chips.map((chip) => chip.textContent)).toEqual(['Início', 'Smash', 'Acompanhamentos', 'Bebidas'])
+  const home = chips[0]
+  expect(home).toHaveAttribute('aria-pressed', 'true')
+  expect(home).toHaveClass('is-active')
+  expect(home).not.toHaveClass('chip--destaque')
+  expect(home.querySelector('.chip__sun')).toBeNull()
   expect(screen.getByRole('button', { name: /Smash da casa/ })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Batata rústica/ })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Refrigerante lata/ })).toBeInTheDocument()
@@ -83,7 +90,9 @@ it('filters by category, remembers it, and returns to all when tapped again', as
   await user.click(screen.getByRole('button', { name: 'Bebidas' }))
 
   expect(sessionStorage.getItem('smash.category')).toBeNull()
+  expect(screen.getByRole('button', { name: 'Início' })).toHaveAttribute('aria-pressed', 'true')
   expect(screen.getByRole('button', { name: /Smash da casa/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Refrigerante lata/ })).toBeInTheDocument()
 })
 
 it('restores the last category from the session', () => {
@@ -92,6 +101,52 @@ it('restores the last category from the session', () => {
   expect(screen.getByRole('button', { name: /Batata rústica/ })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Smash da casa/ })).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Acompanhamentos' })).toHaveAttribute('aria-pressed', 'true')
+})
+
+it('searches every product on Início and only the chosen category after that', async () => {
+  const user = userEvent.setup()
+  renderMenu()
+  const search = screen.getByRole('searchbox', { name: 'Buscar' })
+
+  await user.type(search, 'batata')
+  expect(screen.getByRole('button', { name: /Batata rústica/ })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Smash da casa/ })).not.toBeInTheDocument()
+
+  await user.clear(search)
+  await user.click(screen.getByRole('button', { name: 'Bebidas' }))
+  await user.type(search, 'batata')
+  expect(screen.queryByRole('button', { name: /Batata rústica/ })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Refrigerante lata/ })).not.toBeInTheDocument()
+
+  await user.clear(search)
+  await user.type(search, 'lata')
+  expect(screen.getByRole('button', { name: /Refrigerante lata/ })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Smash da casa/ })).not.toBeInTheDocument()
+})
+
+it('keeps a product without a category on Início only', async () => {
+  render(
+    <AuthProvider>
+      <MemoryRouter>
+        <MenuScreen />
+      </MemoryRouter>
+    </AuthProvider>,
+  )
+  await act(async () => {
+    emit('categories', [{ id: 'lanches', name: 'Lanches', order: 1, destaque: false }])
+    emit('products', [
+      { id: 'solto', name: 'Molho extra', price: 3, available: true, image: '' },
+      { id: 'x', categoryId: 'lanches', name: 'X-Burger', price: 20, available: true, image: '' },
+    ])
+  })
+  expect(screen.getByRole('button', { name: 'Início' })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByRole('button', { name: /Molho extra/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /X-Burger/ })).toBeInTheDocument()
+
+  const user = userEvent.setup()
+  await user.click(screen.getByRole('button', { name: 'Lanches' }))
+  expect(screen.queryByRole('button', { name: /Molho extra/ })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /X-Burger/ })).toBeInTheDocument()
 })
 
 it('searches by name across the cardápio', async () => {
@@ -335,6 +390,7 @@ it('hides the sample cardápio until Firestore answers, then follows edits', asy
     </AuthProvider>,
   )
   expect(screen.getByText('Carregando o cardápio.')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Início' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Acompanhamentos' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Bebidas' })).not.toBeInTheDocument()
   expect(screen.queryByText('Smash da casa')).not.toBeInTheDocument()
@@ -344,6 +400,9 @@ it('hides the sample cardápio until Firestore answers, then follows edits', asy
     emit('products', [{ id: 'batata', categoryId: 'petisco', name: 'Batata', description: '', price: 10, available: true, image: '' }])
   })
   expect(screen.queryByText('Carregando o cardápio.')).not.toBeInTheDocument()
+  const chips = within(screen.getByRole('toolbar', { name: 'Categorias' })).getAllByRole('button')
+  expect(chips[0]).toHaveTextContent('Início')
+  expect(chips[0]).not.toHaveClass('chip--destaque')
   expect(screen.getByRole('button', { name: 'Petisco' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Batata/ })).toHaveTextContent('R$ 10,00')
 
