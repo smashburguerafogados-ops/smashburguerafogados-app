@@ -118,6 +118,10 @@ export function OrderDialog({ order, onClose }: OrderDialogProps) {
           </dd>
         </div>
         <div>
+          <dt>Taxa de entrega</dt>
+          <dd>{formatPrice(order.deliveryFeeCents)}</dd>
+        </div>
+        <div>
           <dt>Total</dt>
           <dd className="order-total">{formatPrice(order.totalCents)}</dd>
         </div>

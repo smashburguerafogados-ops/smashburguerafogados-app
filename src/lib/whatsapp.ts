@@ -140,6 +140,7 @@ export function acceptedMessage(order: Order): string {
   return [
     `${SYMBOLS.check} ${greeting(order.customerName)} Seu pedido #${shortId(order.id)} na ${BUSINESS_NAME} foi aceito.`,
     `${SYMBOLS.fire} Já estamos preparando.`,
+    `${SYMBOLS.scooter} Taxa de entrega: ${formatPrice(order.deliveryFeeCents)}`,
     `${SYMBOLS.money} Total: ${formatPrice(order.totalCents)}`,
     `${SYMBOLS.pray} Obrigado pela preferência!`,
   ].join('\n')
@@ -167,6 +168,7 @@ export function sentMessage(order: Order): string {
     lines.push(`${SYMBOLS.camera} Foto: ${photoLink(item)}`)
   }
   lines.push(
+    `${SYMBOLS.scooter} Taxa de entrega: ${formatPrice(order.deliveryFeeCents)}`,
     `${SYMBOLS.money} Total: ${formatPrice(order.totalCents)}`,
     `${SYMBOLS.cash} Pagamento: ${paymentLine(order)}`,
     `${SYMBOLS.pin} ${pickup ? 'Retirada' : 'Endereço'}: ${formatAddress(order)}`,

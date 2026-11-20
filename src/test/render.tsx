@@ -97,6 +97,7 @@ export function makeOrder(overrides: Partial<Order> = {}): FakeDoc {
         note: 'sem cebola',
       },
     ],
+    deliveryFeeCents: 0,
     totalCents: 5600,
     payment: { method: 'dinheiro', needsChange: true, cashCents: 10000, changeCents: 4400 },
     status: 'novo',

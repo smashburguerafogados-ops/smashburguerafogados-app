@@ -25,7 +25,12 @@ export function ShopScreen({ onClose }: { onClose: () => void }) {
 }
 
 function ShopControls(): ReactNode {
-  const [shop, setShop] = useState<ShopSettings>({ online: true, message: DEFAULT_CLOSED_MESSAGE, hours: '' })
+  const [shop, setShop] = useState<ShopSettings>({
+    online: true,
+    message: DEFAULT_CLOSED_MESSAGE,
+    hours: '',
+    deliveryFeeCents: 0,
+  })
   const [draft, setDraft] = useState(DEFAULT_CLOSED_MESSAGE)
   const [hoursDraft, setHoursDraft] = useState('')
   const [error, setError] = useState('')
@@ -47,7 +52,7 @@ function ShopControls(): ReactNode {
 
   async function toggle() {
     setError('')
-    const next = { online: !shop.online, message: draft, hours: hoursDraft }
+    const next = { ...shop, online: !shop.online, message: draft, hours: hoursDraft }
     setShop(next)
     try {
       await saveShop(next)
@@ -58,7 +63,7 @@ function ShopControls(): ReactNode {
 
   async function saveMessage() {
     setError('')
-    const next = { online: shop.online, message: draft, hours: hoursDraft }
+    const next = { ...shop, message: draft, hours: hoursDraft }
     dirty.current = false
     setShop(next)
     try {
@@ -70,7 +75,7 @@ function ShopControls(): ReactNode {
 
   async function saveHours() {
     setError('')
-    const next = { online: shop.online, message: draft, hours: hoursDraft }
+    const next = { ...shop, message: draft, hours: hoursDraft }
     hoursDirty.current = false
     setShop(next)
     try {

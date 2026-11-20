@@ -42,6 +42,7 @@ function HistoryCard({ order }: { order: Order }) {
           </li>
         ))}
       </ul>
+      <p className="history__fee">Taxa de entrega: {formatPrice(order.deliveryFeeCents)}</p>
       <p className="history__total">
         {PAYMENT_LABELS[order.payment.method]} · <strong>{formatPrice(order.totalCents)}</strong>
       </p>

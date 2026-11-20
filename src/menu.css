@@ -1009,11 +1009,27 @@ html[data-theme='sao-joao'] .menu__content {
   }
 }
 
+.cart__summary {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.cart__summary p {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+}
+
 .cart__total {
   display: flex;
   justify-content: space-between;
   margin-top: 14px;
   font-size: 1.05rem;
+}
+
+.cart__summary .cart__total {
+  margin-top: 4px;
 }
 
 .auth--sheet {
@@ -1383,6 +1399,10 @@ html .chips .chip.chip--destaque {
   padding-left: 18px;
 }
 
+.history__fee {
+  margin: 8px 0 0;
+}
+
 .history__total {
   margin: 8px 0 0;
 }
@@ -1447,6 +1467,18 @@ html .chips .chip.chip--destaque {
 .admin .menu__burger {
   background: #000;
   border-color: #3a3a3a;
+}
+
+.product-screen .money-join__prefix {
+  color: #e3b15a;
+  border-color: #3a3a3a;
+  background: #000;
+}
+
+.product-screen .btn--ghost {
+  color: #fff;
+  border-color: #e3b15a;
+  background: #000;
 }
 
 .product-screen {

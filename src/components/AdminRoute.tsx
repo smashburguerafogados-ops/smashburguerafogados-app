@@ -12,9 +12,12 @@ import { ProductDesk } from './ProductDesk'
 import { ProductForm } from './ProductForm'
 import { RevenueScreen } from './RevenueScreen'
 import { ThemeScreen } from './ThemeScreen'
+import { ManagementScreen } from './ManagementScreen'
 import { RaffleScreen } from './RaffleScreen'
 import { ShopScreen } from './ShopControls'
 import { SideMenu } from './SideMenu'
+
+type AdminScreen = 'create' | 'desk' | 'shop' | 'manage' | 'revenue' | 'themes' | 'contact' | 'broadcast' | 'raffle' | null
 
 function MenuIcon() {
   return (
@@ -93,14 +96,11 @@ function useCustomers(enabled: boolean) {
 export function AdminRoute() {
   const { session, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [creating, setCreating] = useState(false)
-  const [desk, setDesk] = useState(false)
-  const [shop, setShop] = useState(false)
-  const [revenueOpen, setRevenueOpen] = useState(false)
-  const [themesOpen, setThemesOpen] = useState(false)
-  const [contactOpen, setContactOpen] = useState(false)
-  const [broadcastOpen, setBroadcastOpen] = useState(false)
-  const [raffleOpen, setRaffleOpen] = useState(false)
+  const [screenName, setScreenName] = useState<AdminScreen>(null)
+  function openScreen(next: AdminScreen) {
+    setMenuOpen(false)
+    setScreenName(next)
+  }
   const adminReady = session.status === 'ready' && session.profile.role === 'admin'
   const revenue = useRevenue(adminReady)
   const contacts = useCustomers(adminReady)
@@ -160,110 +160,32 @@ export function AdminRoute() {
         <SideMenu
           onClose={() => setMenuOpen(false)}
           onPanel={() => setMenuOpen(false)}
-          onShop={() => {
-            setMenuOpen(false)
-            setCreating(false)
-            setDesk(false)
-            setRevenueOpen(false)
-            setThemesOpen(false)
-            setContactOpen(false)
-            setBroadcastOpen(false)
-            setRaffleOpen(false)
-            setShop(true)
-          }}
-          onProducts={() => {
-            setMenuOpen(false)
-            setCreating(false)
-            setShop(false)
-            setRevenueOpen(false)
-            setThemesOpen(false)
-            setContactOpen(false)
-            setBroadcastOpen(false)
-            setRaffleOpen(false)
-            setDesk(true)
-          }}
-          onRevenue={() => {
-            setMenuOpen(false)
-            setCreating(false)
-            setDesk(false)
-            setShop(false)
-            setThemesOpen(false)
-            setContactOpen(false)
-            setBroadcastOpen(false)
-            setRaffleOpen(false)
-            setRevenueOpen(true)
-          }}
-          onThemes={() => {
-            setMenuOpen(false)
-            setCreating(false)
-            setDesk(false)
-            setShop(false)
-            setRevenueOpen(false)
-            setContactOpen(false)
-            setBroadcastOpen(false)
-            setRaffleOpen(false)
-            setThemesOpen(true)
-          }}
-          onContact={() => {
-            setMenuOpen(false)
-            setCreating(false)
-            setDesk(false)
-            setShop(false)
-            setRevenueOpen(false)
-            setThemesOpen(false)
-            setBroadcastOpen(false)
-            setRaffleOpen(false)
-            setContactOpen(true)
-          }}
-          onWhatsapp={() => {
-            setMenuOpen(false)
-            setCreating(false)
-            setDesk(false)
-            setShop(false)
-            setRevenueOpen(false)
-            setThemesOpen(false)
-            setContactOpen(false)
-            setRaffleOpen(false)
-            setBroadcastOpen(true)
-          }}
-          onRaffle={() => {
-            setMenuOpen(false)
-            setCreating(false)
-            setDesk(false)
-            setShop(false)
-            setRevenueOpen(false)
-            setThemesOpen(false)
-            setContactOpen(false)
-            setBroadcastOpen(false)
-            setRaffleOpen(true)
-          }}
-          onCreateProduct={() => {
-            setMenuOpen(false)
-            setDesk(false)
-            setShop(false)
-            setRevenueOpen(false)
-            setThemesOpen(false)
-            setContactOpen(false)
-            setBroadcastOpen(false)
-            setRaffleOpen(false)
-            setCreating(true)
-          }}
+          onShop={() => openScreen('shop')}
+          onManage={() => openScreen('manage')}
+          onProducts={() => openScreen('desk')}
+          onRevenue={() => openScreen('revenue')}
+          onThemes={() => openScreen('themes')}
+          onContact={() => openScreen('contact')}
+          onWhatsapp={() => openScreen('broadcast')}
+          onRaffle={() => openScreen('raffle')}
+          onCreateProduct={() => openScreen('create')}
         />
       )}
-      {creating && <ProductForm onClose={() => setCreating(false)} onSaved={() => undefined} />}
-      {desk && <ProductDesk onClose={() => setDesk(false)} />}
-      {shop && <ShopScreen onClose={() => setShop(false)} />}
-      {revenueOpen && (
-        <RevenueScreen entries={revenue.entries} status={revenue.status} onClose={() => setRevenueOpen(false)} />
+      {screenName === 'create' && <ProductForm onClose={() => setScreenName(null)} onSaved={() => undefined} />}
+      {screenName === 'desk' && <ProductDesk onClose={() => setScreenName(null)} />}
+      {screenName === 'shop' && <ShopScreen onClose={() => setScreenName(null)} />}
+      {screenName === 'manage' && <ManagementScreen onClose={() => setScreenName(null)} />}
+      {screenName === 'revenue' && (
+        <RevenueScreen entries={revenue.entries} status={revenue.status} onClose={() => setScreenName(null)} />
       )}
-      {themesOpen && <ThemeScreen applied={theme} onClose={() => setThemesOpen(false)} />}
-      {contactOpen && (
-        <ContactScreen people={contacts.people} status={contacts.status} onClose={() => setContactOpen(false)} />
+      {screenName === 'themes' && <ThemeScreen applied={theme} onClose={() => setScreenName(null)} />}
+      {screenName === 'contact' && (
+        <ContactScreen people={contacts.people} status={contacts.status} onClose={() => setScreenName(null)} />
       )}
-      {broadcastOpen && (
-        <BroadcastScreen people={contacts.people} status={contacts.status} onClose={() => setBroadcastOpen(false)} />
+      {screenName === 'broadcast' && (
+        <BroadcastScreen people={contacts.people} status={contacts.status} onClose={() => setScreenName(null)} />
       )}
-      {raffleOpen && <RaffleScreen onClose={() => setRaffleOpen(false)} />}
+      {screenName === 'raffle' && <RaffleScreen onClose={() => setScreenName(null)} />}
     </AdminFrame>
   )
 }

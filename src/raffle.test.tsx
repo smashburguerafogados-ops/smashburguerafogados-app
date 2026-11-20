@@ -29,6 +29,7 @@ function order(patch: Partial<Order> & Pick<Order, 'id' | 'status' | 'customerId
     address: null,
     fulfillment: 'entrega',
     items: [],
+    deliveryFeeCents: 0,
     totalCents: 2800,
     payment: { method: 'pix', needsChange: false, cashCents: null, changeCents: null },
     reason: '',

@@ -15,7 +15,8 @@ import {
 import { formatPrice, maskWholeReais } from '../lib/money'
 import { cartCount, cartTotal, type CartLine } from '../lib/menu'
 import { contactReady, deliveryReady } from '../lib/delivery'
-import { buildOrder, placeOrder, shortId, type Fulfillment, FULFILLMENT_LABEL } from '../lib/orders'
+import { buildOrder, deliveryCharge, placeOrder, shortId, type Fulfillment, FULFILLMENT_LABEL } from '../lib/orders'
+import { useShop } from '../lib/shop'
 import { DeliveryForm } from './DeliveryForm'
 import { PickupForm } from './PickupForm'
 import { Overlay } from './Overlay'
@@ -50,6 +51,7 @@ type CartSheetProps = {
 
 export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps) {
   const { session } = useAuth()
+  const shop = useShop()
   const raffle = useRaffle()
   const raffleToday = raffle.active && raffle.day === localDay(Date.now())
   const [checkout, setCheckout] = useState<CheckoutState>(emptyCheckout)
@@ -60,7 +62,9 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
   const [needsDelivery, setNeedsDelivery] = useState(false)
   const [needsPickup, setNeedsPickup] = useState(false)
 
-  const total = cartTotal(lines)
+  const itemsTotal = cartTotal(lines)
+  const fee = deliveryCharge(fulfillment, shop.deliveryFeeCents)
+  const total = itemsTotal + fee
   const count = cartCount(lines)
   const problem = checkoutProblem(checkout, total, count)
   const ready = canPlaceOrder(checkout, total, count)
@@ -79,7 +83,9 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
     setBusy(true)
     setError('')
     try {
-      const id = await placeOrder(buildOrder(profile, lines, checkout, total, fulfillment))
+      const id = await placeOrder(
+        buildOrder(profile, lines, checkout, itemsTotal, fulfillment, shop.deliveryFeeCents),
+      )
       setPlacedId(id)
       setCheckout(emptyCheckout)
       onPlaced()
@@ -152,9 +158,11 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
           ))}
         </ul>
       )}
-      <p className="cart__total">
-        Total <strong data-testid="cart-total">{formatPrice(total)}</strong>
-      </p>
+      {lines.length === 0 && (
+        <p className="cart__total">
+          Total <strong data-testid="cart-total">{formatPrice(0)}</strong>
+        </p>
+      )}
 
       {lines.length > 0 && (
         <>
@@ -263,6 +271,17 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
             </p>
           )}
           {problem && change === null && <p className="muted pay__hint">{problem}</p>}
+          <div className="cart__summary" role="group" aria-label="Resumo do pedido">
+            <p>
+              Subtotal <strong>{formatPrice(itemsTotal)}</strong>
+            </p>
+            <p>
+              Taxa de entrega <strong>{formatPrice(fee)}</strong>
+            </p>
+            <p className="cart__total">
+              Total <strong data-testid="cart-total">{formatPrice(total)}</strong>
+            </p>
+          </div>
           <button type="button" className="btn" disabled={!ready || busy} onClick={() => void submit()}>
             {busy ? 'Enviando...' : 'Fazer Pedido'}
           </button>
