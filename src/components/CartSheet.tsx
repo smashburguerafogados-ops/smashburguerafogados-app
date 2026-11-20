@@ -91,6 +91,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
       onPlaced()
     } catch {
       setError('Não foi possível enviar o pedido. Tente de novo.')
+      throw new Error('Não foi possível enviar o pedido. Tente de novo.')
     } finally {
       setBusy(false)
     }
@@ -99,12 +100,16 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
   async function submit() {
     if (!ready || busy) return
     if (session.status === 'ready' && session.profile.role === 'customer') {
-      if (fulfillment === 'retirada' && contactReady(session.profile)) {
-        await send(session.profile)
-        return
-      }
-      if (fulfillment === 'entrega' && deliveryReady(session.profile)) {
-        await send(session.profile)
+      try {
+        if (fulfillment === 'retirada' && contactReady(session.profile)) {
+          await send(session.profile)
+          return
+        }
+        if (fulfillment === 'entrega' && deliveryReady(session.profile)) {
+          await send(session.profile)
+          return
+        }
+      } catch {
         return
       }
     }
@@ -292,8 +297,9 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
           profile={
             session.status === 'ready' && session.profile.role === 'customer' ? session.profile : EMPTY_CUSTOMER
           }
+          ordering
           onClose={() => setNeedsDelivery(false)}
-          onSaved={(profile) => void send(profile)}
+          onSaved={(profile) => send(profile)}
         />
       )}
       {needsPickup && (
@@ -301,8 +307,9 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
           profile={
             session.status === 'ready' && session.profile.role === 'customer' ? session.profile : EMPTY_CUSTOMER
           }
+          ordering
           onClose={() => setNeedsPickup(false)}
-          onSaved={(profile) => void send(profile)}
+          onSaved={(profile) => send(profile)}
         />
       )}
     </Overlay>
