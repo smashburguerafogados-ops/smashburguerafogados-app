@@ -16,7 +16,9 @@ export const listeners: Listener[] = []
 export const authState: { user: { uid: string } | null } = { user: null }
 
 export const firebaseMocks = {
-  signInWithEmailAndPassword: vi.fn<AnyFn>(),
+  signInWithEmailAndPassword: vi.fn<AnyFn>(async () => {
+    throw Object.assign(new Error('auth/invalid-credential'), { code: 'auth/invalid-credential' })
+  }),
   createUserWithEmailAndPassword: vi.fn<AnyFn>(async () => ({ user: { uid: 'cliente-novo' } })),
   signOut: vi.fn<AnyFn>(async () => undefined),
   getDoc: vi.fn<AnyFn>(async () => ({ exists: () => false, data: () => undefined })),
@@ -80,6 +82,9 @@ export function resetFirebaseMocks(): void {
   firebaseMocks.getDoc.mockReset()
   firebaseMocks.getDoc.mockResolvedValue({ exists: () => false, data: () => undefined })
   firebaseMocks.signInWithEmailAndPassword.mockReset()
+  firebaseMocks.signInWithEmailAndPassword.mockRejectedValue(
+    Object.assign(new Error('auth/invalid-credential'), { code: 'auth/invalid-credential' }),
+  )
   firebaseMocks.createUserWithEmailAndPassword.mockReset()
   firebaseMocks.createUserWithEmailAndPassword.mockResolvedValue({ user: { uid: 'cliente-novo' } })
   firebaseMocks.signOut.mockClear()

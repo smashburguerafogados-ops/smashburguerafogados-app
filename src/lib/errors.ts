@@ -9,6 +9,16 @@ function isFirebaseError(error: unknown): error is FirebaseError {
   )
 }
 
+/** Delivery and pickup forms have no password field, so never ask for one there. */
+export function mapCustomerError(error: unknown): string {
+  if (isFirebaseError(error) && error.code === 'auth/email-already-in-use') {
+    return 'Não foi possível abrir seu cadastro. Fale com o atendimento pelo WhatsApp.'
+  }
+  const message = mapAuthError(error)
+  if (message === 'WhatsApp ou senha incorretos.') return 'Não foi possível abrir seu cadastro. Tente de novo.'
+  return message
+}
+
 export function mapAuthError(error: unknown): string {
   if (!isFirebaseError(error)) {
     return 'Não foi possível concluir. Tente de novo.'
