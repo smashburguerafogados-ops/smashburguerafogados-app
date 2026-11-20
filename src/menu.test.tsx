@@ -235,12 +235,15 @@ it('enlarges the product photo and returns to the popup without blocking add', a
   await user.click(screen.getByRole('button', { name: /Smash da casa/ }))
   const detail = screen.getByRole('dialog', { name: 'Smash da casa' })
   const thumb = within(detail).getByRole('button', { name: 'Ampliar foto de Smash da casa' })
-  expect(parseFloat(getComputedStyle(thumb).width)).toBe(72)
+  expect(thumb.closest('.product')?.firstElementChild).toBe(thumb)
+  expect(getComputedStyle(thumb).width).toContain('100%')
+  expect(getComputedStyle(thumb).maxHeight).toContain('320px')
 
   await user.click(thumb)
   const zoom = screen.getByRole('dialog', { name: 'Foto de Smash da casa' })
   const big = within(zoom).getByRole('button', { name: 'Foto ampliada' })
-  expect(parseFloat(getComputedStyle(big).width)).toBeGreaterThan(72)
+  expect(getComputedStyle(big).width).not.toContain('100% + 32px')
+  expect(zoom).toHaveTextContent('Toque para fechar')
   expect(within(detail).getByRole('button', { name: 'Adicionar' })).toBeEnabled()
 
   await user.click(within(zoom).getByRole('button', { name: 'Fechar foto' }))
@@ -316,15 +319,15 @@ it('adds a note and updates the cart count and total', async () => {
   const dock = screen.getByRole('navigation', { name: 'Atalhos' })
   expect(dock.querySelector('.dock__count')).toHaveTextContent('1')
   expect(dock.querySelector('.dock__sum')).toHaveTextContent('R$ 28,00')
-  expect(dock.querySelector('.dock__label')).toBeNull()
+  expect(dock.querySelector('.dock__count')).not.toHaveClass('is-zero')
+  expect(screen.getByRole('button', { name: 'Abrir carrinho, 1 item' })).toHaveTextContent('1')
 
   await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
   const cart = screen.getByRole('dialog', { name: 'Carrinho' })
   expect(cart).toHaveTextContent('sem cebola')
   expect(cart).toHaveTextContent('Smash da casa')
   expect(cart).toHaveTextContent('R$ 28,00')
-  expect(dock.querySelector('.dock__label')).toBeNull()
-  expect(dock.querySelector('.dock__item.is-active')).not.toBeNull()
+  expect(dock.querySelector('.dock__item.is-active .dock__sum')).toHaveTextContent('R$ 28,00')
 })
 
 it('confirms an added item with a gold border and lets the customer stay on the menu', async () => {
@@ -506,7 +509,7 @@ it('keeps the griddle behind a readable bar', () => {
   expect(getComputedStyle(name).color).toBe('rgb(244, 245, 246)')
 })
 
-it('uses a floating gold pill for the active shortcut and icons otherwise', async () => {
+it('uses a floating pill with small labels and marks the active shortcut in gold', async () => {
   const user = userEvent.setup()
   renderMenu()
 
@@ -519,8 +522,11 @@ it('uses a floating gold pill for the active shortcut and icons otherwise', asyn
   expect(style.borderRadius).toBe('999px')
   expect(style.backgroundColor).toBe('rgb(20, 20, 22)')
 
+  const labels = Array.from(dock.querySelectorAll('.dock__label')).map((label) => label.textContent)
+  expect(labels).toEqual(['Histórico', 'WhatsApp', 'R$ 0,00', 'Conta'])
+  expect(dock.querySelector('.dock__count')).toHaveClass('is-zero')
+
   const whatsapp = screen.getByRole('button', { name: 'WhatsApp' })
-  expect(whatsapp.querySelector('.dock__label')).toBeNull()
   const mark = whatsapp.querySelector('svg')
   expect(mark).toHaveAttribute('data-icon', 'whatsapp')
   expect(mark?.querySelector('path')).toHaveAttribute('fill', 'currentColor')
@@ -529,13 +535,9 @@ it('uses a floating gold pill for the active shortcut and icons otherwise', asyn
   await user.click(screen.getByRole('button', { name: 'Conta' }))
   const active = dock.querySelector('.dock__item.is-active') as HTMLElement
   expect(active).toHaveAttribute('aria-label', 'Conta')
-  expect(active.querySelector('.dock__label')).toBeNull()
-  expect(active.textContent?.trim()).toBe('')
-  expect(getComputedStyle(active).backgroundColor).toBe('rgb(227, 177, 90)')
-  expect(dock.querySelectorAll('.dock__label')).toHaveLength(0)
-  for (const button of dock.querySelectorAll('.dock__item')) {
-    expect(button.querySelector('.dock__label')).toBeNull()
-  }
+  expect(getComputedStyle(active).color).toBe('rgb(227, 177, 90)')
+  expect(getComputedStyle(active).backgroundColor).toBe('rgba(227, 177, 90, 0.14)')
+  expect(getComputedStyle(active.querySelector('.dock__label') as HTMLElement).color).toBe('rgb(227, 177, 90)')
 })
 
 it('hides the hamburger and shows history with short dividers on the customer bar', () => {
@@ -582,4 +584,21 @@ it('hides the hamburger and shows history with short dividers on the customer ba
     expect(height).toBe(18)
     expect(height).toBeLessThan(itemHeight)
   }
+})
+
+it('lists products vertically with photo, name, price, a short description and an add mark', () => {
+  renderMenu()
+  const items = Array.from(document.querySelectorAll('.items .item')) as HTMLElement[]
+  expect(items.length).toBeGreaterThan(1)
+  expect(getComputedStyle(document.querySelector('.items') as HTMLElement).display).toBe('grid')
+  for (const item of items) {
+    expect(item.firstElementChild?.tagName).toBe('IMG')
+    expect(item.querySelector('.item__copy .item__name')).not.toBeNull()
+    expect(item.querySelector('.item__copy .item__price')).not.toBeNull()
+  }
+  const described = items.find((item) => item.querySelector('.item__desc')) as HTMLElement
+  expect(described).toBeDefined()
+  expect(getComputedStyle(described.querySelector('.item__desc') as HTMLElement).overflow).toBe('hidden')
+  const add = items.find((item) => !item.classList.contains('item--sold'))?.querySelector('.item__add')
+  expect(add).toHaveAttribute('aria-hidden', 'true')
 })

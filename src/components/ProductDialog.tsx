@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Product } from '../data/catalog'
 import { formatPrice, toCents } from '../lib/money'
+import { BackIcon, HandIcon } from './Marks'
 import { CloseButton, Overlay } from './Overlay'
 
 type ProductDialogProps = {
@@ -45,7 +46,7 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
   }, [zoom])
 
   return (
-    <Overlay label={product.name} onClose={onClose} variant="popup">
+    <Overlay label={product.name} onClose={onClose} variant="popup" back>
       <div className="product">
         <button type="button" className="product__zoom" aria-label={`Ampliar foto de ${product.name}`} onClick={() => setZoom(true)}>
           <img src={product.image} alt="" />
@@ -74,9 +75,8 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
                 onChange={() => toggle(extra.id)}
                 disabled={!product.available}
               />
-              <span>
-                {extra.name} · {formatPrice(toCents(extra.price))}
-              </span>
+              <span className="extras__name">{extra.name}</span>
+              <span className="extras__price">+ {formatPrice(toCents(extra.price))}</span>
             </label>
           ))}
         </fieldset>
@@ -106,18 +106,37 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
       </div>
       <button
         type="button"
-        className="btn"
+        className="btn product__add"
         disabled={!product.available}
         onClick={() => onAdd(note, extras, qty)}
       >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M5 7h15l-1.4 8.2a2 2 0 0 1-2 1.6H9.2a2 2 0 0 1-2-1.6L5.6 4.8H3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle cx="9" cy="19.2" r="1.3" fill="currentColor" />
+          <circle cx="16.5" cy="19.2" r="1.3" fill="currentColor" />
+        </svg>
         Adicionar
       </button>
       {zoom && (
         <div className="photo-zoom" role="dialog" aria-modal="true" aria-label={`Foto de ${product.name}`}>
+          <button type="button" className="mark-btn photo-zoom__back" aria-label="Voltar" onClick={() => setZoom(false)}>
+            <BackIcon />
+          </button>
           <CloseButton className="photo-zoom__close" label="Fechar foto" onClick={() => setZoom(false)} />
           <button type="button" className="photo-zoom__photo" aria-label="Foto ampliada" onClick={() => setZoom(false)}>
             <img src={product.image} alt="" />
           </button>
+          <p className="photo-zoom__hint" aria-hidden="true">
+            <HandIcon />
+            Toque para fechar
+          </p>
         </div>
       )}
     </Overlay>

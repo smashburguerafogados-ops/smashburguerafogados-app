@@ -29,7 +29,7 @@ import { BottomBar } from './BottomBar'
 import { CartSheet } from './CartSheet'
 import { OrderHistory } from './OrderHistory'
 import { Overlay } from './Overlay'
-import { ProductDialog } from './ProductDialog'
+import { ProductDialog, descriptionItems } from './ProductDialog'
 import { DeliveryForm } from './DeliveryForm'
 import type { UserProfile } from '../types'
 
@@ -174,7 +174,7 @@ export function MenuScreen() {
 
   const adminKeepsMenu = session.status === 'ready' && session.profile.role === 'admin'
   if (shop.ready && !shop.online && !adminKeepsMenu) {
-    return <ClosedScreen message={shop.message} />
+    return <ClosedScreen message={shop.message} hours={shop.hours} />
   }
 
   function toggle(next: Sheet) {
@@ -215,6 +215,26 @@ export function MenuScreen() {
           <p className="eyebrow">Smash Burger</p>
           {firstName ? <h1 className="menu__title">{firstName}</h1> : null}
         </div>
+        <button
+          type="button"
+          className="menu__cart"
+          aria-label={`Abrir carrinho, ${count} ${count === 1 ? 'item' : 'itens'}`}
+          onClick={() => toggle('cart')}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M5 7h15l-1.4 8.2a2 2 0 0 1-2 1.6H9.2a2 2 0 0 1-2-1.6L5.6 4.8H3"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle cx="9" cy="19.2" r="1.3" fill="currentColor" />
+            <circle cx="16.5" cy="19.2" r="1.3" fill="currentColor" />
+          </svg>
+          {count > 0 && <span className="menu__cart-count">{count}</span>}
+        </button>
       </header>
 
       {shop.hours ? (
@@ -225,9 +245,13 @@ export function MenuScreen() {
 
       <label className="field menu__search">
         <span className="sr-only">Buscar</span>
+        <svg className="menu__search-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M16 16l4.2 4.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
         <input
           type="search"
-          placeholder="Buscar"
+          placeholder="Buscar no cardápio…"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
@@ -284,9 +308,19 @@ export function MenuScreen() {
                 <img src={item.image} alt="" />
                 <span className="item__copy">
                   <span className="item__name">{item.name}</span>
+                  <span className="item__price">{formatPrice(toCents(item.price))}</span>
+                  {item.description.trim() && (
+                    <span className="item__desc">{descriptionItems(item.description).join(', ')}</span>
+                  )}
                   {!item.available && <span className="item__tag">Esgotado</span>}
                 </span>
-                <span className="item__price">{formatPrice(toCents(item.price))}</span>
+                {item.available && (
+                  <span className="mark-btn item__add" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M12 6v12M6 12h12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                )}
               </button>
             </li>
           ))}
@@ -333,7 +367,7 @@ export function MenuScreen() {
       )}
       {sheet === 'whatsapp' && <AttendancePrompt onClose={() => setSheet(null)} />}
       {sheet === 'orders' && (
-        <Overlay label="Meus pedidos" onClose={() => setSheet(null)}>
+        <Overlay label="Meus pedidos" onClose={() => setSheet(null)} back>
           <h2>Meus pedidos</h2>
           <OrderHistory />
         </Overlay>

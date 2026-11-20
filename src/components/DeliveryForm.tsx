@@ -2,8 +2,9 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { lookupCep } from '../lib/cep'
 import { PHONE_PREFIX, PHONE_REST_LENGTH, deliveryReady, joinPhone, phoneRest } from '../lib/delivery'
-import { digitsOnly, maskCep } from '../lib/identity'
+import { digitsOnly, formatWhatsapp, maskCep } from '../lib/identity'
 import type { UserProfile } from '../types'
+import { BuildingIcon, CardIcon, FindMark, PencilIcon, PhoneIcon, PinIcon, SaveIcon } from './Marks'
 import { Overlay } from './Overlay'
 
 type DeliveryFormProps = {
@@ -244,8 +245,23 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
   const [editingSaved] = useState(() => !ordering && Boolean(profile.address?.street.trim()))
 
   return (
-    <Overlay label="Dados para entrega" onClose={onClose} variant="popup">
+    <Overlay label="Dados para entrega" onClose={onClose} variant="popup" back>
       <h2>Dados para entrega</h2>
+      {!ordering && profile.nome.trim() && (
+        <div className="account">
+          <span className="account__avatar" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="8.4" r="3.6" fill="currentColor" />
+              <path d="M4.8 19.6c1.4-3.3 4-5 7.2-5s5.8 1.7 7.2 5Z" fill="currentColor" />
+            </svg>
+          </span>
+          <p className="account__name">
+            {profile.nome}
+            <PencilIcon />
+          </p>
+          {profile.whatsapp && <p className="account__phone">{formatWhatsapp(profile.whatsapp)}</p>}
+        </div>
+      )}
       {ordering && phase === 'searching' ? (
         <p className="muted" role="status">
           Buscando cadastro...
@@ -273,6 +289,7 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
         <div className="field">
           <span id="delivery-phone">Telefone</span>
           <div className="phone-join">
+            <PhoneIcon />
             <span className="phone-join__prefix" aria-hidden="true">
               {PHONE_PREFIX}
             </span>
@@ -286,6 +303,7 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
               value={rest}
               onChange={(event) => onPhone(event.target.value)}
             />
+            <FindMark />
           </div>
         </div>
         )}
@@ -298,6 +316,8 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
         {showCep && (
           <label className="field">
             <span>CEP</span>
+            <span className="field__line">
+            <CardIcon />
             <input
               name="postal-code"
               inputMode="numeric"
@@ -307,6 +327,8 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
               required
               onChange={(event) => setCep(maskCep(event.target.value))}
             />
+            <FindMark />
+            </span>
           </label>
         )}
         {showCep && cepHint && (
@@ -319,6 +341,8 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
           <div className="address">
             <label className="field">
               <span>Endereço</span>
+              <span className="field__line">
+              <PinIcon />
               <input
                 name="street-address"
                 autoComplete="street-address"
@@ -327,6 +351,7 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
                 required
                 onChange={(event) => setStreet(event.target.value)}
               />
+              </span>
             </label>
             <label className="field">
               <span>Número</span>
@@ -340,6 +365,8 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
             </label>
             <label className="field">
               <span>Bairro</span>
+              <span className="field__line">
+              <BuildingIcon />
               <input
                 name="address-level3"
                 value={neighborhood}
@@ -347,9 +374,12 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
                 required
                 onChange={(event) => setNeighborhood(event.target.value)}
               />
+              </span>
             </label>
             <label className="field">
               <span>Cidade</span>
+              <span className="field__line">
+              <PinIcon />
               <input
                 name="address-level2"
                 value={city}
@@ -357,6 +387,7 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
                 required
                 onChange={(event) => setCity(event.target.value)}
               />
+              </span>
             </label>
             {stateUf && (
               <label className="field">
@@ -366,12 +397,15 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
             )}
             <label className="field">
               <span>Ponto de referência (opcional)</span>
+              <span className="field__line">
+              <BuildingIcon />
               <input
                 name="reference"
                 value={reference}
                 maxLength={140}
                 onChange={(event) => setReference(event.target.value)}
               />
+              </span>
             </label>
           </div>
         )}
@@ -383,6 +417,7 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
         )}
         {showDetails && (
           <button className="btn" type="submit" disabled={busy}>
+            {!busy && <SaveIcon />}
             {busy ? 'Salvando...' : editingSaved ? 'Salvar endereço' : 'Salvar e pedir'}
           </button>
         )}

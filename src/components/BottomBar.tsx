@@ -95,31 +95,34 @@ export function BottomBar({
       icon: <PageIcon />,
       onClick: onOrders,
       live: orderLive,
-    },
-    {
-      key: 'profile',
-      label: 'Conta',
-      icon: <UserIcon />,
-      onClick: onProfile,
-    },
-    {
-      key: 'cart',
-      label: `Carrinho, ${count} ${itemWord}, ${formatPrice(totalCents)}`,
-      icon: <CartIcon />,
-      onClick: onCart,
-      wide: true,
-      extra: (
-        <>
-          <span className="dock__count">{count}</span>
-          <span className="dock__sum">{formatPrice(totalCents)}</span>
-        </>
-      ),
+      text: <span className="dock__label">Histórico</span>,
     },
     {
       key: 'whatsapp',
       label: 'WhatsApp',
       icon: <WhatsAppIcon />,
       onClick: onWhatsapp,
+      text: <span className="dock__label">WhatsApp</span>,
+    },
+    {
+      key: 'cart',
+      label: `Carrinho, ${count} ${itemWord}, ${formatPrice(totalCents)}`,
+      icon: (
+        <span className="dock__icon">
+          <CartIcon />
+          <span className={count > 0 ? 'dock__count' : 'dock__count is-zero'}>{count}</span>
+        </span>
+      ),
+      onClick: onCart,
+      wide: true,
+      text: <span className="dock__label dock__sum">{formatPrice(totalCents)}</span>,
+    },
+    {
+      key: 'profile',
+      label: 'Conta',
+      icon: <UserIcon />,
+      onClick: onProfile,
+      text: <span className="dock__label">Conta</span>,
     },
   ]
 
@@ -143,7 +146,7 @@ export function BottomBar({
             onClick={item.onClick}
           >
             {item.icon}
-            {'extra' in item ? item.extra : null}
+            {item.text}
           </button>
         </Fragment>
       ))}

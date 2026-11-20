@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { PHONE_PREFIX, PHONE_REST_LENGTH, contactReady, joinPhone, phoneRest } from '../lib/delivery'
 import { digitsOnly } from '../lib/identity'
 import type { UserProfile } from '../types'
+import { FindMark, PhoneIcon, SaveIcon } from './Marks'
 import { Overlay } from './Overlay'
 
 type PickupFormProps = {
@@ -105,7 +106,7 @@ export function PickupForm({ profile, ordering = false, onClose, onSaved }: Pick
   const showSave = !ordering || (phase === 'finish' && (showName || showPhone))
 
   return (
-    <Overlay label="Dados para retirada" onClose={onClose} variant="popup">
+    <Overlay label="Dados para retirada" onClose={onClose} variant="popup" back>
       <h2>Dados para retirada</h2>
       {ordering && phase === 'searching' ? (
         <p className="muted" role="status">
@@ -132,6 +133,7 @@ export function PickupForm({ profile, ordering = false, onClose, onSaved }: Pick
         <div className="field">
           <span id="pickup-phone">Telefone</span>
           <div className="phone-join">
+            <PhoneIcon />
             <span className="phone-join__prefix" aria-hidden="true">
               {PHONE_PREFIX}
             </span>
@@ -145,6 +147,7 @@ export function PickupForm({ profile, ordering = false, onClose, onSaved }: Pick
               value={rest}
               onChange={(event) => onPhone(event.target.value)}
             />
+            <FindMark />
           </div>
         </div>
         )}
@@ -161,6 +164,7 @@ export function PickupForm({ profile, ordering = false, onClose, onSaved }: Pick
         )}
         {showSave && (
           <button className="btn" type="submit" disabled={busy}>
+            {!busy && <SaveIcon />}
             {busy ? 'Salvando...' : 'Salvar e pedir'}
           </button>
         )}

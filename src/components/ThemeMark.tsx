@@ -41,8 +41,12 @@ const LARGE_FLAKES: Piece[] = [
   { x: '27vw', size: '21px', dur: '8.5s', delay: '-7s', opacity: '0.7', drift: '10px' },
 ]
 
+function half<T>(items: T[]): T[] {
+  return items.filter((_, index) => index % 2 === 0)
+}
+
 function scatter(icons: Array<{ icon: string; kind: string }>): IconPiece[] {
-  return icons.flatMap((item, index) => {
+  return half(icons.flatMap((item, index) => {
     const size = 18 + ((index * 7) % 24)
     return [
       {
@@ -64,7 +68,7 @@ function scatter(icons: Array<{ icon: string; kind: string }>): IconPiece[] {
         drift: `${index % 2 ? -12 : 20}px`,
       },
     ]
-  })
+  }))
 }
 
 const NATAL_FALL = scatter([
@@ -137,7 +141,7 @@ function pieceStyle(piece: Piece): CSSProperties {
 function Snow() {
   return (
     <div className="theme-snow" data-theme-snow="">
-      {THIN_FLAKES.map((flake, index) => (
+      {half(THIN_FLAKES).map((flake, index) => (
         <span
           key={`thin-${index}`}
           className="theme-snow__flake theme-snow__flake--thin"
@@ -147,7 +151,7 @@ function Snow() {
           ❄
         </span>
       ))}
-      {LARGE_FLAKES.map((flake, index) => (
+      {half(LARGE_FLAKES).map((flake, index) => (
         <span
           key={`large-${index}`}
           className="theme-snow__flake theme-snow__flake--large"
