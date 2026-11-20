@@ -7,6 +7,7 @@ import {
   setCategoryDestaque,
   updateProduct,
   watchCategories,
+  watchProducts,
   type ListedProduct,
 } from '../lib/adminCatalog'
 import { formatPrice, maskPrice, toCents } from '../lib/money'
@@ -49,6 +50,7 @@ export function ProductForm({ onClose, onSaved, product }: ProductFormProps) {
     })),
   )
   const [nextKey, setNextKey] = useState(() => (product?.extras.length ?? 0) + 1)
+  const [knownExtras, setKnownExtras] = useState<Extra[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
@@ -69,6 +71,25 @@ export function ProductForm({ onClose, onSaved, product }: ProductFormProps) {
           setCategoriesError('')
         },
         () => setCategoriesError('Não foi possível carregar as categorias.'),
+      ),
+    [],
+  )
+
+  useEffect(
+    () =>
+      watchProducts(
+        (next) => {
+          const byName = new Map<string, Extra>()
+          for (const item of next) {
+            for (const extra of item.extras) {
+              const key = extra.name.trim().toLowerCase()
+              if (!key || byName.has(key)) continue
+              byName.set(key, extra)
+            }
+          }
+          setKnownExtras([...byName.values()].sort((a, b) => a.name.localeCompare(b.name, 'pt')))
+        },
+        () => undefined,
       ),
     [],
   )
@@ -109,6 +130,18 @@ export function ProductForm({ onClose, onSaved, product }: ProductFormProps) {
 
   function addExtra() {
     setExtras((current) => [...current, { key: nextKey, name: '', price: '' }])
+    setNextKey((key) => key + 1)
+  }
+
+  function copyExtra(name: string) {
+    const source = knownExtras.find((extra) => extra.name === name)
+    if (!source) return
+    const taken = extras.some((extra) => extra.name.trim().toLowerCase() === source.name.trim().toLowerCase())
+    if (taken) return
+    setExtras((current) => [
+      ...current,
+      { key: nextKey, name: source.name, price: reaisField(source.price) },
+    ])
     setNextKey((key) => key + 1)
   }
 
@@ -294,6 +327,20 @@ export function ProductForm({ onClose, onSaved, product }: ProductFormProps) {
 
         <fieldset className="extras">
           <legend>Adicionais</legend>
+          {knownExtras.length > 0 && (
+            <ChoiceList
+              label="Adicionais já cadastrados"
+              value=""
+              onChange={copyExtra}
+              choices={[
+                { value: '', label: 'Escolha um adicional' },
+                ...knownExtras.map((extra) => ({
+                  value: extra.name,
+                  label: `${extra.name} · ${formatPrice(toCents(extra.price))}`,
+                })),
+              ]}
+            />
+          )}
           {extras.length === 0 && <p className="muted">Ex.: molho, bacon, cheddar.</p>}
           {extras.map((extra, index) => (
             <div key={extra.key} className="extra-row">

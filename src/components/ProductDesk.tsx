@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Category } from '../data/catalog'
 import {
   deleteCategory,
+  deleteProduct,
   parsePrice,
   renameCategory,
   setCategoryDestaque,
@@ -19,7 +20,7 @@ type ProductDeskProps = {
   onClose: () => void
 }
 
-type Pending = { id: string; name: string }
+type Pending = { kind: 'category' | 'product'; id: string; name: string }
 
 function PencilIcon() {
   return (
@@ -172,7 +173,8 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
     setBusy(true)
     setActionError('')
     try {
-      await deleteCategory(pending.id)
+      if (pending.kind === 'product') await deleteProduct(pending.id)
+      else await deleteCategory(pending.id)
       setPending(null)
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Não foi possível excluir.')
@@ -241,6 +243,13 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
                       >
                         {product.available ? 'Marcar esgotado' : 'Marcar disponível'}
                       </button>
+                      <button
+                        type="button"
+                        className="btn btn--ghost"
+                        onClick={() => setPending({ kind: 'product', id: product.id, name: product.name })}
+                      >
+                        Excluir
+                      </button>
                     </div>
                   </article>
                 </li>
@@ -294,7 +303,7 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
                         type="button"
                         className="catalog__tool"
                         aria-label="Apagar"
-                        onClick={() => setPending({ id: category.id, name: category.name })}
+                        onClick={() => setPending({ kind: 'category', id: category.id, name: category.name })}
                       >
                         <TrashIcon />
                       </button>

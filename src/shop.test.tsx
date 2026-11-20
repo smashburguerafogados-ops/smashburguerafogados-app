@@ -122,11 +122,24 @@ describe('Produtos', () => {
     )
   })
 
-  it('has no delete button on products', async () => {
-    const { desk } = await openDesk()
+  it('asks before deleting a product, and the button does not include the name', async () => {
+    const { user, desk } = await openDesk()
     const card = within(desk).getByRole('article', { name: 'Smash da casa' })
-    expect(within(card).queryByRole('button', { name: /Excluir/ })).not.toBeInTheDocument()
+    const remove = within(card).getByRole('button', { name: 'Excluir' })
+    expect(remove).toHaveTextContent('Excluir')
+    expect(remove).not.toHaveTextContent('Smash')
     expect(within(desk).queryByRole('button', { name: /Excluir Smash/ })).not.toBeInTheDocument()
+
+    await user.click(remove)
+    const confirm = screen.getByRole('alertdialog', { name: 'Confirmar exclusão' })
+    expect(confirm).toHaveTextContent('Excluir Smash da casa?')
+    expect(within(confirm).getByRole('button', { name: 'Excluir' })).not.toHaveTextContent('Smash')
+    await user.click(within(confirm).getByRole('button', { name: 'Cancelar' }))
+    expect(firebaseMocks.deleteDoc).not.toHaveBeenCalled()
+
+    await user.click(within(card).getByRole('button', { name: 'Excluir' }))
+    await user.click(within(screen.getByRole('alertdialog', { name: 'Confirmar exclusão' })).getByRole('button', { name: 'Excluir' }))
+    expect(firebaseMocks.deleteDoc).toHaveBeenCalledWith({ path: 'products/smash' })
   })
 
   it('asks before deleting a category and blocks the delete while products use it', async () => {

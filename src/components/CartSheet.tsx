@@ -61,6 +61,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
   const [placedId, setPlacedId] = useState('')
   const [needsDelivery, setNeedsDelivery] = useState(false)
   const [needsPickup, setNeedsPickup] = useState(false)
+  const [editingAddress, setEditingAddress] = useState(false)
 
   const itemsTotal = cartTotal(lines)
   const fee = deliveryCharge(fulfillment, shop.deliveryFeeCents)
@@ -189,6 +190,21 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
             </div>
           </fieldset>
 
+          {fulfillment === 'entrega' &&
+            session.status === 'ready' &&
+            session.profile.role === 'customer' &&
+            session.profile.address?.street && (
+              <div className="cart__address">
+                <p>
+                  {session.profile.address.street}, {session.profile.address.number}
+                  {session.profile.address.neighborhood ? ` — ${session.profile.address.neighborhood}` : ''}
+                </p>
+                <button type="button" className="text-btn" onClick={() => setEditingAddress(true)}>
+                  Alterar endereço
+                </button>
+              </div>
+            )}
+
           <fieldset className="pay">
             <legend>Forma de pagamento</legend>
             <div className="pay__options">
@@ -291,6 +307,13 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
             {busy ? 'Enviando...' : 'Fazer Pedido'}
           </button>
         </>
+      )}
+      {editingAddress && session.status === 'ready' && session.profile.role === 'customer' && (
+        <DeliveryForm
+          profile={session.profile}
+          onClose={() => setEditingAddress(false)}
+          onSaved={() => setEditingAddress(false)}
+        />
       )}
       {needsDelivery && (
         <DeliveryForm
