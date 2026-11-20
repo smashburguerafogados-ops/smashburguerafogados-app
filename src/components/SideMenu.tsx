@@ -4,6 +4,7 @@ type SideMenuProps = {
   onClose: () => void
   onPanel: () => void
   onShop: () => void
+  onManage: () => void
   onProducts: () => void
   onRevenue: () => void
   onThemes: () => void
@@ -17,6 +18,7 @@ export function SideMenu({
   onClose,
   onPanel,
   onShop,
+  onManage,
   onProducts,
   onRevenue,
   onThemes,
@@ -34,6 +36,9 @@ export function SideMenu({
         </button>
         <button type="button" className="drawer__link" onClick={onShop}>
           Funcionamento
+        </button>
+        <button type="button" className="drawer__link" onClick={onManage}>
+          Gerenciamento
         </button>
         <button type="button" className="drawer__link" onClick={onProducts}>
           Produtos

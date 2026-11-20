@@ -47,6 +47,8 @@ export type Order = {
   address: Address | null
   fulfillment: Fulfillment
   items: OrderItem[]
+  /** Fee charged on this order. Pickup is always 0. Later shop changes do not rewrite it. */
+  deliveryFeeCents: number
   totalCents: number
   payment: OrderPayment
   status: OrderStatus
@@ -120,15 +122,25 @@ export function photoLink(item: Pick<OrderItem, 'image' | 'productId'>): string 
   return item.image || productLink(item.productId)
 }
 
+/** Pickup never pays the fee. An unset or invalid fee is 0. */
+export function deliveryCharge(fulfillment: Fulfillment, feeCents: number): number {
+  if (fulfillment !== 'entrega') return 0
+  if (typeof feeCents !== 'number' || !Number.isFinite(feeCents) || feeCents <= 0) return 0
+  return Math.round(feeCents)
+}
+
 export function buildOrder(
   profile: UserProfile,
   lines: CartLine[],
   checkout: CheckoutState,
-  totalCents: number,
+  itemsCents: number,
   fulfillment: Fulfillment = 'entrega',
+  deliveryFeeCents = 0,
   now = Date.now(),
 ): NewOrder {
   if (!checkout.method) throw new Error('Escolha a forma de pagamento.')
+  const fee = deliveryCharge(fulfillment, deliveryFeeCents)
+  const totalCents = itemsCents + fee
   const needsChange = checkout.method === 'dinheiro' && checkout.needsChange === 'sim'
   const cash = needsChange ? cashToCents(checkout.cash) : null
   return {
@@ -145,6 +157,7 @@ export function buildOrder(
       qty: line.qty,
       note: line.note,
     })),
+    deliveryFeeCents: fee,
     totalCents,
     payment: {
       method: checkout.method,
@@ -208,6 +221,7 @@ export function parseOrder(id: string, data: unknown): Order | null {
     address: fulfillment === 'retirada' ? null : parseAddress(raw.address),
     fulfillment,
     items,
+    deliveryFeeCents: Math.max(0, Math.round(asNumber(raw.deliveryFeeCents))),
     totalCents: asNumber(raw.totalCents),
     payment: {
       method,
