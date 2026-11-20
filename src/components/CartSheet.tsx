@@ -17,6 +17,7 @@ import { cartCount, cartTotal, type CartLine } from '../lib/menu'
 import { contactReady, deliveryReady } from '../lib/delivery'
 import { buildOrder, deliveryCharge, placeOrder, shortId, type Fulfillment, FULFILLMENT_LABEL } from '../lib/orders'
 import { useShop } from '../lib/shop'
+import { BagIcon, TruckIcon } from './Marks'
 import { DeliveryForm } from './DeliveryForm'
 import { PickupForm } from './PickupForm'
 import { Overlay } from './Overlay'
@@ -37,7 +38,7 @@ const FULFILLMENTS: Fulfillment[] = ['entrega', 'retirada']
 function MinusMark() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M7 12h10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M7 7l10 10M17 7 7 17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   )
 }
@@ -123,7 +124,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
 
   if (placedId) {
     return (
-      <Overlay label="Carrinho" onClose={onClose}>
+      <Overlay label="Carrinho" onClose={onClose} back>
         <h2>Pedido enviado</h2>
         <p>
           Pedido <strong>#{shortId(placedId)}</strong> recebido. Acompanhe em Meus pedidos.
@@ -136,7 +137,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
   }
 
   return (
-    <Overlay label="Carrinho" onClose={onClose}>
+    <Overlay label="Carrinho" onClose={onClose} back>
       <h2>Carrinho</h2>
       {raffleToday && (
         <p className="raffle-note">Comprando hoje você entra no sorteio: {raffle.title}. Vale o pedido finalizado.</p>
@@ -189,7 +190,10 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
                     checked={fulfillment === mode}
                     onChange={() => setFulfillment(mode)}
                   />
-                  <span>{FULFILLMENT_LABEL[mode]}</span>
+                  <span>
+                    {mode === 'entrega' ? <TruckIcon /> : <BagIcon />}
+                    {FULFILLMENT_LABEL[mode]}
+                  </span>
                 </label>
               ))}
             </div>
@@ -322,6 +326,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
           </div>
           <button type="button" className="btn" disabled={!ready || busy} onClick={() => void submit()}>
             {busy ? 'Enviando...' : 'Fazer Pedido'}
+            {!busy && <span aria-hidden="true">→</span>}
           </button>
         </>
       )}

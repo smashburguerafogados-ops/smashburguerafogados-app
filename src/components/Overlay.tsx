@@ -1,9 +1,11 @@
 import { useEffect, type ReactNode } from 'react'
+import { BackIcon } from './Marks'
 
 type OverlayProps = {
   label: string
   onClose: () => void
   variant?: 'sheet' | 'popup' | 'drawer'
+  back?: boolean
   children: ReactNode
 }
 
@@ -31,7 +33,7 @@ export function CloseButton({
   )
 }
 
-export function Overlay({ label, onClose, variant = 'sheet', children }: OverlayProps) {
+export function Overlay({ label, onClose, variant = 'sheet', back = false, children }: OverlayProps) {
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose()
@@ -52,6 +54,11 @@ export function Overlay({ label, onClose, variant = 'sheet', children }: Overlay
         aria-label={label}
         onClick={(event) => event.stopPropagation()}
       >
+        {back && (
+          <button type="button" className="mark-btn overlay__back" aria-label="Voltar" onClick={onClose}>
+            <BackIcon />
+          </button>
+        )}
         <CloseButton className="overlay__close" onClick={onClose} />
         {children}
         {variant !== 'drawer' && <div className="dock-spacer" aria-hidden="true" />}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Product } from '../data/catalog'
 import { formatPrice, toCents } from '../lib/money'
+import { BackIcon, HandIcon } from './Marks'
 import { CloseButton, Overlay } from './Overlay'
 
 type ProductDialogProps = {
@@ -45,7 +46,7 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
   }, [zoom])
 
   return (
-    <Overlay label={product.name} onClose={onClose} variant="popup">
+    <Overlay label={product.name} onClose={onClose} variant="popup" back>
       <div className="product">
         <button type="button" className="product__zoom" aria-label={`Ampliar foto de ${product.name}`} onClick={() => setZoom(true)}>
           <img src={product.image} alt="" />
@@ -125,11 +126,15 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
       </button>
       {zoom && (
         <div className="photo-zoom" role="dialog" aria-modal="true" aria-label={`Foto de ${product.name}`}>
+          <button type="button" className="mark-btn photo-zoom__back" aria-label="Voltar" onClick={() => setZoom(false)}>
+            <BackIcon />
+          </button>
           <CloseButton className="photo-zoom__close" label="Fechar foto" onClick={() => setZoom(false)} />
           <button type="button" className="photo-zoom__photo" aria-label="Foto ampliada" onClick={() => setZoom(false)}>
             <img src={product.image} alt="" />
           </button>
           <p className="photo-zoom__hint" aria-hidden="true">
+            <HandIcon />
             Toque para fechar
           </p>
         </div>

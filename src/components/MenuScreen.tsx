@@ -367,7 +367,7 @@ export function MenuScreen() {
       )}
       {sheet === 'whatsapp' && <AttendancePrompt onClose={() => setSheet(null)} />}
       {sheet === 'orders' && (
-        <Overlay label="Meus pedidos" onClose={() => setSheet(null)}>
+        <Overlay label="Meus pedidos" onClose={() => setSheet(null)} back>
           <h2>Meus pedidos</h2>
           <OrderHistory />
         </Overlay>
