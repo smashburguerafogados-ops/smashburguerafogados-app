@@ -262,7 +262,12 @@ export function MenuScreen() {
           Não foi possível carregar o cardápio.
         </p>
       )}
-      {!catalog && !catalogError && <p className="muted">Carregando o cardápio.</p>}
+      {!catalog && !catalogError && (
+        <p className="menu-loading" role="status" aria-label="Carregando o cardápio." aria-busy="true">
+          <span className="menu-loading__spin" aria-hidden="true" />
+          Carregando o cardápio.
+        </p>
+      )}
 
       {catalog && (
       <>
