@@ -111,6 +111,57 @@ describe('Criar Produto', () => {
     expect(firebaseMocks.deleteDoc).not.toHaveBeenCalled()
   })
 
+  it('copies an add-on that already exists on another product', async () => {
+    const { user, form } = await openForm()
+    await waitFor(() => expect(activeListeners('products').length).toBeGreaterThan(0))
+    await act(async () => {
+      emit('products', [
+        {
+          id: 'smash',
+          name: 'Smash da casa',
+          categoryId: 'lanches',
+          price: 28,
+          available: true,
+          description: '',
+          image: 'data:image/jpeg;base64,QUJD',
+          extras: [
+            { id: 'extra-bacon', name: 'Bacon', price: 4 },
+            { id: 'extra-cheddar', name: 'Cheddar', price: 3 },
+          ],
+        },
+      ])
+    })
+
+    await user.click(within(form).getByRole('button', { name: 'Adicionais já cadastrados' }))
+    const list = within(form).getByRole('listbox', { name: 'Adicionais já cadastrados' })
+    const options = within(list).getAllByRole('option').map((option) => option.textContent)
+    expect(options).toEqual(['Escolha um adicional', 'Bacon · R$ 4,00', 'Cheddar · R$ 3,00'])
+    await user.click(within(list).getByRole('option', { name: 'Bacon · R$ 4,00' }))
+
+    expect(within(form).getByRole('textbox', { name: 'Adicional 1' })).toHaveValue('Bacon')
+    expect(within(form).getByRole('textbox', { name: 'Valor do adicional 1' })).toHaveValue('4,00')
+
+    await user.type(within(form).getByRole('textbox', { name: 'Nome' }), 'Smash Bacon')
+    await user.upload(
+      within(form).getByLabelText('Escolher foto da galeria'),
+      new File(['abc'], 'smash.jpg', { type: 'image/jpeg' }),
+    )
+    await pickCategory(user, form, 'Lanches')
+    await user.type(within(form).getByRole('textbox', { name: 'Valor (R$)' }), '2990')
+    await user.click(within(form).getByRole('button', { name: '+ Adicional' }))
+    await user.type(within(form).getByRole('textbox', { name: 'Adicional 2' }), 'Molho')
+    await user.type(within(form).getByRole('textbox', { name: 'Valor do adicional 2' }), '200')
+    await user.click(within(form).getByRole('button', { name: 'Salvar produto' }))
+
+    expect(await within(form).findByRole('status')).toHaveTextContent('Smash Bacon salvo no cardápio.')
+    expect(lastAdd('products')).toMatchObject({
+      extras: [
+        { id: 'extra-1', name: 'Bacon', price: 4 },
+        { id: 'extra-2', name: 'Molho', price: 2 },
+      ],
+    })
+  })
+
   it('saves name, photo, category, valor, descrição and adicionais to Firestore', async () => {
     const { user, form } = await openForm()
     await user.type(within(form).getByRole('textbox', { name: 'Nome' }), 'Smash Bacon')

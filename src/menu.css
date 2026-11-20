@@ -1009,6 +1009,18 @@ html[data-theme='sao-joao'] .menu__content {
   }
 }
 
+.cart__address {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.cart__address p {
+  margin: 0;
+}
+
 .cart__summary {
   display: grid;
   gap: 6px;

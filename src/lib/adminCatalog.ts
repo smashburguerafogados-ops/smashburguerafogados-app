@@ -57,6 +57,10 @@ export async function renameCategory(id: string, name: string): Promise<void> {
   await updateDoc(doc(db, 'categories', id), { name: clean })
 }
 
+export async function deleteProduct(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'products', id))
+}
+
 export async function deleteCategory(id: string): Promise<void> {
   const using = await getDocs(query(collection(db, 'products'), where('categoryId', '==', id)))
   if (!using.empty) {

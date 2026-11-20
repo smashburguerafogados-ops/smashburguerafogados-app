@@ -39,7 +39,11 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
   const [phase, setPhase] = useState<Phase>(identify ? 'phone' : 'finish')
   const [needsCep, setNeedsCep] = useState(ordering && Boolean(profile.uid) && !profile.address?.street.trim())
   const lookedUp = useRef('')
-  const keepCep = useRef('')
+  const keepCep = useRef(
+    profile.address?.street.trim() && digitsOnly(profile.address.cep).length === 8
+      ? digitsOnly(profile.address.cep)
+      : '',
+  )
   const ticket = useRef(0)
 
   function applyPartial(saved: UserProfile) {
@@ -237,6 +241,7 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
   const showDetails = !ordering || (asking && (!needsCep || showAddress))
   const showName = !ordering || (asking && !knownName && showDetails)
   const showPhone = !ordering || identify || !joinPhone(phoneRest(profile.whatsapp))
+  const [editingSaved] = useState(() => !ordering && Boolean(profile.address?.street.trim()))
 
   return (
     <Overlay label="Dados para entrega" onClose={onClose} variant="popup">
@@ -249,7 +254,11 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
         <p className="muted">Finalize seu cadastro.</p>
       ) : (
         <p className="muted">
-          {ordering ? 'Informe o telefone para continuar o pedido.' : 'Falta nome, telefone ou endereço para concluir o pedido.'}
+          {ordering
+            ? 'Informe o telefone para continuar o pedido.'
+            : editingSaved
+              ? 'Altere o endereço. O próximo pedido usa o que você salvar.'
+              : 'Falta nome, telefone ou endereço para concluir o pedido.'}
         </p>
       )}
       <form className="delivery" onSubmit={(event) => void onSubmit(event)} noValidate>
@@ -374,7 +383,7 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
         )}
         {showDetails && (
           <button className="btn" type="submit" disabled={busy}>
-            {busy ? 'Salvando...' : 'Salvar e pedir'}
+            {busy ? 'Salvando...' : editingSaved ? 'Salvar endereço' : 'Salvar e pedir'}
           </button>
         )}
       </form>
