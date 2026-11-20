@@ -212,6 +212,7 @@ describe('admin board', () => {
     expect(document.querySelector('.order-card')).toBeNull()
     expect(document.querySelector('.admin')).not.toHaveAttribute('data-theme')
 
+    await waitFor(() => expect(activeListeners('orders')).toHaveLength(1))
     await act(async () => {
       emit('orders', [])
     })
