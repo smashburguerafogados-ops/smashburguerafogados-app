@@ -47,6 +47,7 @@ describe('Produtos', () => {
   it('shows each product as a card and saves a masked price', async () => {
     const { user, desk } = await openDesk()
     const card = within(desk).getByRole('article', { name: 'Smash da casa' })
+    expect(within(desk).queryByText('Início')).not.toBeInTheDocument()
     expect(card).toHaveClass('catalog__card')
     expect(within(card).getAllByText('Smash da casa')).toHaveLength(1)
     for (const button of within(card).getAllByRole('button')) {

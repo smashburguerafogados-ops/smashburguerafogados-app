@@ -25,15 +25,14 @@ function readCategory(id: string, data: Record<string, unknown>): Category | nul
 }
 
 function readProduct(id: string, data: Record<string, unknown>): Product | null {
-  if (typeof data.name !== 'string' || typeof data.categoryId !== 'string' || typeof data.price !== 'number') {
-    return null
-  }
+  if (typeof data.name !== 'string' || typeof data.price !== 'number') return null
+  const categoryId = typeof data.categoryId === 'string' ? data.categoryId : ''
   const extras = Array.isArray(data.extras)
     ? data.extras.map(asExtra).filter((item): item is Extra => item !== null)
     : []
   return {
     id,
-    categoryId: data.categoryId,
+    categoryId,
     name: data.name,
     description: typeof data.description === 'string' ? data.description : '',
     price: data.price,
