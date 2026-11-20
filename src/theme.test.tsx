@@ -10,6 +10,7 @@ import flagSvg from './assets/theme/flag-yellow.svg?raw'
 import maskSvg from './assets/theme/performing-arts.svg?raw'
 import { Splash } from './components/Splash'
 import { ThemeFrame } from './components/ThemeMark'
+import { AuthProvider } from './context/AuthContext'
 import { activeListeners, emitDoc, firebaseMocks } from './test/mocks'
 import { adminProfile, renderApp, signInAs } from './test/render'
 
@@ -203,9 +204,11 @@ it('shows customers the confirmed theme and hides the picker', async () => {
 
 it('decorates the opening screen with the confirmed theme', async () => {
   render(
-    <ThemeFrame>
-      <Splash onDone={() => {}} ready={false} />
-    </ThemeFrame>,
+    <AuthProvider>
+      <ThemeFrame>
+        <Splash onDone={() => {}} ready={false} />
+      </ThemeFrame>
+    </AuthProvider>,
   )
   await waitFor(() => expect(activeListeners('settings/theme')).toHaveLength(1))
   expect(screen.getByText('Preparando a chapa')).toBeInTheDocument()

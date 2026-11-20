@@ -3,16 +3,25 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { App } from './App'
 import { FIRE_PLAYBACK_RATE } from './components/FireBackdrop'
 import { Splash } from './components/Splash'
-import { emitSeedCatalog } from './test/render'
-import { emitDoc } from './test/mocks'
+import { AuthProvider } from './context/AuthContext'
+import { emitSeedCatalog, signInAs, customerProfile } from './test/render'
+import { authState, emitDoc, firebaseMocks } from './test/mocks'
 
 afterEach(() => {
   vi.useRealTimers()
 })
 
+function renderSplash(onDone = vi.fn(), ready = true) {
+  return render(
+    <AuthProvider>
+      <Splash onDone={onDone} ready={ready} />
+    </AuthProvider>,
+  )
+}
+
 it('plays the shipped fire loop and does not draw the old grill', () => {
   const onDone = vi.fn()
-  const { container } = render(<Splash onDone={onDone} />)
+  const { container } = renderSplash(onDone)
 
   expect(screen.getByText('Preparando a chapa')).toBeInTheDocument()
   const video = container.querySelector('video')
@@ -49,15 +58,20 @@ it('leaves the splash on the menu, not a login wall', async () => {
 it('shows the real open state and hours and lets the customer enter before the hold ends', async () => {
   vi.useFakeTimers()
   const onDone = vi.fn()
-  render(<Splash onDone={onDone} />)
+  renderSplash(onDone)
   act(() => {
     emitDoc('settings/shop', { online: true, hours: '16h às 23h' })
   })
   expect(screen.getByText('Aberto agora')).toBeInTheDocument()
   expect(screen.getByText('16h às 23h')).toBeInTheDocument()
 
+  await act(async () => {
+    await Promise.resolve()
+    await Promise.resolve()
+  })
+  const enter = screen.getByRole('button', { name: /Entrar no cardápio/ })
   act(() => {
-    screen.getByRole('button', { name: /Entrar no cardápio/ }).click()
+    enter.click()
   })
   await act(async () => {
     await vi.advanceTimersByTimeAsync(700)
@@ -66,10 +80,50 @@ it('shows the real open state and hours and lets the customer enter before the h
 })
 
 it('marks the shop closed when the admin turned it off', () => {
-  render(<Splash onDone={vi.fn()} />)
+  renderSplash()
   act(() => {
     emitDoc('settings/shop', { online: false, hours: '16h às 23h' })
   })
   expect(screen.getByText('Fechado')).toBeInTheDocument()
   expect(screen.getByText('16h às 23h').closest('.shop-status')).toHaveClass('is-closed')
+})
+
+it('hides Entrar no cardápio until the signed-in profile finishes loading', async () => {
+  authState.user = { uid: customerProfile.uid }
+  let release!: (value: unknown) => void
+  const gate = new Promise((resolve) => {
+    release = resolve
+  })
+  firebaseMocks.getDoc.mockImplementation(async () => {
+    await gate
+    return {
+      exists: () => true,
+      id: customerProfile.uid,
+      data: () => ({
+        nome: customerProfile.nome,
+        whatsapp: customerProfile.whatsapp,
+        address: customerProfile.address,
+        role: 'customer',
+      }),
+    }
+  })
+
+  renderSplash()
+  expect(screen.queryByRole('button', { name: /Entrar no cardápio/ })).not.toBeInTheDocument()
+
+  await act(async () => {
+    release({})
+  })
+  expect(await screen.findByRole('button', { name: /Entrar no cardápio/ })).toBeInTheDocument()
+})
+
+it('keeps Entrar no cardápio available when there is no session', async () => {
+  renderSplash()
+  expect(await screen.findByRole('button', { name: /Entrar no cardápio/ })).toBeInTheDocument()
+})
+
+it('shows Entrar no cardápio after a ready customer session', async () => {
+  signInAs(customerProfile)
+  renderSplash()
+  expect(await screen.findByRole('button', { name: /Entrar no cardápio/ })).toBeInTheDocument()
 })

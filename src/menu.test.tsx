@@ -438,17 +438,24 @@ it('hides the sample cardápio until Firestore answers, then follows edits', asy
       </MemoryRouter>
     </AuthProvider>,
   )
-  expect(screen.getByText('Carregando o cardápio.')).toBeInTheDocument()
+  const loading = screen.getByRole('status', { name: 'Carregando o cardápio.' })
+  expect(loading).toHaveClass('menu-loading')
+  expect(loading.querySelector('.menu-loading__spin')).not.toBeNull()
+  expect(getComputedStyle(loading.querySelector('.menu-loading__spin') as HTMLElement).animationName).toBe('board-spin')
+  expect(getComputedStyle(loading.querySelector('.menu-loading__spin') as HTMLElement).borderTopColor).toBe(
+    'rgb(227, 177, 90)',
+  )
   expect(screen.queryByRole('button', { name: 'Início' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Acompanhamentos' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Bebidas' })).not.toBeInTheDocument()
   expect(screen.queryByText('Smash da casa')).not.toBeInTheDocument()
+  expect(screen.queryByRole('list')).not.toBeInTheDocument()
 
   await act(async () => {
     emit('categories', [{ id: 'petisco', name: 'Petisco', order: 1, destaque: false }])
     emit('products', [{ id: 'batata', categoryId: 'petisco', name: 'Batata', description: '', price: 10, available: true, image: '' }])
   })
-  expect(screen.queryByText('Carregando o cardápio.')).not.toBeInTheDocument()
+  expect(screen.queryByRole('status', { name: 'Carregando o cardápio.' })).not.toBeInTheDocument()
   const chips = within(screen.getByRole('toolbar', { name: 'Categorias' })).getAllByRole('button')
   expect(chips[0]).toHaveTextContent('Início')
   expect(chips[0]).not.toHaveClass('chip--destaque')
