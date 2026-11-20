@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useAuth } from '../context/AuthContext'
 import { readSavedCustomerId } from '../lib/customerId'
 import { useShop } from '../lib/shop'
 import { applyDocumentTheme, useTheme } from '../lib/theme'
@@ -23,8 +24,10 @@ export function Splash({ onDone, ready = true }: SplashProps) {
   const [leaving, setLeaving] = useState(false)
   const theme = useTheme()
   const shop = useShop()
+  const { session } = useAuth()
   const savedCustomer = useRef(readSavedCustomerId() !== '')
   const reduce = useRef(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  const userReady = session.status !== 'loading'
 
   useEffect(() => {
     applyDocumentTheme(theme)
@@ -65,10 +68,12 @@ export function Splash({ onDone, ready = true }: SplashProps) {
       </div>
       <div className="splash__foot">
         {shop.ready && <ShopStatus online={shop.online} hours={shop.hours} />}
-        <button type="button" className="btn splash__enter" disabled={leaving} onClick={() => setEntered(true)}>
-          Entrar no cardápio
-          <span aria-hidden="true">→</span>
-        </button>
+        {userReady && (
+          <button type="button" className="btn splash__enter" disabled={leaving} onClick={() => setEntered(true)}>
+            Entrar no cardápio
+            <span aria-hidden="true">→</span>
+          </button>
+        )}
         <p className="splash__status">{status}</p>
         <div className="splash__track" aria-hidden="true">
           <span />
