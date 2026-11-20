@@ -96,7 +96,7 @@ describe('cart and checkout', () => {
     expect(dock().querySelector('.dock__count')).toHaveTextContent('2')
   })
 
-  it('lists each item price and the total, then asks for payment with a red notice', async () => {
+  it('lists each item price and the total, then asks for payment with a gold notice', async () => {
     const user = userEvent.setup()
     renderApp()
     await addToCart(user, /Smash da casa/)
@@ -115,7 +115,7 @@ describe('cart and checkout', () => {
     expect(within(cart).getByRole('group', { name: 'Forma de pagamento' })).toBeInTheDocument()
     expect(cart.querySelector('select')).toBeNull()
     const notice = within(cart).getByText('Os pagamentos são feitos ao entregador.')
-    expect(getComputedStyle(notice).color).toBe('rgb(255, 59, 48)')
+    expect(getComputedStyle(notice).color).toBe('rgb(227, 177, 90)')
     expect(within(cart).getByRole('button', { name: 'Fazer Pedido' })).toBeDisabled()
 
     await user.click(within(cart).getByRole('radio', { name: 'Pix' }))

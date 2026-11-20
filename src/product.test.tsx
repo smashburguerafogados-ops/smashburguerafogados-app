@@ -239,8 +239,8 @@ describe('destaque categories on the menu', () => {
     const lit = getComputedStyle(chips[0])
     expect(lit.animationName).toBe('destaque-pulse')
     expect(lit.borderTopWidth).toBe('2px')
-    expect(lit.borderTopColor).toBe('rgb(255, 201, 60)')
-    expect(lit.boxShadow).toContain('rgba(255, 140, 40, 0.55)')
+    expect(lit.borderTopColor).toBe('rgb(227, 177, 90)')
+    expect(lit.boxShadow).toContain('rgba(227, 177, 90, 0.55)')
     const sun = chips[0].querySelector('.chip__sun') as HTMLElement
     expect(sun).not.toBeNull()
     const sunStyle = getComputedStyle(sun)
