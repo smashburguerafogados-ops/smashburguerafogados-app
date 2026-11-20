@@ -207,15 +207,10 @@ describe('returning customer in a new browser session', () => {
     const form = screen.getByRole('dialog', { name: 'Dados para retirada' })
 
     await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '88887777')
-    expect(await within(form).findByText('Encontramos seu cadastro. Confira os dados e peça.')).toBeInTheDocument()
-    expect(within(form).getByRole('textbox', { name: 'Nome' })).toHaveValue('Jameson')
-    await user.click(within(form).getByRole('button', { name: 'Salvar e pedir' }))
 
     expect(await screen.findByText('Pedido enviado')).toBeInTheDocument()
-    expect(firebaseMocks.updateDoc).toHaveBeenCalledWith(
-      { path: `users/${saved.uid}` },
-      { nome: 'Jameson', whatsapp: NUMBER },
-    )
+    expect(screen.queryByRole('button', { name: 'Salvar e pedir' })).not.toBeInTheDocument()
+    expect(firebaseMocks.updateDoc).not.toHaveBeenCalled()
     expect(firebaseMocks.createUserWithEmailAndPassword).not.toHaveBeenCalled()
     const [, payload] = firebaseMocks.addDoc.mock.calls[0] as [unknown, Record<string, unknown>]
     expect(payload).toMatchObject({ customerId: saved.uid, fulfillment: 'retirada' })

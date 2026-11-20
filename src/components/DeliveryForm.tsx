@@ -1,22 +1,27 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { lookupCep } from '../lib/cep'
-import { PHONE_PREFIX, PHONE_REST_LENGTH, joinPhone, phoneRest } from '../lib/delivery'
+import { PHONE_PREFIX, PHONE_REST_LENGTH, deliveryReady, joinPhone, phoneRest } from '../lib/delivery'
 import { digitsOnly, maskCep } from '../lib/identity'
 import type { UserProfile } from '../types'
 import { Overlay } from './Overlay'
 
 type DeliveryFormProps = {
   profile: UserProfile
+  /** Checkout asks for the phone first, then only the fields still missing. */
+  ordering?: boolean
   onClose: () => void
-  onSaved: (profile: UserProfile) => void
+  onSaved: (profile: UserProfile) => void | Promise<void>
 }
 
 type CepStatus = 'idle' | 'loading' | 'found' | 'manual'
 
-export function DeliveryForm({ profile, onClose, onSaved }: DeliveryFormProps) {
+type Phase = 'phone' | 'searching' | 'finish'
+
+export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: DeliveryFormProps) {
   const { saveDelivery, findCustomer } = useAuth()
   const [nome, setNome] = useState(profile.nome)
+  const [knownName, setKnownName] = useState(Boolean(profile.nome.trim()))
   const [rest, setRest] = useState(phoneRest(profile.whatsapp))
   const [cep, setCep] = useState(profile.address?.cep ? maskCep(profile.address.cep) : '')
   const [street, setStreet] = useState(profile.address?.street ?? '')
@@ -30,8 +35,64 @@ export function DeliveryForm({ profile, onClose, onSaved }: DeliveryFormProps) {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [found, setFound] = useState(false)
+  const identify = ordering && !profile.uid
+  const [phase, setPhase] = useState<Phase>(identify ? 'phone' : 'finish')
+  const [needsCep, setNeedsCep] = useState(ordering && Boolean(profile.uid) && !profile.address?.street.trim())
   const lookedUp = useRef('')
   const keepCep = useRef('')
+  const ticket = useRef(0)
+
+  function applyPartial(saved: UserProfile) {
+    if (saved.nome.trim()) {
+      setNome(saved.nome)
+      setKnownName(true)
+    }
+    const address = saved.address
+    if (!address?.street.trim()) {
+      setNeedsCep(true)
+      return
+    }
+    setNeedsCep(false)
+    const savedCep = digitsOnly(address.cep)
+    if (savedCep.length === 8) keepCep.current = savedCep
+    setCep(savedCep ? maskCep(savedCep) : '')
+    setStreet(address.street)
+    setNumber(address.number)
+    setNeighborhood(address.neighborhood)
+    setCity(address.city)
+    setStateUf(address.state)
+    setReference(address.reference)
+    setCepStatus('manual')
+    setCepHint('')
+  }
+
+  async function lookupOrder(whatsapp: string) {
+    const mine = ++ticket.current
+    setPhase('searching')
+    setError('')
+    const saved = await findCustomer(whatsapp)
+    if (mine !== ticket.current) return
+    if (saved && deliveryReady(saved)) {
+      try {
+        await onSaved(saved)
+      } catch (err) {
+        setPhase('phone')
+        setError(err instanceof Error ? err.message : 'Não foi possível enviar o pedido.')
+      }
+      return
+    }
+    if (saved) {
+      applyPartial(saved)
+      if (!saved.address?.street.trim()) setNeedsCep(true)
+    } else {
+      setNeedsCep(true)
+      if (profile.whatsapp && profile.whatsapp !== whatsapp) {
+        setKnownName(false)
+        setNome('')
+      }
+    }
+    setPhase('finish')
+  }
 
   useEffect(() => {
     const digits = digitsOnly(cep)
@@ -94,6 +155,16 @@ export function DeliveryForm({ profile, onClose, onSaved }: DeliveryFormProps) {
     const next = digitsOnly(value).slice(0, PHONE_REST_LENGTH)
     setRest(next)
     const whatsapp = joinPhone(next)
+    if (identify) {
+      if (!whatsapp) {
+        ticket.current += 1
+        setPhase('phone')
+        setError('')
+        return
+      }
+      void lookupOrder(whatsapp)
+      return
+    }
     if (!whatsapp || profile.uid || lookedUp.current === whatsapp) return
     lookedUp.current = whatsapp
     void findCustomer(whatsapp).then((saved) => {
@@ -153,7 +224,7 @@ export function DeliveryForm({ profile, onClose, onSaved }: DeliveryFormProps) {
           reference,
         },
       })
-      onSaved(saved)
+      await onSaved(saved)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível salvar os dados.')
       setBusy(false)
@@ -161,17 +232,35 @@ export function DeliveryForm({ profile, onClose, onSaved }: DeliveryFormProps) {
   }
 
   const showAddress = cepStatus === 'found' || cepStatus === 'manual'
+  const asking = !ordering || phase === 'finish'
+  const showCep = !ordering || (asking && needsCep)
+  const showDetails = !ordering || (asking && (!needsCep || showAddress))
+  const showName = !ordering || (asking && !knownName && showDetails)
+  const showPhone = !ordering || identify || !joinPhone(phoneRest(profile.whatsapp))
 
   return (
     <Overlay label="Dados para entrega" onClose={onClose} variant="popup">
       <h2>Dados para entrega</h2>
-      <p className="muted">Falta nome, telefone ou endereço para concluir o pedido.</p>
+      {ordering && phase === 'searching' ? (
+        <p className="muted" role="status">
+          Buscando cadastro...
+        </p>
+      ) : ordering && phase === 'finish' ? (
+        <p className="muted">Finalize seu cadastro.</p>
+      ) : (
+        <p className="muted">
+          {ordering ? 'Informe o telefone para continuar o pedido.' : 'Falta nome, telefone ou endereço para concluir o pedido.'}
+        </p>
+      )}
       <form className="delivery" onSubmit={(event) => void onSubmit(event)} noValidate>
-        <label className="field">
-          <span>Nome</span>
-          <input value={nome} maxLength={80} required onChange={(event) => setNome(event.target.value)} />
-        </label>
+        {showName && (
+          <label className="field">
+            <span>Nome</span>
+            <input value={nome} maxLength={80} required onChange={(event) => setNome(event.target.value)} />
+          </label>
+        )}
 
+        {showPhone && (
         <div className="field">
           <span id="delivery-phone">Telefone</span>
           <div className="phone-join">
@@ -190,31 +279,34 @@ export function DeliveryForm({ profile, onClose, onSaved }: DeliveryFormProps) {
             />
           </div>
         </div>
-        {found && (
+        )}
+        {found && !ordering && (
           <p className="hint hint--ok" role="status">
             Encontramos seu cadastro. Confira os dados e peça.
           </p>
         )}
 
-        <label className="field">
-          <span>CEP</span>
-          <input
-            name="postal-code"
-            inputMode="numeric"
-            autoComplete="postal-code"
-            placeholder="00000-000"
-            value={cep}
-            required
-            onChange={(event) => setCep(maskCep(event.target.value))}
-          />
-        </label>
-        {cepHint && (
+        {showCep && (
+          <label className="field">
+            <span>CEP</span>
+            <input
+              name="postal-code"
+              inputMode="numeric"
+              autoComplete="postal-code"
+              placeholder="00000-000"
+              value={cep}
+              required
+              onChange={(event) => setCep(maskCep(event.target.value))}
+            />
+          </label>
+        )}
+        {showCep && cepHint && (
           <p className={cepStatus === 'found' ? 'hint hint--ok' : 'hint'} role="status">
             {cepHint}
           </p>
         )}
 
-        {showAddress && (
+        {showDetails && showAddress && (
           <div className="address">
             <label className="field">
               <span>Endereço</span>
@@ -280,9 +372,11 @@ export function DeliveryForm({ profile, onClose, onSaved }: DeliveryFormProps) {
             {error}
           </p>
         )}
-        <button className="btn" type="submit" disabled={busy}>
-          {busy ? 'Salvando...' : 'Salvar e pedir'}
-        </button>
+        {showDetails && (
+          <button className="btn" type="submit" disabled={busy}>
+            {busy ? 'Salvando...' : 'Salvar e pedir'}
+          </button>
+        )}
       </form>
     </Overlay>
   )
