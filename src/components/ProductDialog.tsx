@@ -9,6 +9,14 @@ type ProductDialogProps = {
   onAdd: (note: string, extraIds: string[], qty: number) => void
 }
 
+/** One stored line is one description item. A single line stays a single item. */
+export function descriptionItems(text: string): string[] {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+}
+
 export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
   const [note, setNote] = useState('')
   const [extras, setExtras] = useState<string[]>([])
@@ -18,6 +26,7 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
     .filter((extra) => extras.includes(extra.id))
     .reduce((sum, extra) => sum + toCents(extra.price), 0)
   const total = (toCents(product.price) + extraTotal) * qty
+  const items = descriptionItems(product.description)
 
   function toggle(id: string) {
     setExtras((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))
@@ -41,12 +50,18 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
         <button type="button" className="product__zoom" aria-label={`Ampliar foto de ${product.name}`} onClick={() => setZoom(true)}>
           <img src={product.image} alt="" />
         </button>
-        <div>
-          <h2>{product.name}</h2>
-          <p>{product.description}</p>
-          <p className="product__price">{formatPrice(total)}</p>
-          {!product.available && <p className="item__tag">Esgotado</p>}
-        </div>
+        <h2>{product.name}</h2>
+        <p className="product__price">{formatPrice(toCents(product.price))}</p>
+        {items.length > 0 && (
+          <ul className="product__items">
+            {items.map((line, index) => (
+              <li key={`${index}-${line}`} className="product__item">
+                {line}
+              </li>
+            ))}
+          </ul>
+        )}
+        {!product.available && <p className="item__tag">Esgotado</p>}
       </div>
       {product.extras && product.extras.length > 0 && (
         <fieldset className="extras">
@@ -77,14 +92,17 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
         />
       </label>
       <p className="muted product__note-hint">Exemplo: tirar cebola, sem molho, bem passado.</p>
-      <div className="stepper" role="group" aria-label="Quantidade">
-        <button type="button" aria-label="Diminuir" disabled={!product.available || qty <= 1} onClick={() => setQty((current) => Math.max(1, current - 1))}>
-          −
-        </button>
-        <span>{qty}</span>
-        <button type="button" aria-label="Aumentar" disabled={!product.available} onClick={() => setQty((current) => current + 1)}>
-          +
-        </button>
+      <div className="product__buy">
+        <div className="stepper" role="group" aria-label="Quantidade">
+          <button type="button" aria-label="Diminuir" disabled={!product.available || qty <= 1} onClick={() => setQty((current) => Math.max(1, current - 1))}>
+            −
+          </button>
+          <span>{qty}</span>
+          <button type="button" aria-label="Aumentar" disabled={!product.available} onClick={() => setQty((current) => current + 1)}>
+            +
+          </button>
+        </div>
+        <p className="product__total">{formatPrice(total)}</p>
       </div>
       <button
         type="button"
