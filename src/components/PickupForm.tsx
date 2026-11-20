@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { PHONE_PREFIX, PHONE_REST_LENGTH, joinPhone, phoneRest } from '../lib/delivery'
 import { digitsOnly } from '../lib/identity'
@@ -12,11 +12,26 @@ type PickupFormProps = {
 }
 
 export function PickupForm({ profile, onClose, onSaved }: PickupFormProps) {
-  const { saveContact } = useAuth()
+  const { saveContact, findCustomer } = useAuth()
   const [nome, setNome] = useState(profile.nome)
   const [rest, setRest] = useState(phoneRest(profile.whatsapp))
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [found, setFound] = useState(false)
+  const lookedUp = useRef('')
+
+  function onPhone(value: string) {
+    const next = digitsOnly(value).slice(0, PHONE_REST_LENGTH)
+    setRest(next)
+    const whatsapp = joinPhone(next)
+    if (!whatsapp || profile.uid || lookedUp.current === whatsapp) return
+    lookedUp.current = whatsapp
+    void findCustomer(whatsapp).then((saved) => {
+      if (!saved) return
+      setFound(true)
+      if (!nome.trim()) setNome(saved.nome)
+    })
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -66,10 +81,15 @@ export function PickupForm({ profile, onClose, onSaved }: PickupFormProps) {
               maxLength={PHONE_REST_LENGTH}
               placeholder="0000-0000"
               value={rest}
-              onChange={(event) => setRest(digitsOnly(event.target.value).slice(0, PHONE_REST_LENGTH))}
+              onChange={(event) => onPhone(event.target.value)}
             />
           </div>
         </div>
+        {found && (
+          <p className="hint hint--ok" role="status">
+            Encontramos seu cadastro. Confira os dados e peça.
+          </p>
+        )}
 
         {error && (
           <p className="alert" role="alert">

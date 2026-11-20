@@ -18,8 +18,14 @@ import {
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 import { auth, authReady, db } from '../lib/firebase'
 import { clearSavedCustomerId, saveCustomerId } from '../lib/customerId'
-import { mapAuthError } from '../lib/errors'
-import { digitsOnly, normalizeWhatsapp, whatsappToEmail } from '../lib/identity'
+import { mapAuthError, mapCustomerError } from '../lib/errors'
+import {
+  customerAccessKey,
+  digitsOnly,
+  normalizeWhatsapp,
+  whatsappToEmail,
+  whatsappToRecoveryEmail,
+} from '../lib/identity'
 import { parseProfile, type Address, type UserProfile } from '../types'
 
 type Session =
@@ -63,14 +69,66 @@ type AuthContextValue = {
   register: (input: RegisterInput) => Promise<void>
   saveDelivery: (input: DeliveryInput) => Promise<UserProfile>
   saveContact: (input: ContactInput) => Promise<UserProfile>
+  /** Reopens the saved customer for this WhatsApp, if one exists, without creating anything. */
+  findCustomer: (whatsapp: string) => Promise<UserProfile | null>
   logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-function freshCustomerPassword(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(16))
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+const NOT_THIS_LOGIN = new Set([
+  'auth/invalid-credential',
+  'auth/invalid-login-credentials',
+  'auth/wrong-password',
+  'auth/user-not-found',
+])
+
+function authCode(error: unknown): string {
+  if (typeof error !== 'object' || error === null || !('code' in error)) return ''
+  const code = (error as { code: unknown }).code
+  return typeof code === 'string' ? code : ''
+}
+
+/** The recovery login wins: it only exists because the first one could not be opened. */
+async function signInCustomer(whatsapp: string): Promise<User | null> {
+  const key = customerAccessKey(whatsapp)
+  if (!key) return null
+  for (const email of [whatsappToRecoveryEmail(whatsapp), whatsappToEmail(whatsapp)]) {
+    if (!email) continue
+    try {
+      const credential = await signInWithEmailAndPassword(auth, email, key)
+      if (credential?.user) return credential.user
+    } catch (error) {
+      if (!NOT_THIS_LOGIN.has(authCode(error))) throw error
+    }
+  }
+  return null
+}
+
+/**
+ * Accounts made before this change have a random password nobody kept, and
+ * this app has no server that could reset it. Such a number gets the one
+ * recovery login, and every later visit reopens that same login.
+ */
+async function createCustomerLogin(whatsapp: string): Promise<User> {
+  const key = customerAccessKey(whatsapp)
+  const email = whatsappToEmail(whatsapp)
+  const recovery = whatsappToRecoveryEmail(whatsapp)
+  if (!key || !email || !recovery) throw new Error('Informe o telefone.')
+  try {
+    return (await createUserWithEmailAndPassword(auth, email, key)).user
+  } catch (error) {
+    if (authCode(error) !== 'auth/email-already-in-use') throw error
+  }
+  return (await createUserWithEmailAndPassword(auth, recovery, key)).user
+}
+
+async function readCustomer(uid: string): Promise<UserProfile | null | 'other'> {
+  const snap = await getDoc(doc(db, 'users', uid))
+  if (!snap.exists()) return null
+  const profile = parseProfile(uid, snap.data())
+  if (!profile) return null
+  return profile.role === 'customer' ? profile : 'other'
 }
 
 async function hydrate(user: User): Promise<Session> {
@@ -146,6 +204,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       unsubscribe()
     }
   }, [])
+
+  /** Same WhatsApp, same customer: reopen the saved login, or create it once. */
+  async function openCustomer(whatsapp: string, nome: string, address: Address | null): Promise<UserProfile> {
+    suspendListener.current = true
+    try {
+      let user = await signInCustomer(whatsapp)
+      let existing: UserProfile | null = null
+      let created = false
+      if (user) {
+        const found = await readCustomer(user.uid)
+        if (found === 'other') {
+          await signOut(auth).catch(() => undefined)
+          throw new Error('Este número não pode fazer pedidos por aqui.')
+        }
+        existing = found
+      } else {
+        user = await createCustomerLogin(whatsapp)
+        created = true
+      }
+
+      if (existing) {
+        const profile: UserProfile = { ...existing, nome, whatsapp, address: address ?? existing.address }
+        await updateDoc(doc(db, 'users', profile.uid), {
+          nome,
+          whatsapp,
+          ...(address ? { address } : {}),
+        })
+        saveCustomerId(profile.uid)
+        setSession({ status: 'ready', profile })
+        return profile
+      }
+
+      const profile: UserProfile = { uid: user.uid, nome, whatsapp, address, role: 'customer' }
+      try {
+        await setDoc(doc(db, 'users', profile.uid), {
+          ...profile,
+          address: address ?? EMPTY_ADDRESS,
+          createdAt: serverTimestamp(),
+        })
+      } catch (error) {
+        if (created) await deleteUser(user).catch(() => undefined)
+        throw error
+      }
+      saveCustomerId(profile.uid)
+      setSession({ status: 'ready', profile })
+      return profile
+    } catch (error) {
+      if (error instanceof Error && !authCode(error)) {
+        if (error.message.startsWith('Informe') || error.message.startsWith('Este número')) throw error
+      }
+      throw new Error(mapCustomerError(error))
+    } finally {
+      suspendListener.current = false
+    }
+  }
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -257,36 +370,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return profile
         }
 
-        const email = whatsappToEmail(whatsapp)
-        if (!email) throw new Error('Informe o telefone.')
-        suspendListener.current = true
-        try {
-          const credential = await createUserWithEmailAndPassword(auth, email, freshCustomerPassword())
-          const profile: UserProfile = {
-            uid: credential.user.uid,
-            nome,
-            whatsapp,
-            address,
-            role: 'customer',
-          }
-          try {
-            await setDoc(doc(db, 'users', profile.uid), {
-              ...profile,
-              createdAt: serverTimestamp(),
-            })
-          } catch (error) {
-            await deleteUser(credential.user).catch(() => undefined)
-            throw error
-          }
-          saveCustomerId(profile.uid)
-          setSession({ status: 'ready', profile })
-          return profile
-        } catch (error) {
-          if (error instanceof Error && error.message.startsWith('Informe')) throw error
-          throw new Error(mapAuthError(error))
-        } finally {
-          suspendListener.current = false
-        }
+        return openCustomer(whatsapp, nome, address)
       },
       async saveContact(input) {
         const nome = input.nome.trim().replace(/\s+/g, ' ')
@@ -304,34 +388,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return profile
         }
 
-        const email = whatsappToEmail(whatsapp)
-        if (!email) throw new Error('Informe o telefone.')
+        return openCustomer(whatsapp, nome, null)
+      },
+      async findCustomer(input) {
+        const whatsapp = normalizeWhatsapp(input)
+        if (!whatsapp) return null
+        if (session.status === 'ready') {
+          return session.profile.role === 'customer' && session.profile.whatsapp === whatsapp ? session.profile : null
+        }
         suspendListener.current = true
         try {
-          const credential = await createUserWithEmailAndPassword(auth, email, freshCustomerPassword())
-          const profile: UserProfile = {
-            uid: credential.user.uid,
-            nome,
-            whatsapp,
-            address: null,
-            role: 'customer',
+          const user = await signInCustomer(whatsapp)
+          if (!user) return null
+          const found = await readCustomer(user.uid)
+          if (found === 'other') {
+            await signOut(auth).catch(() => undefined)
+            return null
           }
-          try {
-            await setDoc(doc(db, 'users', profile.uid), {
-              ...profile,
-              address: EMPTY_ADDRESS,
-              createdAt: serverTimestamp(),
-            })
-          } catch (error) {
-            await deleteUser(credential.user).catch(() => undefined)
-            throw error
-          }
-          saveCustomerId(profile.uid)
-          setSession({ status: 'ready', profile })
-          return profile
-        } catch (error) {
-          if (error instanceof Error && error.message.startsWith('Informe')) throw error
-          throw new Error(mapAuthError(error))
+          if (!found) return null
+          saveCustomerId(found.uid)
+          setSession({ status: 'ready', profile: found })
+          return found
+        } catch {
+          return null
         } finally {
           suspendListener.current = false
         }

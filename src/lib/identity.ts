@@ -26,6 +26,29 @@ export function whatsappToEmail(input: string): string | null {
   return `${digits}@${AUTH_EMAIL_DOMAIN}`
 }
 
+/**
+ * Second login for a number whose first login was created with a random
+ * password that nobody kept. There is no server here to reset that password,
+ * so the customer reopens through this one fixed address instead.
+ */
+export function whatsappToRecoveryEmail(input: string): string | null {
+  const digits = normalizeWhatsapp(input)
+  if (!digits) return null
+  return `${digits}.r@${AUTH_EMAIL_DOMAIN}`
+}
+
+/**
+ * Customers have no password: the WhatsApp number is how they come back on a
+ * new browser. This key is derived from the number and ships in the bundle, so
+ * it is not a secret. firestore.rules still keep each customer to their own
+ * users/{uid} and their own orders, and never let a customer become admin.
+ */
+export function customerAccessKey(input: string): string | null {
+  const digits = normalizeWhatsapp(input)
+  if (!digits) return null
+  return `smash-cliente-v1-${digits}`
+}
+
 export function maskWhatsappInput(value: string): string {
   let digits = digitsOnly(value)
   if (digits.startsWith('55') && digits.length > 11) {

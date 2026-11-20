@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { lookupCep } from '../lib/cep'
 import { PHONE_PREFIX, PHONE_REST_LENGTH, joinPhone, phoneRest } from '../lib/delivery'
@@ -15,7 +15,7 @@ type DeliveryFormProps = {
 type CepStatus = 'idle' | 'loading' | 'found' | 'manual'
 
 export function DeliveryForm({ profile, onClose, onSaved }: DeliveryFormProps) {
-  const { saveDelivery } = useAuth()
+  const { saveDelivery, findCustomer } = useAuth()
   const [nome, setNome] = useState(profile.nome)
   const [rest, setRest] = useState(phoneRest(profile.whatsapp))
   const [cep, setCep] = useState(profile.address?.cep ? maskCep(profile.address.cep) : '')
@@ -29,9 +29,19 @@ export function DeliveryForm({ profile, onClose, onSaved }: DeliveryFormProps) {
   const [cepHint, setCepHint] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [found, setFound] = useState(false)
+  const lookedUp = useRef('')
+  const keepCep = useRef('')
 
   useEffect(() => {
     const digits = digitsOnly(cep)
+    if (keepCep.current && digits === keepCep.current) {
+      keepCep.current = ''
+      setCepStatus('manual')
+      setCepHint('')
+      return
+    }
+    keepCep.current = ''
     if (digits.length !== 8) {
       setCepStatus('idle')
       setCepHint('')
@@ -79,6 +89,32 @@ export function DeliveryForm({ profile, onClose, onSaved }: DeliveryFormProps) {
       window.clearTimeout(timer)
     }
   }, [cep])
+
+  function onPhone(value: string) {
+    const next = digitsOnly(value).slice(0, PHONE_REST_LENGTH)
+    setRest(next)
+    const whatsapp = joinPhone(next)
+    if (!whatsapp || profile.uid || lookedUp.current === whatsapp) return
+    lookedUp.current = whatsapp
+    void findCustomer(whatsapp).then((saved) => {
+      if (!saved) return
+      setFound(true)
+      if (!nome.trim()) setNome(saved.nome)
+      const address = saved.address
+      if (!address?.street || street.trim()) return
+      const savedCep = digitsOnly(address.cep)
+      if (savedCep.length === 8) keepCep.current = savedCep
+      setCep(savedCep ? maskCep(savedCep) : '')
+      setStreet(address.street)
+      setNumber(address.number)
+      setNeighborhood(address.neighborhood)
+      setCity(address.city)
+      setStateUf(address.state)
+      setReference(address.reference)
+      setCepStatus('manual')
+      setCepHint('')
+    })
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -150,10 +186,15 @@ export function DeliveryForm({ profile, onClose, onSaved }: DeliveryFormProps) {
               maxLength={PHONE_REST_LENGTH}
               placeholder="0000-0000"
               value={rest}
-              onChange={(event) => setRest(digitsOnly(event.target.value).slice(0, PHONE_REST_LENGTH))}
+              onChange={(event) => onPhone(event.target.value)}
             />
           </div>
         </div>
+        {found && (
+          <p className="hint hint--ok" role="status">
+            Encontramos seu cadastro. Confira os dados e peça.
+          </p>
+        )}
 
         <label className="field">
           <span>CEP</span>
