@@ -18,6 +18,10 @@ rules_version = '2';
 // can listen to the whole collection. Writes, including delete, require
 // users/{uid}.role == 'admin'.
 //
+// addons is the shared add-on catalog: name and price only. Everyone can
+// read it. Only an admin can write it. The public read is its own rule.
+// It is not combined with an admin check in one OR.
+//
 // settings/shop is public to read so the opening screen can show whether
 // the shop is online and the closed message. Only an admin can change it.
 // settings/theme is public to read so every customer sees the confirmed
@@ -25,6 +29,8 @@ rules_version = '2';
 // settings/raffle is public to read so the customer menu can show the
 // hourglass and the order note. Only an admin writes the title, the day,
 // and the winner. A customer records only their own dismissal.
+// settings/catalog is admin-only. It records that product extras were
+// copied into the add-on catalog once. Customers do not read it.
 //
 // faturamento/{orderId} stores the amount once, when an order leaves em
 // andamento for finalizado. Admins read it. The create is one-shot: a
@@ -77,6 +83,23 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    function addonWrite() {
+      let data = request.resource.data;
+      return isAdmin()
+        && data.keys().hasOnly(['name', 'price'])
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 80
+        && data.price is number
+        && data.price > 0;
+    }
+
+    match /addons/{addonId} {
+      allow read: if true;
+      allow create, update: if addonWrite();
+      allow delete: if isAdmin();
+    }
+
     match /products/{productId} {
       allow read: if isAdmin();
       allow read: if resource.data.available == true;
@@ -118,7 +141,9 @@ service cloud.firestore {
 
     match /settings/{settingId} {
       allow read: if settingId == 'shop' || settingId == 'theme' || settingId == 'raffle';
+      allow read: if settingId == 'catalog' && isAdmin();
       allow write: if (settingId == 'shop' || settingId == 'theme' || settingId == 'raffle') && isAdmin();
+      allow write: if settingId == 'catalog' && isAdmin();
     }
 
     match /raffleDismissals/{dismissalId} {

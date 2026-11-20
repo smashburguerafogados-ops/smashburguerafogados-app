@@ -1,13 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import type { Category, Extra } from '../data/catalog'
 import {
-  createCategory,
+  addonChoices,
+  addonKey,
   createProduct,
   parsePrice,
-  setCategoryDestaque,
   updateProduct,
+  useAddonCatalog,
   watchCategories,
-  watchProducts,
   type ListedProduct,
 } from '../lib/adminCatalog'
 import { formatPrice, maskPrice, toCents } from '../lib/money'
@@ -21,36 +21,24 @@ type ProductFormProps = {
   product?: ListedProduct
 }
 
-type ExtraDraft = { key: number; id?: string; name: string; price: string }
-
 function reaisField(reais: number): string {
   return formatPrice(toCents(reais)).replace('R$ ', '')
 }
-
-const NEW_CATEGORY = '__nova__'
 
 export function ProductForm({ onClose, onSaved, product }: ProductFormProps) {
   const editing = Boolean(product)
   const [categories, setCategories] = useState<Category[]>([])
   const [categoriesError, setCategoriesError] = useState('')
+  const { addons, error: addonsError } = useAddonCatalog()
   const [name, setName] = useState(product?.name ?? '')
   const [photo, setPhoto] = useState(product?.image ?? '')
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? '')
-  const [newCategory, setNewCategory] = useState('')
-  const [newDestaque, setNewDestaque] = useState(false)
   const [price, setPrice] = useState(product ? reaisField(product.price) : '')
   const [description, setDescription] = useState(product?.description ?? '')
   const [available, setAvailable] = useState(product?.available !== false)
-  const [extras, setExtras] = useState<ExtraDraft[]>(() =>
-    (product?.extras ?? []).map((extra, index) => ({
-      key: index + 1,
-      id: extra.id,
-      name: extra.name,
-      price: reaisField(extra.price),
-    })),
+  const [picked, setPicked] = useState<string[]>(() =>
+    (product?.extras ?? []).map((extra) => addonKey(extra.name)).filter(Boolean),
   )
-  const [nextKey, setNextKey] = useState(() => (product?.extras.length ?? 0) + 1)
-  const [knownExtras, setKnownExtras] = useState<Extra[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
@@ -75,26 +63,8 @@ export function ProductForm({ onClose, onSaved, product }: ProductFormProps) {
     [],
   )
 
-  useEffect(
-    () =>
-      watchProducts(
-        (next) => {
-          const byName = new Map<string, Extra>()
-          for (const item of next) {
-            for (const extra of item.extras) {
-              const key = extra.name.trim().toLowerCase()
-              if (!key || byName.has(key)) continue
-              byName.set(key, extra)
-            }
-          }
-          setKnownExtras([...byName.values()].sort((a, b) => a.name.localeCompare(b.name, 'pt')))
-        },
-        () => undefined,
-      ),
-    [],
-  )
-
   const selected = categories.find((category) => category.id === categoryId) ?? null
+  const choices = addonChoices(addons, product?.extras ?? [])
 
   async function onPhoto(file: File | undefined) {
     if (!file) return
@@ -106,47 +76,10 @@ export function ProductForm({ onClose, onSaved, product }: ProductFormProps) {
     }
   }
 
-  async function addCategory() {
-    setError('')
-    try {
-      const order = categories.reduce((max, category) => Math.max(max, category.order), 0) + 1
-      const id = await createCategory(newCategory, newDestaque, order)
-      setCategoryId(id)
-      setNewCategory('')
-      setNewDestaque(false)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível criar a categoria.')
-    }
-  }
-
-  async function toggleDestaque(value: boolean) {
-    if (!selected) return
-    try {
-      await setCategoryDestaque(selected.id, value)
-    } catch {
-      setError('Não foi possível atualizar o destaque.')
-    }
-  }
-
-  function addExtra() {
-    setExtras((current) => [...current, { key: nextKey, name: '', price: '' }])
-    setNextKey((key) => key + 1)
-  }
-
-  function copyExtra(name: string) {
-    const source = knownExtras.find((extra) => extra.name === name)
-    if (!source) return
-    const taken = extras.some((extra) => extra.name.trim().toLowerCase() === source.name.trim().toLowerCase())
-    if (taken) return
-    setExtras((current) => [
-      ...current,
-      { key: nextKey, name: source.name, price: reaisField(source.price) },
-    ])
-    setNextKey((key) => key + 1)
-  }
-
-  function updateExtra(key: number, patch: Partial<ExtraDraft>) {
-    setExtras((current) => current.map((extra) => (extra.key === key ? { ...extra, ...patch } : extra)))
+  function toggleAddon(name: string) {
+    const key = addonKey(name)
+    if (!key) return
+    setPicked((current) => (current.includes(key) ? current.filter((item) => item !== key) : [...current, key]))
   }
 
   async function onSubmit(event: FormEvent) {
@@ -159,15 +92,9 @@ export function ProductForm({ onClose, onSaved, product }: ProductFormProps) {
     if (!selected) return setError('Escolha uma categoria.')
     if (value === null) return setError('Informe um valor válido, por exemplo 28,90.')
 
-    const cleanExtras: Extra[] = []
-    for (const extra of extras) {
-      if (!extra.name.trim() && !extra.price.trim()) continue
-      const extraPrice = parsePrice(extra.price)
-      if (!extra.name.trim() || extraPrice === null) {
-        return setError('Cada adicional precisa de nome e valor.')
-      }
-      cleanExtras.push({ id: extra.id ?? `extra-${extra.key}`, name: extra.name.trim(), price: extraPrice })
-    }
+    const cleanExtras: Extra[] = choices
+      .filter((addon) => picked.includes(addonKey(addon.name)))
+      .map((addon) => ({ id: addon.id, name: addon.name, price: addon.price }))
 
     const draft = {
       name,
@@ -190,7 +117,7 @@ export function ProductForm({ onClose, onSaved, product }: ProductFormProps) {
         setPhoto('')
         setPrice('')
         setDescription('')
-        setExtras([])
+        setPicked([])
       }
       onSaved()
     } catch {
@@ -253,44 +180,10 @@ export function ProductForm({ onClose, onSaved, product }: ProductFormProps) {
                 value: category.id,
                 label: category.destaque ? `${category.name} (destaque)` : category.name,
               })),
-              { value: NEW_CATEGORY, label: '+ Nova categoria' },
             ]}
           />
         </div>
         {categoriesError && <p className="alert">{categoriesError}</p>}
-
-        {selected && (
-          <div className="category-tools">
-            <label className="check">
-              <input
-                type="checkbox"
-                checked={Boolean(selected.destaque)}
-                onChange={(event) => void toggleDestaque(event.target.checked)}
-              />
-              <span>Destaque</span>
-            </label>
-          </div>
-        )}
-
-        {categoryId === NEW_CATEGORY && (
-          <div className="category-tools category-tools--new">
-            <label className="field">
-              <span>Nova categoria</span>
-              <input value={newCategory} maxLength={40} onChange={(event) => setNewCategory(event.target.value)} />
-            </label>
-            <label className="check">
-              <input
-                type="checkbox"
-                checked={newDestaque}
-                onChange={(event) => setNewDestaque(event.target.checked)}
-              />
-              <span>Destaque</span>
-            </label>
-            <button type="button" className="btn btn--ghost" onClick={() => void addCategory()}>
-              Criar categoria
-            </button>
-          </div>
-        )}
 
         <div className="field">
           <span id="product-price">Valor (R$)</span>
@@ -327,54 +220,24 @@ export function ProductForm({ onClose, onSaved, product }: ProductFormProps) {
 
         <fieldset className="extras">
           <legend>Adicionais</legend>
-          {knownExtras.length > 0 && (
-            <ChoiceList
-              label="Adicionais já cadastrados"
-              value=""
-              onChange={copyExtra}
-              choices={[
-                { value: '', label: 'Escolha um adicional' },
-                ...knownExtras.map((extra) => ({
-                  value: extra.name,
-                  label: `${extra.name} · ${formatPrice(toCents(extra.price))}`,
-                })),
-              ]}
-            />
-          )}
-          {extras.length === 0 && <p className="muted">Ex.: molho, bacon, cheddar.</p>}
-          {extras.map((extra, index) => (
-            <div key={extra.key} className="extra-row">
-              <input
-                aria-label={`Adicional ${index + 1}`}
-                placeholder="Nome"
-                value={extra.name}
-                onChange={(event) => updateExtra(extra.key, { name: event.target.value })}
-              />
-              <div className="money-join">
-                <span className="money-join__prefix" aria-hidden="true">
-                  R$
-                </span>
+          {choices.length === 0 ? (
+            <p className="muted">Cadastre os adicionais na área Adicionais.</p>
+          ) : (
+            choices.map((addon) => (
+              <label key={addon.id}>
                 <input
-                  aria-label={`Valor do adicional ${index + 1}`}
-                  inputMode="numeric"
-                  placeholder="0,00"
-                  value={extra.price}
-                  onChange={(event) => updateExtra(extra.key, { price: maskPrice(event.target.value) })}
+                  type="checkbox"
+                  checked={picked.includes(addonKey(addon.name))}
+                  onChange={() => toggleAddon(addon.name)}
                 />
-              </div>
-              <button
-                type="button"
-                className="text-btn"
-                onClick={() => setExtras((current) => current.filter((item) => item.key !== extra.key))}
-              >
-                Remover
-              </button>
-            </div>
-          ))}
-          <button type="button" className="text-btn" onClick={addExtra}>
-            + Adicional
-          </button>
+                <span>
+                  {addon.name} · {formatPrice(toCents(addon.price))}
+                </span>
+              </label>
+            ))
+          )}
         </fieldset>
+        {addonsError && <p className="alert">{addonsError}</p>}
 
         {error && (
           <p className="alert" role="alert">

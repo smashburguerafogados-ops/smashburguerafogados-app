@@ -27,6 +27,12 @@ describe('firestore.rules', () => {
     const categories = block('categories')
     expect(categories).toContain('allow read: if true;')
     expect(categories).toContain('allow write: if isAdmin();')
+    const addons = block('addons')
+    expect(addons).toContain('allow read: if true;')
+    expect(addons).toContain('allow create, update: if addonWrite();')
+    expect(addons).toContain('allow delete: if isAdmin();')
+    expect(addons).not.toContain('||')
+    expect(rules).toContain("data.keys().hasOnly(['name', 'price'])")
     expect(rules).toContain(".data.role == 'admin'")
   })
 
@@ -62,6 +68,9 @@ describe('firestore.rules', () => {
     expect(settings).toContain(
       "allow write: if (settingId == 'shop' || settingId == 'theme' || settingId == 'raffle') && isAdmin();",
     )
+    expect(settings).toContain("allow read: if settingId == 'catalog' && isAdmin();")
+    expect(settings).toContain("allow write: if settingId == 'catalog' && isAdmin();")
+    expect(settings).not.toContain('isAdmin() ||')
     const dismissals = block('raffleDismissals')
     expect(dismissals).toContain('allow read: if isAdmin();')
     expect(dismissals).toContain('resource.data.customerId == request.auth.uid')

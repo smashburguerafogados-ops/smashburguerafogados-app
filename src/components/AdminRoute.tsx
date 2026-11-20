@@ -8,6 +8,8 @@ import type { UserProfile } from '../types'
 import { AdminPanel } from './AdminPanel'
 import { BroadcastScreen } from './BroadcastScreen'
 import { ContactScreen } from './ContactScreen'
+import { AddonScreen } from './AddonScreen'
+import { CategoryScreen } from './CategoryScreen'
 import { ProductDesk } from './ProductDesk'
 import { ProductForm } from './ProductForm'
 import { RevenueScreen } from './RevenueScreen'
@@ -17,7 +19,19 @@ import { RaffleScreen } from './RaffleScreen'
 import { ShopScreen } from './ShopControls'
 import { SideMenu } from './SideMenu'
 
-type AdminScreen = 'create' | 'desk' | 'shop' | 'manage' | 'revenue' | 'themes' | 'contact' | 'broadcast' | 'raffle' | null
+type AdminScreen =
+  | 'create'
+  | 'desk'
+  | 'categories'
+  | 'addons'
+  | 'shop'
+  | 'manage'
+  | 'revenue'
+  | 'themes'
+  | 'contact'
+  | 'broadcast'
+  | 'raffle'
+  | null
 
 function MenuIcon() {
   return (
@@ -163,6 +177,8 @@ export function AdminRoute() {
           onShop={() => openScreen('shop')}
           onManage={() => openScreen('manage')}
           onProducts={() => openScreen('desk')}
+          onCategories={() => openScreen('categories')}
+          onAddons={() => openScreen('addons')}
           onRevenue={() => openScreen('revenue')}
           onThemes={() => openScreen('themes')}
           onContact={() => openScreen('contact')}
@@ -173,6 +189,8 @@ export function AdminRoute() {
       )}
       {screenName === 'create' && <ProductForm onClose={() => setScreenName(null)} onSaved={() => undefined} />}
       {screenName === 'desk' && <ProductDesk onClose={() => setScreenName(null)} />}
+      {screenName === 'categories' && <CategoryScreen onClose={() => setScreenName(null)} />}
+      {screenName === 'addons' && <AddonScreen onClose={() => setScreenName(null)} />}
       {screenName === 'shop' && <ShopScreen onClose={() => setScreenName(null)} />}
       {screenName === 'manage' && <ManagementScreen onClose={() => setScreenName(null)} />}
       {screenName === 'revenue' && (

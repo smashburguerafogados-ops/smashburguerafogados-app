@@ -1949,6 +1949,19 @@ html .chips .chip.chip--destaque {
   font: inherit;
 }
 
+.catalog__price {
+  color: #e3b15a;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.catalog__edit-fields {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
 .catalog__tools {
   display: flex;
   flex: none;

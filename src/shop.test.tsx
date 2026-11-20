@@ -38,7 +38,6 @@ async function openDesk() {
   await waitFor(() => expect(activeListeners('products')).toHaveLength(1))
   await act(async () => {
     emit('products', products)
-    emit('categories', categories)
   })
   return { user, desk }
 }
@@ -76,16 +75,21 @@ describe('Produtos', () => {
     const card = within(desk).getByRole('article', { name: 'Smash da casa' })
     await user.click(within(card).getByRole('button', { name: 'Editar' }))
     const form = await screen.findByRole('dialog', { name: 'Editar produto' })
-    await waitFor(() => expect(activeListeners('categories').length).toBeGreaterThan(1))
+    await waitFor(() => expect(activeListeners('categories').length).toBeGreaterThan(0))
+    await waitFor(() => expect(activeListeners('addons').length).toBeGreaterThan(0))
     await act(async () => {
       emit('categories', categories)
+      emit('addons', [
+        { id: 'addon-bacon', name: 'Bacon', price: 4 },
+        { id: 'addon-cheddar', name: 'Cheddar', price: 3 },
+      ])
     })
     expect(within(form).getByRole('textbox', { name: 'Nome' })).toHaveValue('Smash da casa')
     expect(within(form).getByRole('textbox', { name: 'Valor (R$)' })).toHaveValue('28,00')
     expect(within(form).getByRole('textbox', { name: 'Descrição' })).toHaveValue('Blend 80g.')
     expect(within(form).getByRole('img', { name: 'Prévia da foto' })).toHaveAttribute('src', 'data:image/jpeg;base64,QUJD')
     expect(within(form).getByRole('checkbox', { name: 'Disponível' })).toBeChecked()
-    expect(within(form).getByRole('textbox', { name: 'Adicional 1' })).toHaveValue('Bacon')
+    expect(within(form).getByRole('checkbox', { name: 'Bacon · R$ 4,00' })).toBeChecked()
 
     const name = within(form).getByRole('textbox', { name: 'Nome' })
     await user.clear(name)
@@ -102,9 +106,7 @@ describe('Produtos', () => {
     const description = within(form).getByRole('textbox', { name: 'Descrição' })
     await user.clear(description)
     await user.type(description, 'Dois blends.')
-    const extraPrice = within(form).getByRole('textbox', { name: 'Valor do adicional 1' })
-    await user.clear(extraPrice)
-    await user.type(extraPrice, '500')
+    await user.click(within(form).getByRole('checkbox', { name: 'Cheddar · R$ 3,00' }))
     await user.click(within(form).getByRole('checkbox', { name: 'Disponível' }))
     await user.click(within(form).getByRole('button', { name: 'Salvar produto' }))
 
@@ -117,7 +119,10 @@ describe('Produtos', () => {
         price: 32.5,
         description: 'Dois blends.',
         image: 'data:image/jpeg;base64,QUJD',
-        extras: [{ id: 'extra-bacon', name: 'Bacon', price: 5 }],
+        extras: [
+          { id: 'addon-bacon', name: 'Bacon', price: 4 },
+          { id: 'addon-cheddar', name: 'Cheddar', price: 3 },
+        ],
         available: false,
       },
     )
@@ -143,55 +148,6 @@ describe('Produtos', () => {
     expect(firebaseMocks.deleteDoc).toHaveBeenCalledWith({ path: 'products/smash' })
   })
 
-  it('asks before deleting a category and blocks the delete while products use it', async () => {
-    firebaseMocks.getDocs.mockImplementation(async (ref: unknown) => {
-      const constraints = (ref as { constraints?: { value?: string }[] }).constraints
-      if (constraints?.some((constraint) => constraint.value === 'lanches')) {
-        return { empty: false, docs: [{ id: 'smash' }] }
-      }
-      return { empty: true, docs: [] }
-    })
-    const { user, desk } = await openDesk()
-
-    await user.click(
-      within(within(desk).getByRole('article', { name: 'Lanches' })).getByRole('button', { name: 'Apagar' }),
-    )
-    await user.click(within(screen.getByRole('alertdialog', { name: 'Confirmar exclusão' })).getByRole('button', { name: 'Excluir' }))
-    expect(await within(desk).findByRole('alert')).toHaveTextContent(
-      'Esta categoria ainda tem produtos. Exclua esses produtos antes.',
-    )
-    expect(firebaseMocks.deleteDoc).not.toHaveBeenCalled()
-
-    await user.click(
-      within(within(desk).getByRole('article', { name: 'Bebidas' })).getByRole('button', { name: 'Apagar' }),
-    )
-    await user.click(within(screen.getByRole('alertdialog', { name: 'Confirmar exclusão' })).getByRole('button', { name: 'Excluir' }))
-    expect(firebaseMocks.deleteDoc).toHaveBeenCalledWith({ path: 'categories/bebidas' })
-  })
-
-  it('edits a category from an icon and can mark it destaque', async () => {
-    const { user, desk } = await openDesk()
-    const card = within(desk).getByRole('article', { name: 'Lanches' })
-    const tools = within(card).getAllByRole('button')
-    expect(tools).toHaveLength(3)
-    for (const button of tools) {
-      expect(button).not.toHaveTextContent('Excluir')
-      expect(button).not.toHaveTextContent('Lanches')
-      expect(button.querySelector('svg')).toBeInTheDocument()
-      expect(parseFloat(getComputedStyle(button).width)).toBeGreaterThanOrEqual(44)
-    }
-
-    await user.click(within(card).getByRole('button', { name: 'Editar' }))
-    const name = within(card).getByRole('textbox', { name: 'Novo nome' })
-    await user.clear(name)
-    await user.type(name, 'Burgers')
-    await user.click(within(card).getByRole('button', { name: 'Salvar nome' }))
-    expect(firebaseMocks.updateDoc).toHaveBeenCalledWith({ path: 'categories/lanches' }, { name: 'Burgers' })
-
-    const drinks = within(desk).getByRole('article', { name: 'Bebidas' })
-    await user.click(within(drinks).getByRole('button', { name: 'Destacar' }))
-    expect(firebaseMocks.updateDoc).toHaveBeenCalledWith({ path: 'categories/bebidas' }, { destaque: true })
-  })
 })
 
 async function openShop() {
