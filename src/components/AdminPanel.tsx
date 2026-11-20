@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   COLUMN_LABEL,
+  FULFILLMENT_LABEL,
   columnOf,
   orderMatches,
   watchAllOrders,
@@ -109,6 +110,7 @@ export function AdminPanel() {
               onClick={() => setOpenId(order.id)}
             >
               <span className="order-card__name">{order.customerName || 'Sem nome'}</span>
+              <span className="order-card__mode">{FULFILLMENT_LABEL[order.fulfillment]}</span>
               <span className="order-card__order">
                 {orderItems(order).map((line, index) => (
                   <span key={`${line}-${index}`}>{line}</span>

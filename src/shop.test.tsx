@@ -207,7 +207,17 @@ describe('shop hours', () => {
     await user.click(toggle)
     expect(firebaseMocks.setDoc).toHaveBeenCalledWith(
       { path: 'settings/shop' },
-      { online: false, message: DEFAULT_CLOSED_MESSAGE },
+      { online: false, message: DEFAULT_CLOSED_MESSAGE, hours: '' },
+      { merge: true },
+    )
+
+    const hours = within(sheet).getByRole('textbox', { name: 'Horário de funcionamento' })
+    await user.clear(hours)
+    await user.type(hours, 'Quarta a domingo, 18h às 23h')
+    await user.click(within(sheet).getByRole('button', { name: 'Salvar horário' }))
+    expect(firebaseMocks.setDoc).toHaveBeenLastCalledWith(
+      { path: 'settings/shop' },
+      { online: false, message: DEFAULT_CLOSED_MESSAGE, hours: 'Quarta a domingo, 18h às 23h' },
       { merge: true },
     )
 
@@ -217,9 +227,21 @@ describe('shop hours', () => {
     await user.click(within(sheet).getByRole('button', { name: 'Salvar mensagem' }))
     expect(firebaseMocks.setDoc).toHaveBeenLastCalledWith(
       { path: 'settings/shop' },
-      { online: false, message: 'Hoje fechado. Abrimos sexta, das 18h às 23h.' },
+      { online: false, message: 'Hoje fechado. Abrimos sexta, das 18h às 23h.', hours: 'Quarta a domingo, 18h às 23h' },
       { merge: true },
     )
+  })
+
+  it('shows the shop hours on the customer menu with a soft blink', async () => {
+    renderApp()
+    await waitFor(() => expect(activeListeners('settings/shop')).toHaveLength(1))
+    expect(screen.queryByText(/Horário:/)).not.toBeInTheDocument()
+    await act(async () => {
+      emitDoc('settings/shop', { online: true, message: DEFAULT_CLOSED_MESSAGE, hours: 'Quarta a domingo, 18h às 23h' })
+    })
+    const hours = document.querySelector('.menu__hours')
+    expect(hours).toHaveTextContent('Horário: Quarta a domingo, 18h às 23h')
+    expect(getComputedStyle(hours!).animationName).toContain('hours-pulse')
   })
 
   it('keeps a customer on the opening screen when the shop is offline', async () => {

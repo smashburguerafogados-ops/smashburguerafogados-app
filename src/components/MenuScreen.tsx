@@ -216,6 +216,12 @@ export function MenuScreen() {
         </div>
       </header>
 
+      {shop.hours ? (
+        <p className="menu__hours" role="status">
+          Horário: {shop.hours}
+        </p>
+      ) : null}
+
       <label className="field menu__search">
         <span className="sr-only">Buscar</span>
         <input

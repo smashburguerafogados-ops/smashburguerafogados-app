@@ -25,10 +25,15 @@ export function joinPhone(rest: string): string | null {
   return normalizeWhatsapp(`${PREFIX_DIGITS}${typed}`)
 }
 
-export function deliveryReady(profile: UserProfile): boolean {
+/** Nome and WhatsApp are enough for pickup. Delivery still needs the address. */
+export function contactReady(profile: UserProfile): boolean {
   if (profile.role !== 'customer') return false
   if (!profile.nome.trim()) return false
-  if (!normalizeWhatsapp(profile.whatsapp)) return false
+  return Boolean(normalizeWhatsapp(profile.whatsapp))
+}
+
+export function deliveryReady(profile: UserProfile): boolean {
+  if (!contactReady(profile)) return false
   const address = profile.address
   if (!address) return false
   return Boolean(

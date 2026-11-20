@@ -202,6 +202,7 @@ describe('cart and checkout', () => {
       customerWhatsapp: '5587988887777',
       status: 'novo',
       reason: '',
+      fulfillment: 'entrega',
       totalCents: 4400,
       payment: { method: 'dinheiro', needsChange: true, cashCents: 5000, changeCents: 600 },
     })
@@ -209,6 +210,53 @@ describe('cart and checkout', () => {
     expect(payload.address).toMatchObject({ street: 'Rua das Flores', number: '120' })
     expect(dock().querySelector('.dock__count')).toHaveTextContent('0')
     expect(dock().querySelector('.dock__sum')).toHaveTextContent('R$ 0,00')
+  })
+
+  it('places a pickup order without asking for address', async () => {
+    signInAs({ ...customerProfile, address: null })
+    const user = userEvent.setup()
+    renderApp()
+    await waitFor(() => expect(firebaseMocks.getDoc).toHaveBeenCalled())
+    await addToCart(user, /Smash da casa/)
+    await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
+    const cart = screen.getByRole('dialog', { name: 'Carrinho' })
+    await user.click(within(cart).getByRole('radio', { name: 'Retirada' }))
+    expect(within(cart).getByText('Os pagamentos são feitos na retirada.')).toBeInTheDocument()
+    await user.click(within(cart).getByRole('radio', { name: 'Pix' }))
+    await user.click(within(cart).getByRole('button', { name: 'Fazer Pedido' }))
+    expect(await screen.findByText('Pedido enviado')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Dados para entrega' })).not.toBeInTheDocument()
+    const [, payload] = firebaseMocks.addDoc.mock.calls[0] as [unknown, Record<string, unknown>]
+    expect(payload).toMatchObject({
+      fulfillment: 'retirada',
+      customerName: 'Ana Souza',
+      address: null,
+    })
+  })
+
+  it('asks only for name and phone when pickup data is missing', async () => {
+    signInAs({ ...customerProfile, nome: '', whatsapp: '', address: null })
+    const user = userEvent.setup()
+    renderApp()
+    await waitFor(() => expect(firebaseMocks.getDoc).toHaveBeenCalled())
+    await addToCart(user, /Smash da casa/)
+    await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
+    const cart = screen.getByRole('dialog', { name: 'Carrinho' })
+    await user.click(within(cart).getByRole('radio', { name: 'Retirada' }))
+    await user.click(within(cart).getByRole('radio', { name: 'Pix' }))
+    await user.click(within(cart).getByRole('button', { name: 'Fazer Pedido' }))
+    const form = screen.getByRole('dialog', { name: 'Dados para retirada' })
+    expect(within(form).queryByRole('textbox', { name: 'CEP' })).not.toBeInTheDocument()
+    await user.type(within(form).getByRole('textbox', { name: 'Nome' }), 'Ana Souza')
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '88887777')
+    await user.click(within(form).getByRole('button', { name: 'Salvar e pedir' }))
+    expect(await screen.findByText('Pedido enviado')).toBeInTheDocument()
+    expect(firebaseMocks.updateDoc).toHaveBeenCalledWith(
+      { path: 'users/cliente-1' },
+      { nome: 'Ana Souza', whatsapp: '5587988887777' },
+    )
+    const [, payload] = firebaseMocks.addDoc.mock.calls[0] as [unknown, Record<string, unknown>]
+    expect(payload).toMatchObject({ fulfillment: 'retirada', address: null, customerName: 'Ana Souza' })
   })
 
   it('opens the delivery fields instead of Conta when the person is signed out', async () => {

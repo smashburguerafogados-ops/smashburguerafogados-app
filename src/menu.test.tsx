@@ -204,6 +204,11 @@ it('adds a note and updates the cart count and total', async () => {
 
   await user.click(screen.getByRole('button', { name: /Smash da casa/ }))
   const detail = screen.getByRole('dialog', { name: 'Smash da casa' })
+  expect(within(detail).getByRole('textbox', { name: 'Observação' })).toHaveAttribute(
+    'placeholder',
+    'Ex.: tirar cebola, ponto da carne',
+  )
+  expect(detail).toHaveTextContent('Exemplo: tirar cebola, sem molho, bem passado.')
   await user.type(within(detail).getByRole('textbox', { name: 'Observação' }), 'sem cebola')
   await user.click(within(detail).getByRole('button', { name: 'Adicionar' }))
 

@@ -115,7 +115,8 @@ function greeting(name: string): string {
   return first ? `Olá, ${first}!` : 'Olá!'
 }
 
-export function formatAddress(order: Pick<Order, 'address'>): string {
+export function formatAddress(order: Pick<Order, 'address' | 'fulfillment'>): string {
+  if (order.fulfillment === 'retirada') return 'Retirada no balcão'
   const address = order.address
   if (!address) return 'Endereço não informado'
   const line = [address.street, address.number].filter(Boolean).join(', ')
@@ -125,10 +126,11 @@ export function formatAddress(order: Pick<Order, 'address'>): string {
   return parts.join(' | ')
 }
 
-export function paymentLine(order: Pick<Order, 'payment'>): string {
+export function paymentLine(order: Pick<Order, 'payment' | 'fulfillment'>): string {
   const { payment } = order
   const label = PAYMENT_LABELS[payment.method]
-  if (payment.method !== 'dinheiro') return `${label} (pague ao entregador)`
+  const where = order.fulfillment === 'retirada' ? 'na retirada' : 'ao entregador'
+  if (payment.method !== 'dinheiro') return `${label} (pague ${where})`
   if (!payment.needsChange || payment.cashCents === null) return `${label}, sem troco`
   const change = payment.changeCents ?? 0
   return `${label}, troco para ${formatPrice(payment.cashCents)} (troco ${formatPrice(change)})`
@@ -152,8 +154,11 @@ export function refusedMessage(order: Order, reason: string): string {
 }
 
 export function sentMessage(order: Order): string {
+  const pickup = order.fulfillment === 'retirada'
   const lines = [
-    `${SYMBOLS.scooter} ${greeting(order.customerName)} Seu pedido #${shortId(order.id)} saiu para entrega.`,
+    pickup
+      ? `${SYMBOLS.box} ${greeting(order.customerName)} Seu pedido #${shortId(order.id)} está pronto para retirada.`
+      : `${SYMBOLS.scooter} ${greeting(order.customerName)} Seu pedido #${shortId(order.id)} saiu para entrega.`,
     `${SYMBOLS.burger} ${BUSINESS_NAME}`,
     `${SYMBOLS.box} Itens:`,
   ]
@@ -164,8 +169,8 @@ export function sentMessage(order: Order): string {
   lines.push(
     `${SYMBOLS.money} Total: ${formatPrice(order.totalCents)}`,
     `${SYMBOLS.cash} Pagamento: ${paymentLine(order)}`,
-    `${SYMBOLS.pin} Endereço: ${formatAddress(order)}`,
-    `${SYMBOLS.scooter} A entrega está a caminho!`,
+    `${SYMBOLS.pin} ${pickup ? 'Retirada' : 'Endereço'}: ${formatAddress(order)}`,
+    pickup ? `${SYMBOLS.box} Pode vir buscar!` : `${SYMBOLS.scooter} A entrega está a caminho!`,
   )
   return lines.join('\n')
 }

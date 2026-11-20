@@ -86,6 +86,7 @@ export function makeOrder(overrides: Partial<Order> = {}): FakeDoc {
     customerName: customerProfile.nome,
     customerWhatsapp: customerProfile.whatsapp,
     address: customerProfile.address,
+    fulfillment: 'entrega',
     items: [
       {
         productId: 'smash-casa',
