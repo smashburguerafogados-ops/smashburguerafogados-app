@@ -1,8 +1,9 @@
 import { digitsOnly, normalizeWhatsapp } from './identity'
 import type { UserProfile } from '../types'
 
-/** DDD 87 and the mobile 9, shown beside the field. The rest is what they type. */
+/** DDD 87 and the mobile 9, shown beside the field on an order. The rest is what they type. */
 export const PHONE_PREFIX = '87 9'
+export const DEFAULT_DDD = '87'
 
 const PREFIX_DIGITS = digitsOnly(PHONE_PREFIX)
 export const PHONE_REST_LENGTH = 8
@@ -15,14 +16,29 @@ export function phoneRest(stored: string): string {
   return national.slice(PREFIX_DIGITS.length).slice(0, PHONE_REST_LENGTH)
 }
 
+/** DDD and the digits after the mobile 9. A missing number starts at DDD 87. */
+export function splitPhone(stored: string): { ddd: string; rest: string } {
+  const digits = digitsOnly(stored)
+  const national = digits.startsWith('55') ? digits.slice(2) : digits
+  if (national.length >= 3 && national[2] === '9') {
+    return {
+      ddd: national.slice(0, 2),
+      rest: national.slice(3, 3 + PHONE_REST_LENGTH),
+    }
+  }
+  return { ddd: DEFAULT_DDD, rest: phoneRest(stored) }
+}
+
 /**
- * One full number: the 87 9 prefix plus what they typed, with country code 55.
- * The prefix is not stored on its own.
+ * One full number: DDD, the mobile 9, and what they typed, with country code 55.
+ * DDD defaults to 87. Nothing is stored on its own.
  */
-export function joinPhone(rest: string): string | null {
+export function joinPhone(rest: string, ddd: string = DEFAULT_DDD): string | null {
+  const area = digitsOnly(ddd).slice(0, 2)
+  if (area.length !== 2) return null
   const typed = digitsOnly(rest).slice(0, PHONE_REST_LENGTH)
   if (typed.length !== PHONE_REST_LENGTH) return null
-  return normalizeWhatsapp(`${PREFIX_DIGITS}${typed}`)
+  return normalizeWhatsapp(`${area}9${typed}`)
 }
 
 /** Nome and WhatsApp are enough for pickup. Delivery still needs the address. */

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { lookupCep } from '../lib/cep'
-import { PHONE_PREFIX, PHONE_REST_LENGTH, deliveryReady, joinPhone, phoneRest } from '../lib/delivery'
+import { PHONE_PREFIX, PHONE_REST_LENGTH, deliveryReady, joinPhone, phoneRest, splitPhone } from '../lib/delivery'
 import { digitsOnly, formatWhatsapp, maskCep } from '../lib/identity'
 import type { UserProfile } from '../types'
 import { BuildingIcon, CardIcon, FindMark, PencilIcon, PhoneIcon, PinIcon, SaveIcon } from './Marks'
@@ -23,7 +23,9 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
   const { saveDelivery, findCustomer } = useAuth()
   const [nome, setNome] = useState(profile.nome)
   const [knownName, setKnownName] = useState(Boolean(profile.nome.trim()))
-  const [rest, setRest] = useState(phoneRest(profile.whatsapp))
+  const openedPhone = splitPhone(profile.whatsapp)
+  const [ddd, setDdd] = useState(openedPhone.ddd)
+  const [rest, setRest] = useState(ordering ? phoneRest(profile.whatsapp) : openedPhone.rest)
   const [cep, setCep] = useState(profile.address?.cep ? maskCep(profile.address.cep) : '')
   const [street, setStreet] = useState(profile.address?.street ?? '')
   const [number, setNumber] = useState(profile.address?.number ?? '')
@@ -156,10 +158,24 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
     }
   }, [cep])
 
+  function composedPhone(nextRest: string, nextDdd: string) {
+    return ordering ? joinPhone(nextRest) : joinPhone(nextRest, nextDdd)
+  }
+
+  function onDdd(value: string) {
+    const nextDdd = digitsOnly(value).slice(0, 2)
+    setDdd(nextDdd)
+    syncPhone(rest, nextDdd)
+  }
+
   function onPhone(value: string) {
     const next = digitsOnly(value).slice(0, PHONE_REST_LENGTH)
     setRest(next)
-    const whatsapp = joinPhone(next)
+    syncPhone(next, ddd)
+  }
+
+  function syncPhone(nextRest: string, nextDdd: string) {
+    const whatsapp = composedPhone(nextRest, nextDdd)
     if (identify) {
       if (!whatsapp) {
         ticket.current += 1
@@ -200,9 +216,9 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
       setError('Informe seu nome.')
       return
     }
-    const whatsapp = joinPhone(rest)
+    const whatsapp = composedPhone(rest, ddd)
     if (!whatsapp) {
-      setError('Informe o restante do telefone.')
+      setError(!ordering && digitsOnly(ddd).length !== 2 ? 'Informe o DDD.' : 'Informe o restante do telefone.')
       return
     }
     if (cepStatus === 'idle' || cepStatus === 'loading') {
@@ -290,8 +306,20 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
           <span id="delivery-phone">Telefone</span>
           <div className="phone-join">
             <PhoneIcon />
+            {!ordering && (
+              <input
+                aria-label="DDD"
+                className="phone-join__ddd"
+                inputMode="numeric"
+                autoComplete="tel-area-code"
+                required
+                maxLength={2}
+                value={ddd}
+                onChange={(event) => onDdd(event.target.value)}
+              />
+            )}
             <span className="phone-join__prefix" aria-hidden="true">
-              {PHONE_PREFIX}
+              {ordering ? PHONE_PREFIX : '9'}
             </span>
             <input
               aria-labelledby="delivery-phone"
