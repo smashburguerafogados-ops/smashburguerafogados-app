@@ -74,9 +74,8 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
                 onChange={() => toggle(extra.id)}
                 disabled={!product.available}
               />
-              <span>
-                {extra.name} · {formatPrice(toCents(extra.price))}
-              </span>
+              <span className="extras__name">{extra.name}</span>
+              <span className="extras__price">+ {formatPrice(toCents(extra.price))}</span>
             </label>
           ))}
         </fieldset>
@@ -106,10 +105,22 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
       </div>
       <button
         type="button"
-        className="btn"
+        className="btn product__add"
         disabled={!product.available}
         onClick={() => onAdd(note, extras, qty)}
       >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M5 7h15l-1.4 8.2a2 2 0 0 1-2 1.6H9.2a2 2 0 0 1-2-1.6L5.6 4.8H3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle cx="9" cy="19.2" r="1.3" fill="currentColor" />
+          <circle cx="16.5" cy="19.2" r="1.3" fill="currentColor" />
+        </svg>
         Adicionar
       </button>
       {zoom && (
@@ -118,6 +129,9 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
           <button type="button" className="photo-zoom__photo" aria-label="Foto ampliada" onClick={() => setZoom(false)}>
             <img src={product.image} alt="" />
           </button>
+          <p className="photo-zoom__hint" aria-hidden="true">
+            Toque para fechar
+          </p>
         </div>
       )}
     </Overlay>

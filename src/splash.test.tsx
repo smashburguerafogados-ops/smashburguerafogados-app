@@ -4,6 +4,7 @@ import { App } from './App'
 import { FIRE_PLAYBACK_RATE } from './components/FireBackdrop'
 import { Splash } from './components/Splash'
 import { emitSeedCatalog } from './test/render'
+import { emitDoc } from './test/mocks'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -43,4 +44,32 @@ it('leaves the splash on the menu, not a login wall', async () => {
   expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Smash da casa/ })).toBeInTheDocument()
   expect(screen.queryByRole('tab', { name: 'Entrar' })).not.toBeInTheDocument()
+})
+
+it('shows the real open state and hours and lets the customer enter before the hold ends', async () => {
+  vi.useFakeTimers()
+  const onDone = vi.fn()
+  render(<Splash onDone={onDone} />)
+  act(() => {
+    emitDoc('settings/shop', { online: true, hours: '16h às 23h' })
+  })
+  expect(screen.getByText('Aberto agora')).toBeInTheDocument()
+  expect(screen.getByText('16h às 23h')).toBeInTheDocument()
+
+  act(() => {
+    screen.getByRole('button', { name: /Entrar no cardápio/ }).click()
+  })
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(700)
+  })
+  expect(onDone).toHaveBeenCalledTimes(1)
+})
+
+it('marks the shop closed when the admin turned it off', () => {
+  render(<Splash onDone={vi.fn()} />)
+  act(() => {
+    emitDoc('settings/shop', { online: false, hours: '16h às 23h' })
+  })
+  expect(screen.getByText('Fechado')).toBeInTheDocument()
+  expect(screen.getByText('16h às 23h').closest('.shop-status')).toHaveClass('is-closed')
 })

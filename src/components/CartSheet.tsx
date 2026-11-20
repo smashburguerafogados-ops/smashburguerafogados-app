@@ -147,6 +147,11 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
         <ul className="cart">
           {lines.map((line) => (
             <li key={line.key}>
+              {line.image ? (
+                <img className="cart__thumb" src={line.image} alt="" />
+              ) : (
+                <span className="cart__thumb" aria-hidden="true" />
+              )}
               <div className="cart__info">
                 <strong className="cart__name">{line.name}</strong>
                 <span>
@@ -172,7 +177,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
 
       {lines.length > 0 && (
         <>
-          <fieldset className="pay">
+          <fieldset className="pay pay--split">
             <legend>Como prefere receber</legend>
             <div className="pay__options">
               {FULFILLMENTS.map((mode) => (
@@ -195,6 +200,16 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
             session.profile.role === 'customer' &&
             session.profile.address?.street && (
               <div className="cart__address">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M4 11.2 12 4.5l8 6.7M6.4 9.4V19.5h4.1v-5h3v5h4.1V9.4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
                 <p>
                   {session.profile.address.street}, {session.profile.address.number}
                   {session.profile.address.neighborhood ? ` — ${session.profile.address.neighborhood}` : ''}

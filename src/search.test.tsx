@@ -36,7 +36,7 @@ describe('menu search', () => {
   it('rounds the search field on the current theme', () => {
     renderMenu()
     const box = screen.getByRole('searchbox', { name: 'Buscar' })
-    expect(getComputedStyle(box).borderRadius).toBe('8px')
+    expect(getComputedStyle(box).borderRadius).toBe('14px')
     expect(getComputedStyle(box).borderTopWidth).not.toBe('0px')
   })
 

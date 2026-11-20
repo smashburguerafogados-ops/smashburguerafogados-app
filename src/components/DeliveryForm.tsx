@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { lookupCep } from '../lib/cep'
 import { PHONE_PREFIX, PHONE_REST_LENGTH, deliveryReady, joinPhone, phoneRest } from '../lib/delivery'
-import { digitsOnly, maskCep } from '../lib/identity'
+import { digitsOnly, formatWhatsapp, maskCep } from '../lib/identity'
 import type { UserProfile } from '../types'
 import { Overlay } from './Overlay'
 
@@ -246,6 +246,18 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
   return (
     <Overlay label="Dados para entrega" onClose={onClose} variant="popup">
       <h2>Dados para entrega</h2>
+      {!ordering && profile.nome.trim() && (
+        <div className="account">
+          <span className="account__avatar" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="8.4" r="3.6" fill="currentColor" />
+              <path d="M4.8 19.6c1.4-3.3 4-5 7.2-5s5.8 1.7 7.2 5Z" fill="currentColor" />
+            </svg>
+          </span>
+          <p className="account__name">{profile.nome}</p>
+          {profile.whatsapp && <p className="account__phone">{formatWhatsapp(profile.whatsapp)}</p>}
+        </div>
+      )}
       {ordering && phase === 'searching' ? (
         <p className="muted" role="status">
           Buscando cadastro...

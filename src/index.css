@@ -9,6 +9,13 @@
   --orange-hot: #f4f5f6;
   --gold: #e3b15a;
   --danger: #e3b15a;
+  --surface: #141416;
+  --surface-raised: #1b1b1f;
+  --panel: #0f0f11;
+  --edge: rgba(255, 255, 255, 0.08);
+  --gold-soft: rgba(227, 177, 90, 0.14);
+  --ok: #3ecf6e;
+  --closed: #e5484d;
   --font-body: 'Manrope', 'Segoe UI', sans-serif;
   --font-display: 'Unbounded', 'Manrope', sans-serif;
   color-scheme: dark;
@@ -116,26 +123,11 @@ html[data-theme='ano-novo'] .menu__search input,
 html[data-theme='carnaval'] .menu__search input,
 html[data-theme='pascoa'] .menu__search input,
 html[data-theme='sao-joao'] .menu__search input,
-html[data-theme='natal'] .field input,
-html[data-theme='ano-novo'] .field input,
-html[data-theme='carnaval'] .field input,
-html[data-theme='pascoa'] .field input,
-html[data-theme='sao-joao'] .field input,
-html[data-theme='natal'] .field textarea,
-html[data-theme='ano-novo'] .field textarea,
-html[data-theme='carnaval'] .field textarea,
-html[data-theme='pascoa'] .field textarea,
-html[data-theme='sao-joao'] .field textarea,
 html[data-theme='natal'] .chip,
 html[data-theme='ano-novo'] .chip,
 html[data-theme='carnaval'] .chip,
 html[data-theme='pascoa'] .chip,
 html[data-theme='sao-joao'] .chip,
-html[data-theme='natal'] .item,
-html[data-theme='ano-novo'] .item,
-html[data-theme='carnaval'] .item,
-html[data-theme='pascoa'] .item,
-html[data-theme='sao-joao'] .item,
 html[data-theme='natal'] .password__toggle,
 html[data-theme='ano-novo'] .password__toggle,
 html[data-theme='carnaval'] .password__toggle,
@@ -151,25 +143,12 @@ html[data-theme='sao-joao'] .tabs button {
   border-width: 0.5px;
 }
 
-html[data-theme='natal'] .dock__item.is-active,
-html[data-theme='ano-novo'] .dock__item.is-active,
-html[data-theme='carnaval'] .dock__item.is-active,
-html[data-theme='pascoa'] .dock__item.is-active,
-html[data-theme='sao-joao'] .dock__item.is-active,
 html[data-theme='natal'] .mark-btn,
 html[data-theme='ano-novo'] .mark-btn,
 html[data-theme='carnaval'] .mark-btn,
 html[data-theme='pascoa'] .mark-btn,
 html[data-theme='sao-joao'] .mark-btn {
   border-color: var(--gold);
-}
-
-html[data-theme='natal'] .dock__item.is-active,
-html[data-theme='ano-novo'] .dock__item.is-active,
-html[data-theme='carnaval'] .dock__item.is-active,
-html[data-theme='pascoa'] .dock__item.is-active,
-html[data-theme='sao-joao'] .dock__item.is-active {
-  background: var(--gold);
 }
 
 button,
@@ -581,9 +560,98 @@ form {
 
 .splash__mark {
   position: relative;
-  width: min(420px, 86vw);
-  margin: 20px 20px 40px;
+  width: min(340px, 74vw);
+  margin: 20px 20px 18px;
   animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.splash__foot {
+  position: relative;
+  z-index: 1;
+  width: min(340px, calc(100% - 48px));
+  display: grid;
+  gap: 14px;
+  animation: rise 0.9s 0.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.splash__foot .splash__status,
+.splash__foot .splash__track {
+  justify-self: center;
+}
+
+.splash__enter {
+  min-height: 52px;
+  gap: 10px;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow: 0 10px 28px rgba(227, 177, 90, 0.22);
+}
+
+.splash__enter:hover:not(:disabled) {
+  background: #ecc06f;
+}
+
+.shop-status {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: min(340px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 14px 18px;
+  border: 1px solid var(--edge);
+  border-radius: 18px;
+  background: rgba(14, 14, 16, 0.86);
+  text-align: center;
+}
+
+.splash__foot .shop-status {
+  width: 100%;
+}
+
+.shop-status__state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.shop-status__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 3px rgba(62, 207, 110, 0.22), 0 0 10px rgba(62, 207, 110, 0.7);
+}
+
+.shop-status.is-closed .shop-status__dot {
+  background: var(--closed);
+  box-shadow: 0 0 0 3px rgba(229, 72, 77, 0.22);
+}
+
+.shop-status__hours {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.shop-status__hours svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.shop-status.is-closed .shop-status__hours {
+  animation: hours-pulse 2.4s ease-in-out infinite;
 }
 
 .splash__mark img {
@@ -714,6 +782,8 @@ form {
   .splash__glow,
   .splash__mark,
   .splash__track span,
+  .splash__foot,
+  .shop-status.is-closed .shop-status__hours,
   .splash--out {
     animation: none;
   }

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { readSavedCustomerId } from '../lib/customerId'
+import { useShop } from '../lib/shop'
 import { applyDocumentTheme, useTheme } from '../lib/theme'
 import { FireBackdrop } from './FireBackdrop'
+import { ShopStatus } from './ShopStatus'
 import { ThemeBackdrop, ThemeDecor } from './ThemeMark'
 
 const HOLD_MS = 2300
@@ -17,8 +19,10 @@ type SplashProps = {
 export function Splash({ onDone, ready = true }: SplashProps) {
   const [held, setHeld] = useState(false)
   const [timedOut, setTimedOut] = useState(false)
+  const [entered, setEntered] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const theme = useTheme()
+  const shop = useShop()
   const savedCustomer = useRef(readSavedCustomerId() !== '')
   const reduce = useRef(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
 
@@ -35,7 +39,7 @@ export function Splash({ onDone, ready = true }: SplashProps) {
     }
   }, [])
 
-  const canLeave = held && (ready || timedOut)
+  const canLeave = entered || (held && (ready || timedOut))
 
   useEffect(() => {
     if (!canLeave) return
@@ -59,9 +63,16 @@ export function Splash({ onDone, ready = true }: SplashProps) {
         <span className="tick tick--se" aria-hidden="true" />
         <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Smash Burger" />
       </div>
-      <p className="splash__status">{status}</p>
-      <div className="splash__track" aria-hidden="true">
-        <span />
+      <div className="splash__foot">
+        {shop.ready && <ShopStatus online={shop.online} hours={shop.hours} />}
+        <button type="button" className="btn splash__enter" disabled={leaving} onClick={() => setEntered(true)}>
+          Entrar no cardápio
+          <span aria-hidden="true">→</span>
+        </button>
+        <p className="splash__status">{status}</p>
+        <div className="splash__track" aria-hidden="true">
+          <span />
+        </div>
       </div>
     </div>
   )
