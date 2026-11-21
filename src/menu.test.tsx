@@ -81,6 +81,17 @@ it('shows the SMASH BURGER wordmark with a gold rule, with or without a name', a
   expect(brand.children[2]).toBe(title)
 })
 
+it('shines through the wordmark letters and stays static with reduced motion', () => {
+  const css = (import.meta.glob('./menu.css', { query: '?raw', import: 'default', eager: true }) as Record<string, string>)['./menu.css']
+  const supports = css.slice(css.indexOf('@supports (-webkit-background-clip'), css.indexOf('@keyframes wordmark-shine-a'))
+  expect(supports).toContain('background-clip: text')
+  expect(supports).toMatch(/span:first-child \{[^}]*wordmark-shine-a/)
+  expect(supports).toMatch(/menu__wordmark-gold \{[^}]*wordmark-shine-b/)
+  const reduced = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce) {\n  .menu__wordmark > span'))
+  expect(reduced).toMatch(/animation: none !important/)
+  expect(reduced).toMatch(/background-position: 50% 0 !important/)
+})
+
 it('opens on Início and lists products from every category', () => {
   renderMenu()
   const chips = within(screen.getByRole('toolbar', { name: 'Categorias' })).getAllByRole('button')
