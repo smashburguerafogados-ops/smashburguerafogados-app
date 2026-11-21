@@ -574,11 +574,18 @@ html[data-theme='sao-joao'] .menu__content {
   gap: 14px;
   text-align: left;
   color: inherit;
-  background: var(--panel);
-  border: 1px solid var(--edge);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+  background-color: var(--panel);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 45%);
+  border: 1px solid rgba(227, 177, 90, 0.32);
+  border-top-color: rgba(227, 177, 90, 0.8);
+  box-shadow: none;
+  transform: translateY(-2px);
   border-radius: 18px;
   padding: 10px 12px 10px 10px;
+}
+
+.item ~ .item {
+  margin-top: 4px;
 }
 
 .item img {
