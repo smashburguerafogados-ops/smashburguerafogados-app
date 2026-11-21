@@ -55,6 +55,73 @@
   color: var(--gold);
 }
 
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .menu__wordmark > span {
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    background-repeat: no-repeat;
+    background-size: 320% 100%;
+    animation: wordmark-shine 5s ease-in-out infinite;
+  }
+
+  .menu__wordmark > span:first-child {
+    background-image: linear-gradient(
+      112deg,
+      #f4f5f6 0%,
+      #f4f5f6 43%,
+      #ecc57a 47.5%,
+      var(--gold) 50%,
+      #ecc57a 52.5%,
+      #f4f5f6 57%,
+      #f4f5f6 100%
+    );
+    animation-name: wordmark-shine-a;
+  }
+
+  .menu__wordmark > span.menu__wordmark-gold {
+    background-image: linear-gradient(
+      112deg,
+      var(--gold) 0%,
+      var(--gold) 43%,
+      #f6e3bb 47.5%,
+      #ffffff 50%,
+      #f6e3bb 52.5%,
+      var(--gold) 57%,
+      var(--gold) 100%
+    );
+    animation-name: wordmark-shine-b;
+  }
+}
+
+@keyframes wordmark-shine-a {
+  0% {
+    background-position: 92% 0;
+  }
+  38%,
+  100% {
+    background-position: 8% 0;
+  }
+}
+
+@keyframes wordmark-shine-b {
+  0%,
+  18% {
+    background-position: 92% 0;
+  }
+  56%,
+  100% {
+    background-position: 8% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu__wordmark > span {
+    animation: none !important;
+    background-position: 50% 0 !important;
+  }
+}
+
 .menu__rule {
   display: block;
   width: 100%;
