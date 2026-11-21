@@ -9,6 +9,7 @@ import { AdminPanel } from './AdminPanel'
 import { BroadcastScreen } from './BroadcastScreen'
 import { ContactScreen } from './ContactScreen'
 import { AddonScreen } from './AddonScreen'
+import { BlockScreen } from './BlockScreen'
 import { CategoryScreen } from './CategoryScreen'
 import { ProductDesk } from './ProductDesk'
 import { ProductForm } from './ProductForm'
@@ -24,6 +25,7 @@ type AdminScreen =
   | 'desk'
   | 'categories'
   | 'addons'
+  | 'block'
   | 'shop'
   | 'manage'
   | 'revenue'
@@ -121,7 +123,7 @@ export function AdminRoute() {
   const theme = useTheme()
   useTitle('Painel | Smash Burger')
 
-  if (session.status === 'loading') {
+  if (session.status === 'loading' || session.status === 'blocked') {
     return (
       <AdminFrame onLogout={() => void logout()}>
         <h1>Carregando</h1>
@@ -179,6 +181,7 @@ export function AdminRoute() {
           onProducts={() => openScreen('desk')}
           onCategories={() => openScreen('categories')}
           onAddons={() => openScreen('addons')}
+          onBlock={() => openScreen('block')}
           onRevenue={() => openScreen('revenue')}
           onThemes={() => openScreen('themes')}
           onContact={() => openScreen('contact')}
@@ -191,6 +194,7 @@ export function AdminRoute() {
       {screenName === 'desk' && <ProductDesk onClose={() => setScreenName(null)} />}
       {screenName === 'categories' && <CategoryScreen onClose={() => setScreenName(null)} />}
       {screenName === 'addons' && <AddonScreen onClose={() => setScreenName(null)} />}
+      {screenName === 'block' && <BlockScreen onClose={() => setScreenName(null)} />}
       {screenName === 'shop' && <ShopScreen onClose={() => setScreenName(null)} />}
       {screenName === 'manage' && <ManagementScreen onClose={() => setScreenName(null)} />}
       {screenName === 'revenue' && (

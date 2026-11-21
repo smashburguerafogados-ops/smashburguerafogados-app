@@ -25,7 +25,17 @@ export function emitAuth(user: { uid: string } | null): void {
   for (const listener of authListeners) listener(user)
 }
 
+/** Phones on the blocked list. A blocked/{phone} read answers from here, never from getDoc. */
+export const blockedPhones = new Set<string>()
+export const blockedState: { denied: boolean } = { denied: false }
+
 export const firebaseMocks = {
+  blockedLookup: vi.fn<(phone: string) => Promise<unknown>>(async (phone) => {
+    if (blockedState.denied) {
+      throw Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' })
+    }
+    return { exists: () => blockedPhones.has(phone), data: () => ({ phone }) }
+  }),
   signInWithEmailAndPassword: vi.fn<AnyFn>(async () => {
     throw Object.assign(new Error('auth/invalid-credential'), { code: 'auth/invalid-credential' })
   }),
@@ -88,6 +98,9 @@ export function resetFirebaseMocks(): void {
   listeners.length = 0
   authListeners.clear()
   authState.user = null
+  blockedPhones.clear()
+  blockedState.denied = false
+  firebaseMocks.blockedLookup.mockClear()
   firebaseMocks.getDocs.mockReset()
   firebaseMocks.getDocs.mockResolvedValue({ empty: true, docs: [] })
   firebaseMocks.getDoc.mockReset()

@@ -8,6 +8,7 @@ type SideMenuProps = {
   onProducts: () => void
   onCategories: () => void
   onAddons: () => void
+  onBlock: () => void
   onRevenue: () => void
   onThemes: () => void
   onContact: () => void
@@ -24,6 +25,7 @@ export function SideMenu({
   onProducts,
   onCategories,
   onAddons,
+  onBlock,
   onRevenue,
   onThemes,
   onContact,
@@ -52,6 +54,9 @@ export function SideMenu({
         </button>
         <button type="button" className="drawer__link" onClick={onAddons}>
           Adicionais
+        </button>
+        <button type="button" className="drawer__link" onClick={onBlock}>
+          Bloquear
         </button>
         <button type="button" className="drawer__link" onClick={onRevenue}>
           Faturamento

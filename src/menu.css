@@ -2768,3 +2768,17 @@ html .chips .chip.chip--destaque {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
+
+.blocked__info {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.blocked__info .muted {
+  overflow-wrap: anywhere;
+}
+
+.blocked__undo {
+  flex: none;
+}
