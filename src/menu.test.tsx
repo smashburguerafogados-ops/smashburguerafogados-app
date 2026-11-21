@@ -7,7 +7,8 @@ import { MenuScreen } from './components/MenuScreen'
 import { descriptionItems } from './components/ProductDialog'
 import { Griddle } from './components/Griddle'
 import { customerProfile, emitSeedCatalog, signInAs } from './test/render'
-import { emit } from './test/mocks'
+import { emit, emitCached } from './test/mocks'
+import { CATALOG_TIMEOUT_MS } from './lib/remoteCatalog'
 import './index.css'
 import './menu.css'
 import './griddle.css'
@@ -90,6 +91,52 @@ it('shines through the wordmark letters and stays static with reduced motion', (
   const reduced = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce) {\n  .menu__wordmark > span'))
   expect(reduced).toMatch(/animation: none !important/)
   expect(reduced).toMatch(/background-position: 50% 0 !important/)
+})
+
+it('keeps loading on an empty offline cache instead of saying no item was found', () => {
+  render(
+    <AuthProvider>
+      <MemoryRouter>
+        <MenuScreen />
+      </MemoryRouter>
+    </AuthProvider>,
+  )
+  act(() => {
+    emitCached('categories', [])
+    emitCached('products', [])
+  })
+  expect(screen.queryByText('Nenhum item encontrado.')).not.toBeInTheDocument()
+  expect(screen.getByRole('status', { name: 'Carregando o cardápio.' })).toBeInTheDocument()
+
+  act(() => {
+    emitSeedCatalog()
+  })
+  expect(screen.queryByRole('status', { name: 'Carregando o cardápio.' })).not.toBeInTheDocument()
+  expect(document.querySelectorAll('.item').length).toBeGreaterThan(0)
+})
+
+it('offers a retry when the menu never arrives, and still shows a late answer', () => {
+  vi.useFakeTimers()
+  render(
+    <AuthProvider>
+      <MemoryRouter>
+        <MenuScreen />
+      </MemoryRouter>
+    </AuthProvider>,
+  )
+  act(() => {
+    emitCached('products', [])
+    vi.advanceTimersByTime(CATALOG_TIMEOUT_MS)
+  })
+  expect(screen.getByRole('alert')).toHaveTextContent('Não foi possível carregar o cardápio.')
+  expect(screen.getByRole('button', { name: 'Tentar de novo' })).toBeInTheDocument()
+  expect(screen.queryByText('Nenhum item encontrado.')).not.toBeInTheDocument()
+
+  act(() => {
+    emitSeedCatalog()
+  })
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  expect(document.querySelectorAll('.item').length).toBeGreaterThan(0)
 })
 
 it('opens on Início and lists products from every category', () => {

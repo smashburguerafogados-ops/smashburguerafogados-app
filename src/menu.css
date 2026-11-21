@@ -2263,6 +2263,16 @@ html .chips .chip.chip--destaque {
   color: var(--gold);
 }
 
+.menu-retry {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.menu-retry .alert {
+  justify-self: stretch;
+}
+
 .board-loading__spin,
 .menu-loading__spin {
   width: 36px;
