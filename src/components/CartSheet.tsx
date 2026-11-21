@@ -17,7 +17,7 @@ import { cartCount, cartTotal, type CartLine } from '../lib/menu'
 import { contactReady, deliveryReady } from '../lib/delivery'
 import { buildOrder, deliveryCharge, placeOrder, shortId, type Fulfillment, FULFILLMENT_LABEL } from '../lib/orders'
 import { useShop } from '../lib/shop'
-import { BagIcon, TruckIcon } from './Marks'
+import { BagIcon, TrashIcon, TruckIcon } from './Marks'
 import { DeliveryForm } from './DeliveryForm'
 import { PickupForm } from './PickupForm'
 import { Overlay } from './Overlay'
@@ -34,14 +34,6 @@ const EMPTY_CUSTOMER: UserProfile = {
 }
 
 const FULFILLMENTS: Fulfillment[] = ['entrega', 'retirada']
-
-function MinusMark() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M7 7l10 10M17 7 7 17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  )
-}
 
 type CartSheetProps = {
   lines: CartLine[]
@@ -163,7 +155,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
               <div className="cart__side">
                 <span className="cart__line-total">{formatPrice(line.priceCents * line.qty)}</span>
                 <button type="button" className="mark-btn" aria-label="Remover" onClick={() => onRemove(line.key)}>
-                  <MinusMark />
+                  <TrashIcon />
                 </button>
               </div>
             </li>

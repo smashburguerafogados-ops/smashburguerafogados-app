@@ -108,6 +108,16 @@ export function PencilIcon() {
   )
 }
 
+export function TrashIcon() {
+  return (
+    <Mark>
+      <path d="M4.5 7h15M9.5 7V5.2c0-.7.5-1.2 1.2-1.2h2.6c.7 0 1.2.5 1.2 1.2V7" {...stroke} />
+      <path d="M6.5 7l.8 11.6c.1.9.8 1.4 1.6 1.4h6.2c.8 0 1.5-.5 1.6-1.4L17.5 7" {...stroke} />
+      <path d="M10 10.8v5.4M14 10.8v5.4" {...stroke} />
+    </Mark>
+  )
+}
+
 export function FindMark() {
   return (
     <span className="field__find" aria-hidden="true">
