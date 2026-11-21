@@ -3162,12 +3162,13 @@ html .chips .chip.chip--destaque {
   font-weight: 700;
   line-height: 1;
   color: var(--gold);
+  white-space: nowrap;
   font-variant-numeric: lining-nums tabular-nums;
 }
 
 .reorder__btn {
   flex: none;
-  width: 82px;
+  width: 94px;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
@@ -3206,5 +3207,19 @@ html .chips .chip.chip--destaque {
 @media (prefers-reduced-motion: reduce) {
   .reorder__scroll {
     scroll-behavior: auto;
+  }
+}
+
+@media (max-width: 340px) {
+  .reorder__thumbs img:nth-child(3) {
+    display: none;
+  }
+
+  .reorder__btn {
+    width: 78px;
+  }
+
+  .reorder__btn svg {
+    display: none;
   }
 }
