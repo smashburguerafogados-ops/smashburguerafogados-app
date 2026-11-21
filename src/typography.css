@@ -1,0 +1,98 @@
+/* Tipografia do cliente: Anton (títulos e nomes), Oswald (preços), Barlow (corpo).
+   Escopo só em .menu e .splash; o painel admin segue com Manrope e Unbounded. */
+.menu,
+.splash {
+  --font-body: 'Barlow', 'Segoe UI', 'Arial Narrow', sans-serif;
+  --font-display: 'Anton', 'Impact', 'Arial Narrow', sans-serif;
+  --font-name: var(--font-display);
+  --font-price: 'Oswald', 'Arial Narrow', sans-serif;
+  font-family: var(--font-body);
+  font-synthesis-weight: none;
+}
+
+.menu h1,
+.menu h2,
+.splash h1 {
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+.menu .menu__title {
+  font-size: 1.3rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+}
+
+.menu .item__name,
+.menu .product h2,
+.menu .cart__name,
+.menu .order-card__name,
+.menu .account__name {
+  font-family: var(--font-name);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+
+.menu .item__name,
+.menu .product h2,
+.menu .cart__name {
+  text-transform: uppercase;
+}
+
+.menu .item__name {
+  font-size: 1.2rem;
+  line-height: 1.15;
+}
+
+.menu .cart__name {
+  font-size: 1.05rem;
+}
+
+.menu .order-card__name,
+.menu .account__name {
+  font-size: 1.15rem;
+}
+
+.menu .chip,
+.menu .dock__label {
+  font-weight: 600;
+}
+
+.menu .item__price,
+.menu .product__price,
+.menu .product__total,
+.menu .extras__price,
+.menu .cart__line-total,
+.menu .cart__summary p strong,
+.menu .history__total strong,
+.menu .order-total,
+.menu .dock__sum {
+  font-family: var(--font-price);
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.menu .item__price {
+  font-size: 1.2rem;
+}
+
+.menu .product__price,
+.menu .product__total {
+  font-size: 1.5rem;
+}
+
+.menu .cart__summary .cart__total,
+.menu .cart__summary .cart__total strong {
+  font-family: var(--font-price);
+  font-weight: 700;
+}
+
+@media (max-width: 360px) {
+  .menu .item__name {
+    font-size: 1.05rem;
+  }
+
+  .menu .item__price {
+    font-size: 1.1rem;
+  }
+}
