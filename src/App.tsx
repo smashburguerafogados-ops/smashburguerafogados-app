@@ -6,7 +6,7 @@ import { MenuScreen } from './components/MenuScreen'
 import { Splash } from './components/Splash'
 import { CustomerTheme, ThemeFrame } from './components/ThemeMark'
 import { RaffleProvider } from './components/RaffleProvider'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { OrdersProvider, useBootReady } from './context/OrdersContext'
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
@@ -27,8 +27,11 @@ function AppRoutes() {
 
 function Boot() {
   const ready = useBootReady()
+  const { session } = useAuth()
   const [booting, setBooting] = useState(true)
   const finishBoot = useCallback(() => setBooting(false), [])
+
+  if (session.status === 'blocked') return <Splash locked ready={false} onDone={finishBoot} />
 
   return booting ? <Splash ready={ready} onDone={finishBoot} /> : <AppRoutes />
 }

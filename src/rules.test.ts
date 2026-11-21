@@ -54,6 +54,24 @@ describe('firestore.rules', () => {
     expect(rules).toContain("affectedKeys().hasOnly(['status', 'updatedAt'])")
   })
 
+  it('stops blocked phones from ordering and keeps the list private', () => {
+    const blocked = block('blocked')
+    expect(blocked.match(/allow [a-z, ]+:.*;/g)).toEqual([
+      'allow read: if isAdmin();',
+      'allow get: if request.auth != null;',
+      'allow write: if isAdmin();',
+    ])
+    expect(blocked).not.toContain('||')
+    const notes = block('blockedNotes')
+    expect(notes).toContain('allow read, write: if isAdmin();')
+    expect(notes).not.toContain('request.auth != null')
+    expect(rules).toContain("request.auth.token.email.split('[.@]')[0]")
+    expect(rules).toContain('exists(/databases/$(database)/documents/blocked/$(phone))')
+    const orderRule = rules.slice(rules.indexOf('function orderCreate()'), rules.indexOf('function customerFinishes()'))
+    expect(orderRule).toContain('!loginIsBlocked()')
+    expect(orderRule).toContain('!phoneIsBlocked(data.customerWhatsapp)')
+  })
+
   it('lets an admin list customers on its own rule', () => {
     const users = block('users')
     const reads = users.match(/allow read:.*;/g) ?? []

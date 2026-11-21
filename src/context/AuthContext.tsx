@@ -17,6 +17,7 @@ import {
 } from 'firebase/auth'
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 import { auth, authReady, db } from '../lib/firebase'
+import { blockKeyFromEmail, isPhoneBlocked, watchBlocked } from '../lib/blocked'
 import { clearSavedCustomerId, saveCustomerId } from '../lib/customerId'
 import { mapAuthError, mapCustomerError } from '../lib/errors'
 import {
@@ -31,6 +32,7 @@ import { parseProfile, type Address, type UserProfile } from '../types'
 type Session =
   | { status: 'loading' }
   | { status: 'signedOut' }
+  | { status: 'blocked' }
   | { status: 'ready'; profile: UserProfile }
   | { status: 'error'; message: string }
 
@@ -157,6 +159,7 @@ async function readCustomer(uid: string): Promise<UserProfile | null | 'other'> 
 }
 
 async function hydrate(user: User): Promise<Session> {
+  if (await isPhoneBlocked([blockKeyFromEmail(user.email)])) return { status: 'blocked' }
   const snap = await getDoc(doc(db, 'users', user.uid))
   if (!snap.exists()) {
     return {
@@ -171,9 +174,14 @@ async function hydrate(user: User): Promise<Session> {
       message: 'O cadastro desta conta está incompleto.',
     }
   }
-  if (profile.role === 'customer') saveCustomerId(profile.uid)
+  if (profile.role === 'customer') {
+    if (await isPhoneBlocked([profile.whatsapp])) return { status: 'blocked' }
+    saveCustomerId(profile.uid)
+  }
   return { status: 'ready', profile }
 }
+
+const BLOCKED_MESSAGE = 'Este número não pode fazer pedidos por aqui.'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session>({ status: 'loading' })
@@ -234,6 +242,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const readyCustomer = session.status === 'ready' && session.profile.role === 'customer' ? session.profile : null
+  const readyWhatsapp = readyCustomer?.whatsapp ?? ''
+  const readyEmail = readyCustomer ? (auth.currentUser?.email ?? '') : ''
+  const readyUid = readyCustomer?.uid ?? ''
+  useEffect(() => {
+    if (!readyUid) return
+    return watchBlocked([readyWhatsapp, blockKeyFromEmail(readyEmail)], () => setSession({ status: 'blocked' }))
+  }, [readyUid, readyWhatsapp, readyEmail])
+
   /** Same WhatsApp, same customer: reopen the saved login, or create it once. */
   async function openCustomer(whatsapp: string, nome: string, address: Address | null): Promise<UserProfile> {
     suspendListener.current = true
@@ -251,6 +268,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         user = await createCustomerLogin(whatsapp)
         created = true
+      }
+      if (await isPhoneBlocked([whatsapp, blockKeyFromEmail(user.email), existing?.whatsapp])) {
+        setSession({ status: 'blocked' })
+        throw new Error(BLOCKED_MESSAGE)
       }
 
       if (existing) {
@@ -281,7 +302,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return profile
     } catch (error) {
       if (error instanceof Error && !authCode(error)) {
-        if (error.message.startsWith('Informe') || error.message.startsWith('Este número')) throw error
+        if (error.message.startsWith('Informe') || error.message === BLOCKED_MESSAGE || error.message.startsWith('Este número')) throw error
       }
       throw new Error(mapCustomerError(error))
     } finally {
@@ -432,6 +453,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const found = await readCustomer(user.uid)
           if (found === 'other') {
             await signOut(auth).catch(() => undefined)
+            return null
+          }
+          if (await isPhoneBlocked([whatsapp, blockKeyFromEmail(user.email), found?.whatsapp])) {
+            setSession({ status: 'blocked' })
             return null
           }
           if (!found) return null

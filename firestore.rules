@@ -45,6 +45,19 @@ rules_version = '2';
 // in one OR makes Firestore reject the admin's collection listener,
 // because a list query must be proven by a rule that does not depend on
 // a field the query does not filter.
+//
+// blocked/{55DDDnúmero} is the list of phones that cannot order. The id is
+// the normalized phone digits, the same digits the customer login email is
+// built from. A signed-in person can read one document by id (get) so the app
+// can check a phone, but nobody except an admin can list the collection. Only
+// an admin writes it. The admin's private note lives in blockedNotes/{same id},
+// admin-only, so a blocked customer never reads it.
+// Creating an order is denied when the signed-in login's phone, taken from the
+// token email and not from any field the client sends, is blocked, or when
+// customerWhatsapp is blocked. Reading the menu stays public: categories,
+// products, addons and settings are open to people who are not signed in, so
+// no rule can keep a blocked phone out of the menu. The app hides it instead.
+// A blocked number can still sign in with a different phone.
 // connection_tests is locked. Everything else is denied.
 
 service cloud.firestore {
@@ -57,6 +70,20 @@ service cloud.firestore {
       return request.auth != null
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function phoneIsBlocked(phone) {
+      return exists(/databases/$(database)/documents/blocked/$(phone));
+    }
+
+    function loginPhone() {
+      return request.auth.token.email.split('[.@]')[0];
+    }
+
+    function loginIsBlocked() {
+      return request.auth != null
+        && 'email' in request.auth.token
+        && phoneIsBlocked(loginPhone());
     }
 
     function customerCreate(userId) {
@@ -120,7 +147,9 @@ service cloud.firestore {
         && data.items.size() > 0
         && data.items.size() <= 50
         && data.payment is map
-        && data.payment.method in ['pix', 'cartao', 'dinheiro'];
+        && data.payment.method in ['pix', 'cartao', 'dinheiro']
+        && !loginIsBlocked()
+        && !phoneIsBlocked(data.customerWhatsapp);
     }
 
     function customerFinishes() {
@@ -172,6 +201,16 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow create: if revenueCreate(orderId);
       allow update, delete: if false;
+    }
+
+    match /blocked/{phone} {
+      allow read: if isAdmin();
+      allow get: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    match /blockedNotes/{phone} {
+      allow read, write: if isAdmin();
     }
 
     match /connection_tests/{docId} {

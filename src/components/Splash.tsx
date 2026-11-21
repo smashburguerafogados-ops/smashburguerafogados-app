@@ -15,9 +15,11 @@ export const MAX_WAIT_MS = 15000
 type SplashProps = {
   onDone: () => void
   ready?: boolean
+  /** A blocked customer stays here: no way into the menu, and the wait never ends. */
+  locked?: boolean
 }
 
-export function Splash({ onDone, ready = true }: SplashProps) {
+export function Splash({ onDone, ready = true, locked = false }: SplashProps) {
   const [held, setHeld] = useState(false)
   const [timedOut, setTimedOut] = useState(false)
   const [entered, setEntered] = useState(false)
@@ -27,7 +29,7 @@ export function Splash({ onDone, ready = true }: SplashProps) {
   const { session } = useAuth()
   const savedCustomer = useRef(readSavedCustomerId() !== '')
   const reduce = useRef(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-  const userReady = session.status !== 'loading'
+  const userReady = session.status !== 'loading' && !locked
 
   useEffect(() => {
     applyDocumentTheme(theme)
@@ -42,7 +44,7 @@ export function Splash({ onDone, ready = true }: SplashProps) {
     }
   }, [])
 
-  const canLeave = entered || (held && (ready || timedOut))
+  const canLeave = !locked && (entered || (held && (ready || timedOut)))
 
   useEffect(() => {
     if (!canLeave) return
@@ -51,10 +53,10 @@ export function Splash({ onDone, ready = true }: SplashProps) {
     return () => window.clearTimeout(finish)
   }, [canLeave, onDone])
 
-  const status = held && !ready && savedCustomer.current ? 'Carregando seus pedidos' : 'Preparando a chapa'
+  const status = !locked && held && !ready && savedCustomer.current ? 'Carregando seus pedidos' : 'Preparando a chapa'
 
   return (
-    <div className={leaving ? 'splash splash--out' : 'splash'} role="status" aria-live="polite">
+    <div className={leaving && !locked ? 'splash splash--out' : 'splash'} role="status" aria-live="polite">
       <ThemeBackdrop theme={theme} />
       <ThemeDecor theme={theme} />
       <FireBackdrop />

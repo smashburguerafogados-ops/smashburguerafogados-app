@@ -57,7 +57,10 @@ vi.mock('firebase/firestore', async () => {
     query: vi.fn((ref: { path: string }, ...constraints: unknown[]) => ({ path: ref.path, constraints })),
     where: vi.fn((field: string, op: string, value: unknown) => ({ field, op, value })),
     doc: vi.fn((_db: unknown, ...segments: string[]) => ({ path: segments.join('/') })),
-    getDoc: (...args: unknown[]) => mocks.getDoc(...args),
+    getDoc: async (ref: { path: string }, ...rest: unknown[]) => {
+      if (ref.path.startsWith('blocked/')) return mocks.blockedLookup(ref.path.slice('blocked/'.length))
+      return mocks.getDoc(ref, ...rest)
+    },
     getDocs: (...args: unknown[]) => mocks.getDocs(...args),
     setDoc: (...args: unknown[]) => mocks.setDoc(...args),
     addDoc: (...args: unknown[]) => mocks.addDoc(...args),
