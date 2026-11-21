@@ -1,4 +1,5 @@
 :root {
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
   --bg: #35363a;
   --bg-deep: #141416;
   --ink: #100e0c;
@@ -120,6 +121,7 @@ p {
 
 .stage {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 32px 18px 48px;
@@ -382,6 +384,7 @@ form {
 
 .shell {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   position: relative;

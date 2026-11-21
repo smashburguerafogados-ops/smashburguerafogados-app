@@ -599,7 +599,7 @@ it('keeps the griddle behind a readable bar', () => {
   expect(getComputedStyle(name).color).toBe('rgb(244, 245, 246)')
 })
 
-it('uses a floating pill with small labels and marks the active shortcut in gold', async () => {
+it('uses a flush bottom bar with small labels and marks the active shortcut in gold', async () => {
   const user = userEvent.setup()
   renderMenu()
 
@@ -609,7 +609,7 @@ it('uses a floating pill with small labels and marks the active shortcut in gold
 
   const style = getComputedStyle(dock)
   expect(style.position).toBe('fixed')
-  expect(style.borderRadius).toBe('999px')
+  expect(style.borderRadius).toBe('18px 18px 0px 0px')
   expect(style.backgroundColor).toBe('rgb(20, 20, 22)')
 
   const labels = Array.from(dock.querySelectorAll('.dock__label')).map((label) => label.textContent)
