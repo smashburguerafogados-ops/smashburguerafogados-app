@@ -80,6 +80,14 @@ describe('WhatsApp messages', () => {
     expect(sentMessage(pickup)).not.toContain('saiu para entrega')
   })
 
+  it('sentMessage lists the items without any photo or product link', () => {
+    const text = sentMessage(order)
+    expect(text).not.toMatch(/Foto|produto=|https?:\/\//)
+    const lines = text.split('\n')
+    expect(lines.filter((line) => line.startsWith(`${SYMBOLS.burger} `) && / - R\$ /.test(line)).length).toBe(order.items.length)
+    expect(lines[lines.length - 1]).toBe(`${SYMBOLS.scooter} A entrega está a caminho!`)
+  })
+
   it('names the Smash Burger in every customer message', () => {
     for (const text of Object.values(messages)) expect(text).toContain('Smash Burger')
   })

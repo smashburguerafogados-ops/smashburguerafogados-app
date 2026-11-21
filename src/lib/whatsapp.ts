@@ -1,7 +1,7 @@
 import { PAYMENT_LABELS } from './checkout'
 import { normalizeWhatsapp } from './identity'
 import { formatPrice } from './money'
-import { photoLink, shortId, type Order } from './orders'
+import { shortId, type Order } from './orders'
 
 /** Shop WhatsApp. Customers write here, and the admin sends from this account. Not a secret. */
 export const BUSINESS_WHATSAPP = '558796619629'
@@ -22,7 +22,6 @@ export const SYMBOLS = {
   pin: '\u{1F4CD}',
   money: '\u{1F4B0}',
   cash: '\u{1F4B5}',
-  camera: '\u{1F4F8}',
   memo: '\u{1F4DD}',
   chat: '\u{1F4AC}',
   pray: '\u{1F64F}',
@@ -172,7 +171,6 @@ export function sentMessage(order: Order): string {
   ]
   for (const item of order.items) {
     lines.push(`${SYMBOLS.burger} ${item.qty}x ${item.name} - ${formatPrice(item.priceCents * item.qty)}`)
-    lines.push(`${SYMBOLS.camera} Foto: ${photoLink(item)}`)
   }
   const fee = feeLine(order)
   if (fee) lines.push(fee)

@@ -334,7 +334,7 @@ describe('admin board', () => {
     })
   })
 
-  it('Enviar pedido sends photo, product, Smash Burger, total, address and on the way', async () => {
+  it('Enviar pedido sends product, Smash Burger, total, address and on the way', async () => {
     const user = userEvent.setup()
     await openBoard()
     await user.click(screen.getByRole('tab', { name: /Em Andamento/ }))
@@ -343,7 +343,8 @@ describe('admin board', () => {
     await user.click(screen.getByRole('button', { name: 'Enviar pedido' }))
 
     const { text } = lastWhatsapp()
-    expect(text).toContain('\u{1F4F8} Foto: https://smashburguerafogados-ops.github.io/smashburguerafogados-app/menu/smash.svg')
+    expect(text).not.toContain('Foto')
+    expect(text).not.toMatch(/https?:\/\//)
     expect(text).toContain('2x Smash da casa')
     expect(text).toContain('Smash Burger')
     expect(text).toContain('Total: R$ 56,00')
@@ -353,7 +354,7 @@ describe('admin board', () => {
     expect(lastUpdate().patch).toMatchObject({ status: 'enviado' })
   })
 
-  it('links the product page as the photo when the product photo is stored inline', async () => {
+  it('never puts a product link in the message, even when the photo is stored inline', async () => {
     const user = userEvent.setup()
     signInAs(adminProfile)
     renderApp('/admin')
@@ -367,7 +368,9 @@ describe('admin board', () => {
     await user.click(screen.getByRole('tab', { name: /Em Andamento/ }))
     await user.click(screen.getByRole('button', { name: /Ana Souza/ }))
     await user.click(screen.getByRole('button', { name: 'Enviar pedido' }))
-    expect(lastWhatsapp().text).toContain(`Foto: ${window.location.origin}/?produto=abc%201`)
+    const { text } = lastWhatsapp()
+    expect(text).toContain('1x X-Tudo')
+    expect(text).not.toMatch(/Foto|produto=|https?:\/\//)
   })
 
   it('Cancelar asks for a reason and sends it on WhatsApp', async () => {
