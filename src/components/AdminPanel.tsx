@@ -8,6 +8,7 @@ import {
   type Order,
   type OrderColumn,
 } from '../lib/orders'
+import { keepListening } from '../lib/listen'
 import { OrderDialog } from './OrderDialog'
 
 const COLUMNS: OrderColumn[] = ['novos', 'andamento', 'finalizados']
@@ -28,16 +29,17 @@ export function AdminPanel() {
 
   useEffect(
     () =>
-      watchAllOrders(
-        (next) => {
-          const seen = known.current
-          if (seen && next.some((order) => order.status === 'novo' && !seen.has(order.id))) {
-            setBlink(true)
-          }
-          known.current = new Set(next.map((order) => order.id))
-          setOrders(next)
-          setStatus('ready')
-        },
+      keepListening(
+        (fail) =>
+          watchAllOrders((next) => {
+            const seen = known.current
+            if (seen && next.some((order) => order.status === 'novo' && !seen.has(order.id))) {
+              setBlink(true)
+            }
+            known.current = new Set(next.map((order) => order.id))
+            setOrders(next)
+            setStatus('ready')
+          }, fail),
         () => setStatus('error'),
       ),
     [],

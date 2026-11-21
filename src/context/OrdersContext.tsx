@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { useAuth } from './AuthContext'
+import { keepListening } from '../lib/listen'
 import { watchCustomerOrders, type Order } from '../lib/orders'
 
 export type OrderHistory = {
@@ -23,9 +24,8 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
       return
     }
     setHistory({ status: 'loading', customerId, orders: [] })
-    return watchCustomerOrders(
-      customerId,
-      (orders) => setHistory({ status: 'ready', customerId, orders }),
+    return keepListening(
+      (fail) => watchCustomerOrders(customerId, (orders) => setHistory({ status: 'ready', customerId, orders }), fail),
       () => setHistory((current) => ({ ...current, status: 'error' })),
     )
   }, [customerId])

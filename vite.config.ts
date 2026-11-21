@@ -14,9 +14,25 @@ function pagesFallback(): Plugin {
   }
 }
 
+const APP_VERSION = process.env.GITHUB_SHA || `local-${Date.now().toString(36)}`
+
+/** An open tab compares this file with the build it is running to offer the new one. */
+function versionFile(): Plugin {
+  return {
+    name: 'version-file',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ version: APP_VERSION }) })
+    },
+  }
+}
+
 export default defineConfig({
   base: '/smashburguerafogados-app/',
-  plugins: [react(), pagesFallback()],
+  define: {
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
+  },
+  plugins: [react(), pagesFallback(), versionFile()],
   server: {
     host: '127.0.0.1',
     port: 5173,

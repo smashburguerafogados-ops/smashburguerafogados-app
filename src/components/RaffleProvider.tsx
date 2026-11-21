@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { keepListening } from '../lib/listen'
 import { EMPTY_RAFFLE, watchRaffle, type Raffle } from '../lib/raffle'
 
 const RaffleContext = createContext<Raffle>(EMPTY_RAFFLE)
@@ -8,8 +9,8 @@ export function RaffleProvider({ children }: { children: ReactNode }) {
 
   useEffect(
     () =>
-      watchRaffle(
-        (next) => setRaffle(next),
+      keepListening(
+        (fail) => watchRaffle((next) => setRaffle(next), fail),
         () => setRaffle(EMPTY_RAFFLE),
       ),
     [],

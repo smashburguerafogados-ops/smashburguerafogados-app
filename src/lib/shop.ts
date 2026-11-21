@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { db } from './firebase'
+import { keepListening } from './listen'
 
 export const DEFAULT_CLOSED_MESSAGE =
   'Hoje não estamos funcionando. Nossos dias de funcionamento são de quarta a domingo.'
@@ -65,15 +66,19 @@ export function useShop(): { ready: boolean; online: boolean; message: string; h
 
   useEffect(
     () =>
-      watchShop(
-        (shop) =>
-          setState({
-            ready: true,
-            online: shop.online,
-            message: shop.message,
-            hours: shop.hours,
-            deliveryFeeCents: shop.deliveryFeeCents,
-          }),
+      keepListening(
+        (fail) =>
+          watchShop(
+            (shop) =>
+              setState({
+                ready: true,
+                online: shop.online,
+                message: shop.message,
+                hours: shop.hours,
+                deliveryFeeCents: shop.deliveryFeeCents,
+              }),
+            fail,
+          ),
         () => setState((current) => ({ ...current, ready: true, online: true })),
       ),
     [],

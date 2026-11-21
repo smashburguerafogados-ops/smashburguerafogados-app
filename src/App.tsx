@@ -6,6 +6,7 @@ import { MenuScreen } from './components/MenuScreen'
 import { Splash } from './components/Splash'
 import { CustomerTheme, ThemeFrame } from './components/ThemeMark'
 import { RaffleProvider } from './components/RaffleProvider'
+import { UpdateNotice } from './components/UpdateNotice'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { OrdersProvider, useBootReady } from './context/OrdersContext'
 
@@ -40,6 +41,7 @@ export function App() {
   return (
     <>
       <Griddle />
+      <UpdateNotice />
       <AuthProvider>
         <ThemeFrame>
           <OrdersProvider>
