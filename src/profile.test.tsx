@@ -97,12 +97,13 @@ it('saves the address without an existing account', async () => {
 
   await user.click(screen.getByRole('button', { name: 'Conta' }))
   const form = screen.getByRole('dialog', { name: 'Dados para entrega' })
-  await user.type(within(form).getByRole('textbox', { name: 'Nome' }), 'João Lima')
   await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
+  expect(await within(form).findByText('Finalize seu cadastro.')).toBeInTheDocument()
   await user.type(within(form).getByRole('textbox', { name: 'CEP' }), '01001000')
   expect(await within(form).findByDisplayValue('Praça da Sé')).toBeInTheDocument()
+  await user.type(within(form).getByRole('textbox', { name: 'Nome' }), 'João Lima')
   await user.type(within(form).getByRole('textbox', { name: 'Número' }), '15')
-  await user.click(within(form).getByRole('button', { name: 'Salvar e pedir' }))
+  await user.click(within(form).getByRole('button', { name: 'Salvar cadastro' }))
 
   await waitFor(() => expect(firebaseMocks.createUserWithEmailAndPassword).toHaveBeenCalled())
   const [auth, email, password] = firebaseMocks.createUserWithEmailAndPassword.mock.calls[0] as [
@@ -133,19 +134,25 @@ it('saves the address without an existing account', async () => {
   expect(screen.queryByText(/entrar na conta/i)).not.toBeInTheDocument()
   expect(screen.queryByRole('tab', { name: 'Entrar' })).not.toBeInTheDocument()
   expect(screen.queryByRole('tab', { name: 'Criar conta' })).not.toBeInTheDocument()
-  expect(screen.queryByRole('dialog', { name: 'Dados para entrega' })).not.toBeInTheDocument()
+  const account = screen.getByRole('dialog', { name: 'Dados para entrega' })
+  expect(within(account).getByText('João Lima')).toBeInTheDocument()
+  expect(within(account).getByRole('textbox', { name: 'Telefone' })).toHaveValue('(87) 98888-7777')
 })
 
-it('does not open login when the user icon is tapped while signed out', async () => {
+it('shows only the phone first when the user icon is tapped while signed out', async () => {
   const user = userEvent.setup()
   renderApp()
 
   await user.click(screen.getByRole('button', { name: 'Conta' }))
   const form = screen.getByRole('dialog', { name: 'Dados para entrega' })
-  expect(within(form).getByRole('textbox', { name: 'Nome' })).toBeInTheDocument()
   expect(within(form).getByRole('textbox', { name: 'Telefone' })).toHaveValue('')
+  expect(within(form).getByRole('textbox', { name: 'Telefone' })).toBeRequired()
+  expect(form.querySelector('.field__find')).toBeInTheDocument()
   expect(form.querySelector('.phone-join__prefix')).toBeNull()
-  expect(within(form).getByRole('textbox', { name: 'CEP' })).toBeInTheDocument()
+  expect(within(form).queryByRole('textbox', { name: 'Nome' })).not.toBeInTheDocument()
+  expect(within(form).queryByRole('textbox', { name: 'CEP' })).not.toBeInTheDocument()
+  expect(within(form).queryByRole('button', { name: /Salvar/ })).not.toBeInTheDocument()
+  expect(within(form).getByText('Informe o telefone para abrir sua conta.')).toBeInTheDocument()
   expect(screen.queryByRole('tab', { name: 'Entrar' })).not.toBeInTheDocument()
   expect(screen.queryByRole('tab', { name: 'Criar conta' })).not.toBeInTheDocument()
   expect(screen.queryByRole('dialog', { name: 'Conta' })).not.toBeInTheDocument()

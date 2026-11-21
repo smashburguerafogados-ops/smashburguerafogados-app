@@ -11,6 +11,8 @@ type DeliveryFormProps = {
   profile: UserProfile
   /** Checkout asks for the phone first, then only the fields still missing. */
   ordering?: boolean
+  /** Opened from Conta while signed out: same phone-first lookup, but not tied to an order. */
+  fromAccount?: boolean
   onClose: () => void
   onSaved: (profile: UserProfile) => void | Promise<void>
 }
@@ -19,7 +21,7 @@ type CepStatus = 'idle' | 'loading' | 'found' | 'manual'
 
 type Phase = 'phone' | 'searching' | 'finish'
 
-export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: DeliveryFormProps) {
+export function DeliveryForm({ profile, ordering = false, fromAccount = false, onClose, onSaved }: DeliveryFormProps) {
   const { saveDelivery, findCustomer } = useAuth()
   const [nome, setNome] = useState(profile.nome)
   const [knownName, setKnownName] = useState(Boolean(profile.nome.trim()))
@@ -271,7 +273,9 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
       ) : (
         <p className="muted">
           {ordering
-            ? 'Informe o telefone para continuar o pedido.'
+            ? fromAccount
+              ? 'Informe o telefone para abrir sua conta.'
+              : 'Informe o telefone para continuar o pedido.'
             : editingSaved
               ? 'Altere o endereço. O próximo pedido usa o que você salvar.'
               : 'Falta nome, telefone ou endereço para concluir o pedido.'}
@@ -414,7 +418,7 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
         {showDetails && (
           <button className="btn" type="submit" disabled={busy}>
             {!busy && <SaveIcon />}
-            {busy ? 'Salvando...' : editingSaved ? 'Salvar endereço' : 'Salvar e pedir'}
+            {busy ? 'Salvando...' : editingSaved ? 'Salvar endereço' : fromAccount ? 'Salvar cadastro' : 'Salvar e pedir'}
           </button>
         )}
       </form>
