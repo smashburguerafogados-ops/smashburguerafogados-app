@@ -495,7 +495,13 @@ it('fits the item name on one line and does not head the cart with the customer 
   expect(remove).toHaveClass('mark-btn')
   expect(remove).not.toHaveTextContent('Remover')
   expect(remove.querySelector('svg')).toBeInTheDocument()
+  expect(remove.querySelectorAll('svg path')).toHaveLength(3)
+  expect(remove.querySelector('svg path[d*="M7 7l10 10"]')).toBeNull()
   expect(getComputedStyle(remove).borderRadius).toBe('50%')
+  expect(getComputedStyle(remove).borderColor).toBe('rgb(227, 177, 90)')
+  expect(getComputedStyle(remove).color).toBe('rgb(244, 245, 246)')
+  expect(getComputedStyle(remove).width).toBe('34px')
+  expect(getComputedStyle(remove).height).toBe('34px')
 
   const total = cart.querySelector('.cart__line-total') as HTMLElement
   expect(total).toHaveTextContent('R$ 32,00')
