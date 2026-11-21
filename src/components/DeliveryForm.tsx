@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { lookupCep } from '../lib/cep'
-import { PHONE_PREFIX, PHONE_REST_LENGTH, deliveryReady, joinPhone, phoneRest, splitPhone } from '../lib/delivery'
-import { digitsOnly, formatWhatsapp, maskCep } from '../lib/identity'
+import { deliveryReady, phoneFieldValue, phoneFromField } from '../lib/delivery'
+import { digitsOnly, formatWhatsapp, maskCep, maskWhatsappInput } from '../lib/identity'
 import type { UserProfile } from '../types'
 import { BuildingIcon, CardIcon, FindMark, PencilIcon, PhoneIcon, PinIcon, SaveIcon } from './Marks'
 import { Overlay } from './Overlay'
@@ -23,9 +23,7 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
   const { saveDelivery, findCustomer } = useAuth()
   const [nome, setNome] = useState(profile.nome)
   const [knownName, setKnownName] = useState(Boolean(profile.nome.trim()))
-  const openedPhone = splitPhone(profile.whatsapp)
-  const [ddd, setDdd] = useState(openedPhone.ddd)
-  const [rest, setRest] = useState(ordering ? phoneRest(profile.whatsapp) : openedPhone.rest)
+  const [phone, setPhone] = useState(phoneFieldValue(profile.whatsapp))
   const [cep, setCep] = useState(profile.address?.cep ? maskCep(profile.address.cep) : '')
   const [street, setStreet] = useState(profile.address?.street ?? '')
   const [number, setNumber] = useState(profile.address?.number ?? '')
@@ -158,24 +156,10 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
     }
   }, [cep])
 
-  function composedPhone(nextRest: string, nextDdd: string) {
-    return ordering ? joinPhone(nextRest) : joinPhone(nextRest, nextDdd)
-  }
-
-  function onDdd(value: string) {
-    const nextDdd = digitsOnly(value).slice(0, 2)
-    setDdd(nextDdd)
-    syncPhone(rest, nextDdd)
-  }
-
   function onPhone(value: string) {
-    const next = digitsOnly(value).slice(0, PHONE_REST_LENGTH)
-    setRest(next)
-    syncPhone(next, ddd)
-  }
-
-  function syncPhone(nextRest: string, nextDdd: string) {
-    const whatsapp = composedPhone(nextRest, nextDdd)
+    const next = maskWhatsappInput(value)
+    setPhone(next)
+    const whatsapp = phoneFromField(next)
     if (identify) {
       if (!whatsapp) {
         ticket.current += 1
@@ -216,9 +200,9 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
       setError('Informe seu nome.')
       return
     }
-    const whatsapp = composedPhone(rest, ddd)
+    const whatsapp = phoneFromField(phone)
     if (!whatsapp) {
-      setError(!ordering && digitsOnly(ddd).length !== 2 ? 'Informe o DDD.' : 'Informe o restante do telefone.')
+      setError('Informe o telefone com DDD.')
       return
     }
     if (cepStatus === 'idle' || cepStatus === 'loading') {
@@ -257,7 +241,7 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
   const showCep = !ordering || (asking && needsCep)
   const showDetails = !ordering || (asking && (!needsCep || showAddress))
   const showName = !ordering || (asking && !knownName && showDetails)
-  const showPhone = !ordering || identify || !joinPhone(phoneRest(profile.whatsapp))
+  const showPhone = !ordering || identify || !phoneFromField(profile.whatsapp)
   const [editingSaved] = useState(() => !ordering && Boolean(profile.address?.street.trim()))
 
   return (
@@ -306,29 +290,13 @@ export function DeliveryForm({ profile, ordering = false, onClose, onSaved }: De
           <span id="delivery-phone">Telefone</span>
           <div className="phone-join">
             <PhoneIcon />
-            {!ordering && (
-              <input
-                aria-label="DDD"
-                className="phone-join__ddd"
-                inputMode="numeric"
-                autoComplete="tel-area-code"
-                required
-                maxLength={2}
-                value={ddd}
-                onChange={(event) => onDdd(event.target.value)}
-              />
-            )}
-            <span className="phone-join__prefix" aria-hidden="true">
-              {ordering ? PHONE_PREFIX : '9'}
-            </span>
             <input
               aria-labelledby="delivery-phone"
               inputMode="numeric"
-              autoComplete="tel-national"
+              autoComplete="tel"
               required
-              maxLength={PHONE_REST_LENGTH}
-              placeholder="0000-0000"
-              value={rest}
+              placeholder="(87) 98888-7777"
+              value={phone}
               onChange={(event) => onPhone(event.target.value)}
             />
             <FindMark />

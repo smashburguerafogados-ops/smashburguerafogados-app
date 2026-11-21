@@ -1,44 +1,23 @@
-import { digitsOnly, normalizeWhatsapp } from './identity'
+import { digitsOnly, maskWhatsappInput, normalizeWhatsapp } from './identity'
 import type { UserProfile } from '../types'
 
-/** DDD 87 and the mobile 9, shown beside the field on an order. The rest is what they type. */
-export const PHONE_PREFIX = '87 9'
-export const DEFAULT_DDD = '87'
-
-const PREFIX_DIGITS = digitsOnly(PHONE_PREFIX)
-export const PHONE_REST_LENGTH = 8
-
-/** Digits after 87 9 when the stored number already uses that prefix. */
-export function phoneRest(stored: string): string {
-  const digits = digitsOnly(stored)
-  const national = digits.startsWith('55') ? digits.slice(2) : digits
-  if (!national.startsWith(PREFIX_DIGITS)) return ''
-  return national.slice(PREFIX_DIGITS.length).slice(0, PHONE_REST_LENGTH)
-}
-
-/** DDD and the digits after the mobile 9. A missing number starts at DDD 87. */
-export function splitPhone(stored: string): { ddd: string; rest: string } {
-  const digits = digitsOnly(stored)
-  const national = digits.startsWith('55') ? digits.slice(2) : digits
-  if (national.length >= 3 && national[2] === '9') {
-    return {
-      ddd: national.slice(0, 2),
-      rest: national.slice(3, 3 + PHONE_REST_LENGTH),
-    }
-  }
-  return { ddd: DEFAULT_DDD, rest: phoneRest(stored) }
-}
+/** National mobile length: DDD and the rest, in one field. */
+export const PHONE_LENGTH = 11
 
 /**
- * One full number: DDD, the mobile 9, and what they typed, with country code 55.
- * DDD defaults to 87. Nothing is stored on its own.
+ * One field for the whole number. A saved WhatsApp opens as 87 plus the rest.
+ * No digit is locked.
  */
-export function joinPhone(rest: string, ddd: string = DEFAULT_DDD): string | null {
-  const area = digitsOnly(ddd).slice(0, 2)
-  if (area.length !== 2) return null
-  const typed = digitsOnly(rest).slice(0, PHONE_REST_LENGTH)
-  if (typed.length !== PHONE_REST_LENGTH) return null
-  return normalizeWhatsapp(`${area}9${typed}`)
+export function phoneFieldValue(stored: string): string {
+  return maskWhatsappInput(stored)
+}
+
+/** Full WhatsApp from that one field. Incomplete until every national digit is there. */
+export function phoneFromField(input: string): string | null {
+  const digits = digitsOnly(input)
+  const national = digits.startsWith('55') && digits.length > PHONE_LENGTH ? digits.slice(2) : digits
+  if (national.length !== PHONE_LENGTH) return null
+  return normalizeWhatsapp(national)
 }
 
 /** Nome and WhatsApp are enough for pickup. Delivery still needs the address. */

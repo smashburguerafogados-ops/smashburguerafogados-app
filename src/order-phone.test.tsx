@@ -41,7 +41,7 @@ async function openCheckout(user: ReturnType<typeof userEvent.setup>, mode: 'Ent
 }
 
 describe('phone before the order', () => {
-  it('shows only the phone, searches after eight digits, then asks to finish the cadastro', async () => {
+  it('shows only the phone, searches after the full number, then asks to finish the cadastro', async () => {
     let open = false
     const queued: Array<(value: { user: null }) => void> = []
     firebaseMocks.signInWithEmailAndPassword.mockImplementation(
@@ -62,7 +62,7 @@ describe('phone before the order', () => {
     expect(within(form).queryByRole('textbox', { name: 'CEP' })).not.toBeInTheDocument()
     expect(within(form).queryByRole('button', { name: 'Salvar e pedir' })).not.toBeInTheDocument()
 
-    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '8888777')
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '8798888777')
     expect(firebaseMocks.signInWithEmailAndPassword).not.toHaveBeenCalled()
     expect(form).not.toHaveTextContent('Buscando cadastro...')
 
@@ -107,7 +107,7 @@ describe('phone before the order', () => {
 
     await user.click(within(cart).getByRole('button', { name: 'Fazer Pedido' }))
     const form = screen.getByRole('dialog', { name: 'Dados para entrega' })
-    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '88887777')
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
 
     expect(await screen.findByText('Pedido enviado')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Salvar e pedir' })).not.toBeInTheDocument()
@@ -156,7 +156,7 @@ describe('phone before the order', () => {
     await user.click(within(cart).getByRole('button', { name: 'Fazer Pedido' }))
     await user.type(
       within(screen.getByRole('dialog', { name: 'Dados para entrega' })).getByRole('textbox', { name: 'Telefone' }),
-      '88887777',
+      '87988887777',
     )
 
     expect(await screen.findByText('Pedido enviado')).toBeInTheDocument()
@@ -205,7 +205,7 @@ describe('phone before the order', () => {
     await user.click(within(cart).getByRole('button', { name: 'Fazer Pedido' }))
     await user.type(
       within(screen.getByRole('dialog', { name: 'Dados para retirada' })).getByRole('textbox', { name: 'Telefone' }),
-      '88887777',
+      '87988887777',
     )
 
     expect(await screen.findByText('Pedido enviado')).toBeInTheDocument()
