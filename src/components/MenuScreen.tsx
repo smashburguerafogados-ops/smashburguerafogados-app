@@ -243,7 +243,10 @@ export function MenuScreen() {
           <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" />
         </button>
         <div className="menu__brand">
-          <p className="eyebrow">Smash Burger</p>
+          <p className="menu__wordmark">
+            <span>Smash</span> <span className="menu__wordmark-gold">Burger</span>
+          </p>
+          <i className="menu__rule" aria-hidden="true" />
           {firstName ? <h1 className="menu__title">{firstName}</h1> : null}
         </div>
         <button

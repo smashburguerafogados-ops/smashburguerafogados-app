@@ -17,10 +17,17 @@
   letter-spacing: 0.04em;
 }
 
-.menu .menu__title {
-  font-size: 1.3rem;
+.menu .menu__wordmark {
+  font-family: var(--font-display);
   font-weight: 400;
-  letter-spacing: 0.1em;
+}
+
+.menu .menu__title {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #f4f5f6;
 }
 
 .menu .item__name,

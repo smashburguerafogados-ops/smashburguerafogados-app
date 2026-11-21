@@ -41,11 +41,27 @@
   flex: none;
 }
 
-.menu__brand .eyebrow {
+.menu__wordmark {
   margin: 0;
-  color: var(--text);
-  font-size: 0.82rem;
-  letter-spacing: 0.2em;
+  color: #f4f5f6;
+  font-size: 1.6rem;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.menu__wordmark-gold {
+  color: var(--gold);
+}
+
+.menu__rule {
+  display: block;
+  width: 100%;
+  max-width: 190px;
+  height: 1px;
+  margin: 7px 0 0;
+  background: linear-gradient(90deg, transparent, var(--gold) 25%, var(--gold) 75%, transparent);
 }
 
 .menu__cart {
@@ -118,8 +134,12 @@
 }
 
 .menu__title {
-  margin: 2px 0 0;
-  font-size: 1.05rem;
+  margin: 7px 0 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
 }
 
 .theme-bg,
@@ -714,10 +734,9 @@ html[data-theme='sao-joao'] .menu__content {
     width: 56px;
   }
 
-  .menu__brand .eyebrow {
-    font-size: 0.72rem;
-    letter-spacing: 0.12em;
-    white-space: nowrap;
+  .menu__wordmark {
+    font-size: 1.35rem;
+    letter-spacing: 0.07em;
   }
 
   .items {
