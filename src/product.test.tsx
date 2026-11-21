@@ -191,7 +191,7 @@ describe('destaque categories on the menu', () => {
     expect(names).toEqual(['Combo do dia', 'X-Salada'])
   })
 
-  it('fills every selected category with a very soft gold', async () => {
+  it('fills the selected category with solid gold and leaves the others outlined', async () => {
     document.documentElement.dataset.theme = 'pascoa'
     const user = userEvent.setup()
     renderApp()
@@ -209,23 +209,19 @@ describe('destaque categories on the menu', () => {
 
     const plain = await screen.findByRole('button', { name: 'Lanches' })
     const idle = screen.getByRole('button', { name: 'Bebidas' })
-    expect(getComputedStyle(idle).backgroundColor).toBe('rgb(20, 20, 22)')
+    expect(getComputedStyle(idle).backgroundColor).toBe('rgba(0, 0, 0, 0)')
     expect(getComputedStyle(idle).backgroundImage).toBe('none')
     await user.click(plain)
     expect(plain).toHaveClass('is-active')
     expect(plain).not.toHaveClass('chip--destaque')
-    expect(getComputedStyle(plain).backgroundColor).toBe('rgb(20, 20, 22)')
-    expect(getComputedStyle(plain).backgroundImage).toContain('227, 177, 90')
-    expect(getComputedStyle(plain).backgroundImage).toContain('0.16')
+    expect(getComputedStyle(plain).backgroundColor).toBe('rgb(227, 177, 90)')
+    expect(getComputedStyle(plain).backgroundImage).toBe('none')
 
     const featured = screen.getByRole('button', { name: 'Promoções' })
     await user.click(featured)
     expect(featured).toHaveClass('is-active')
     expect(featured).toHaveClass('chip--destaque')
-    expect(getComputedStyle(featured).backgroundColor).toBe('rgb(20, 20, 22)')
-    expect(getComputedStyle(featured).backgroundImage).toContain('0.16')
-    expect(getComputedStyle(featured).backgroundColor).not.toBe('rgb(125, 206, 160)')
-    expect(getComputedStyle(featured).backgroundColor).not.toBe('rgba(227, 177, 90, 0.16)')
+    expect(getComputedStyle(featured).backgroundColor).toBe('rgb(227, 177, 90)')
     delete document.documentElement.dataset.theme
   })
 })
@@ -365,3 +361,66 @@ describe('Adicionais', () => {
     expect(within(dialog).getByRole('article', { name: 'Cheddar' })).toHaveTextContent('R$ 3,00')
   })
 })
+
+describe('Ícones das categorias', () => {
+  it('maps names to icons without needing a saved icon', async () => {
+    const { autoIconForName, iconForCategory } = await import('./lib/categoryIcons')
+    expect(autoIconForName('Combos')).toBe('combo')
+    expect(autoIconForName('Smash industrial')).toBe('burger')
+    expect(autoIconForName('Smash artesanal')).toBe('burger')
+    expect(autoIconForName('Hambúrgueres')).toBe('burger')
+    expect(autoIconForName('Batata P M G')).toBe('fries')
+    expect(autoIconForName('Sobremesas')).toBe('sweet')
+    expect(autoIconForName('Salgados')).toBe('salgado')
+    expect(autoIconForName('Suco turbinado')).toBe('suco')
+    expect(autoIconForName('Bebidas')).toBe('drink')
+    expect(autoIconForName('Porções')).toBe('porcao')
+    expect(autoIconForName('Qualquer coisa nova')).toBe('prato')
+    expect(iconForCategory('Bebidas', 'pizza')).toBe('pizza')
+    expect(iconForCategory('Bebidas', 'invalido')).toBe('drink')
+  })
+
+  it('shows an icon on every category pill, chosen or automatic', async () => {
+    renderApp()
+    await act(async () => {
+      emit('categories', [
+        { id: 'a', name: 'Lanches', order: 1, icon: 'pizza' },
+        { id: 'b', name: 'Bebidas', order: 2 },
+      ])
+      emit('products', [{ id: 'p1', categoryId: 'a', name: 'X-Salada', price: 20, available: true, description: '' }])
+    })
+    for (const name of ['Início', 'Lanches', 'Bebidas']) {
+      const pill = await screen.findByRole('button', { name })
+      expect(pill.querySelector('svg.cat-icon')).toBeInTheDocument()
+    }
+  })
+
+  it('lets the admin pick an icon, or leave it automatic, when creating and editing', async () => {
+    const { user, dialog } = await openAdminScreen('Categorias')
+    await waitFor(() => expect(activeListeners('categories')).toHaveLength(1))
+    await act(async () => {
+      emit('categories', [{ id: 'lanches', name: 'Lanches', order: 1, icon: 'burger' }])
+    })
+
+    await user.type(within(dialog).getByRole('textbox', { name: 'Nome' }), 'Pizzas')
+    const picker = within(dialog).getAllByRole('radiogroup', { name: 'Ícone da categoria' })[0]
+    expect(within(picker).getAllByRole('radio').length).toBeGreaterThanOrEqual(29)
+    expect(within(picker).getByRole('radio', { name: 'Automático' })).toHaveAttribute('aria-checked', 'true')
+    await user.click(within(picker).getByRole('radio', { name: 'Pizza' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Criar categoria' }))
+    expect(lastAdd('categories')).toMatchObject({ name: 'Pizzas', icon: 'pizza' })
+
+    await user.type(within(dialog).getByRole('textbox', { name: 'Nome' }), 'Sucos')
+    await user.click(within(dialog).getByRole('button', { name: 'Criar categoria' }))
+    expect(lastAdd('categories')).not.toHaveProperty('icon')
+
+    const card = within(dialog).getByRole('article', { name: 'Lanches' })
+    await user.click(within(card).getByRole('button', { name: 'Editar' }))
+    const editPicker = within(dialog).getAllByRole('radiogroup', { name: 'Ícone da categoria' })[1]
+    expect(within(editPicker).getByRole('radio', { name: 'Hambúrguer' })).toHaveAttribute('aria-checked', 'true')
+    await user.click(within(editPicker).getByRole('radio', { name: 'Automático' }))
+    await user.click(within(card).getByRole('button', { name: 'Salvar nome' }))
+    expect(firebaseMocks.updateDoc).toHaveBeenCalledWith({ path: 'categories/lanches' }, { icon: 'DELETE_FIELD' })
+  })
+})
+
