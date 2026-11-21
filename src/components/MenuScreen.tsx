@@ -8,6 +8,7 @@ import { useLongPress } from '../lib/longPress'
 import {
   addCartLine,
   cartCount,
+  cartLineFor,
   cartTotal,
   filterProducts,
   HOME_LABEL,
@@ -33,6 +34,8 @@ import { ProductDialog, descriptionItems } from './ProductDialog'
 import { DeliveryForm } from './DeliveryForm'
 import type { UserProfile } from '../types'
 import { CategoryIcon, iconForCategory } from '../lib/categoryIcons'
+import { ReorderStrip } from './ReorderStrip'
+import type { ReorderEntry } from '../lib/reorder'
 
 type Sheet = 'cart' | 'profile' | 'whatsapp' | 'orders' | null
 
@@ -168,28 +171,19 @@ export function MenuScreen() {
 
   function addProduct(item: Product, note: string, extraIds: string[], qty: number) {
     if (!item.available) return
-    const extras = (item.extras ?? []).filter((extra) => extraIds.includes(extra.id))
-    const priceCents = toCents(item.price) + extras.reduce((sum, extra) => sum + toCents(extra.price), 0)
-    const clean = note.trim()
-    const key = [item.id, clean, extras.map((extra) => extra.id).sort().join(',')].join('|')
-    const name = extras.length > 0 ? `${item.name} + ${extras.map((extra) => extra.name).join(', ')}` : item.name
-    setLines((current) =>
-      addCartLine(
-        current,
-        {
-          key,
-          productId: item.id,
-          name,
-          image: item.image,
-          priceCents,
-          note: clean,
-        },
-        qty,
-      ),
-    )
+    const line = cartLineFor(item, note, extraIds)
+    const name = line.name
+    setLines((current) => addCartLine(current, line, qty))
     noticeId.current += 1
     setNotice({ id: noticeId.current, text: `Adicionado: ${name}` })
     setProduct(null)
+  }
+
+  function reorder(entries: ReorderEntry[], label: string) {
+    if (entries.length === 0) return
+    setLines((current) => entries.reduce((acc, entry) => addCartLine(acc, entry.line, entry.qty), current))
+    noticeId.current += 1
+    setNotice({ id: noticeId.current, text: `Adicionado: ${label}` })
   }
 
   const firstName =
@@ -341,6 +335,10 @@ export function MenuScreen() {
           )
         })}
       </div>
+
+      {history.status === 'ready' && !activeCategory && !search.trim() && (
+        <ReorderStrip orders={history.orders} products={catalog.products} onReorder={reorder} />
+      )}
 
       {visible.length === 0 ? (
         <p className="muted">Nenhum item encontrado.</p>

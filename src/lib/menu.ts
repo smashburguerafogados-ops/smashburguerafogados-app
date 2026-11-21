@@ -1,4 +1,5 @@
 import type { Category, Product } from '../data/catalog'
+import { toCents } from './money'
 
 const CATEGORY_KEY = 'smash.category'
 
@@ -75,6 +76,20 @@ export function cartCount(lines: CartLine[]): number {
 
 export function cartTotal(lines: CartLine[]): number {
   return lines.reduce((sum, line) => sum + line.priceCents * line.qty, 0)
+}
+
+/** The cart line for a product with a note and the chosen extras. Same key rule everywhere. */
+export function cartLineFor(product: Product, note: string, extraIds: string[]): Omit<CartLine, 'qty'> {
+  const extras = (product.extras ?? []).filter((extra) => extraIds.includes(extra.id))
+  const clean = note.trim()
+  return {
+    key: [product.id, clean, extras.map((extra) => extra.id).sort().join(',')].join('|'),
+    productId: product.id,
+    name: extras.length > 0 ? `${product.name} + ${extras.map((extra) => extra.name).join(', ')}` : product.name,
+    image: product.image,
+    priceCents: toCents(product.price) + extras.reduce((sum, extra) => sum + toCents(extra.price), 0),
+    note: clean,
+  }
 }
 
 export function addCartLine(lines: CartLine[], next: Omit<CartLine, 'qty'>, qty = 1): CartLine[] {
