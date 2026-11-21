@@ -1,7 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { PHONE_PREFIX, PHONE_REST_LENGTH, contactReady, joinPhone, phoneRest } from '../lib/delivery'
-import { digitsOnly } from '../lib/identity'
+import { contactReady, phoneFieldValue, phoneFromField } from '../lib/delivery'
+import { maskWhatsappInput } from '../lib/identity'
 import type { UserProfile } from '../types'
 import { FindMark, PhoneIcon, SaveIcon } from './Marks'
 import { Overlay } from './Overlay'
@@ -20,7 +20,7 @@ export function PickupForm({ profile, ordering = false, onClose, onSaved }: Pick
   const { saveContact, findCustomer } = useAuth()
   const [nome, setNome] = useState(profile.nome)
   const [knownName, setKnownName] = useState(Boolean(profile.nome.trim()))
-  const [rest, setRest] = useState(phoneRest(profile.whatsapp))
+  const [phone, setPhone] = useState(phoneFieldValue(profile.whatsapp))
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [found, setFound] = useState(false)
@@ -55,9 +55,9 @@ export function PickupForm({ profile, ordering = false, onClose, onSaved }: Pick
   }
 
   function onPhone(value: string) {
-    const next = digitsOnly(value).slice(0, PHONE_REST_LENGTH)
-    setRest(next)
-    const whatsapp = joinPhone(next)
+    const next = maskWhatsappInput(value)
+    setPhone(next)
+    const whatsapp = phoneFromField(next)
     if (identify) {
       if (!whatsapp) {
         ticket.current += 1
@@ -85,9 +85,9 @@ export function PickupForm({ profile, ordering = false, onClose, onSaved }: Pick
       setError('Informe seu nome.')
       return
     }
-    const whatsapp = joinPhone(rest)
+    const whatsapp = phoneFromField(phone)
     if (!whatsapp) {
-      setError('Informe o restante do telefone.')
+      setError('Informe o telefone com DDD.')
       return
     }
 
@@ -102,7 +102,7 @@ export function PickupForm({ profile, ordering = false, onClose, onSaved }: Pick
   }
 
   const showName = !ordering || (phase === 'finish' && !knownName)
-  const showPhone = !ordering || identify || !joinPhone(phoneRest(profile.whatsapp))
+  const showPhone = !ordering || identify || !phoneFromField(profile.whatsapp)
   const showSave = !ordering || (phase === 'finish' && (showName || showPhone))
 
   return (
@@ -134,17 +134,13 @@ export function PickupForm({ profile, ordering = false, onClose, onSaved }: Pick
           <span id="pickup-phone">Telefone</span>
           <div className="phone-join">
             <PhoneIcon />
-            <span className="phone-join__prefix" aria-hidden="true">
-              {PHONE_PREFIX}
-            </span>
             <input
               aria-labelledby="pickup-phone"
               inputMode="numeric"
-              autoComplete="tel-national"
+              autoComplete="tel"
               required
-              maxLength={PHONE_REST_LENGTH}
-              placeholder="0000-0000"
-              value={rest}
+              placeholder="(87) 98888-7777"
+              value={phone}
               onChange={(event) => onPhone(event.target.value)}
             />
             <FindMark />

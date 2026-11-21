@@ -9,7 +9,7 @@ import {
   checkoutProblem,
   type CheckoutState,
 } from './lib/checkout'
-import { joinPhone, phoneRest, splitPhone } from './lib/delivery'
+import { phoneFieldValue, phoneFromField } from './lib/delivery'
 import { firebaseMocks } from './test/mocks'
 import { customerProfile, renderApp, signInAs } from './test/render'
 import './index.css'
@@ -19,18 +19,16 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('telefone 87 9', () => {
-  it('joins the prefix and what they typed into one number', () => {
-    expect(joinPhone('88887777')).toBe('5587988887777')
-    expect(joinPhone('8888-7777')).toBe('5587988887777')
-    expect(joinPhone('8888777')).toBeNull()
-    expect(joinPhone('88887777', '81')).toBe('5581988887777')
-    expect(joinPhone('88887777', '8')).toBeNull()
-    expect(phoneRest('5587988887777')).toBe('88887777')
-    expect(phoneRest('5581911112222')).toBe('')
-    expect(splitPhone('5587988887777')).toEqual({ ddd: '87', rest: '88887777' })
-    expect(splitPhone('5581911112222')).toEqual({ ddd: '81', rest: '11112222' })
-    expect(splitPhone('')).toEqual({ ddd: '87', rest: '' })
+describe('telefone junto', () => {
+  it('keeps 87 and the rest in one editable number', () => {
+    expect(phoneFieldValue('5587988887777')).toBe('(87) 98888-7777')
+    expect(phoneFieldValue('5581811112222')).toBe('(81) 81111-2222')
+    expect(phoneFieldValue('')).toBe('')
+    expect(phoneFromField('(87) 98888-7777')).toBe('5587988887777')
+    expect(phoneFromField('87988887777')).toBe('5587988887777')
+    expect(phoneFromField('81811112222')).toBe('5581811112222')
+    expect(phoneFromField('8798888777')).toBeNull()
+    expect(phoneFromField('88887777')).toBeNull()
   })
 })
 
@@ -256,7 +254,7 @@ describe('cart and checkout', () => {
     expect(within(form).queryByRole('textbox', { name: 'CEP' })).not.toBeInTheDocument()
     expect(firebaseMocks.signInWithEmailAndPassword).not.toHaveBeenCalled()
     await user.type(within(form).getByRole('textbox', { name: 'Nome' }), 'Ana Souza')
-    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '88887777')
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
     await user.click(within(form).getByRole('button', { name: 'Salvar e pedir' }))
     expect(await screen.findByText('Pedido enviado')).toBeInTheDocument()
     expect(firebaseMocks.updateDoc).toHaveBeenCalledWith(
@@ -284,7 +282,10 @@ describe('cart and checkout', () => {
     expect(screen.queryByRole('tab', { name: 'Entrar' })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Criar conta' })).not.toBeInTheDocument()
     expect(within(form).queryByRole('textbox', { name: 'Nome' })).not.toBeInTheDocument()
-    expect(within(form).getByText('87 9')).toBeInTheDocument()
+    expect(within(form).queryByText('87 9')).not.toBeInTheDocument()
+    expect(within(form).getByRole('textbox', { name: 'Telefone' })).toHaveValue('')
+    expect(form.querySelector('.phone-join__prefix')).toBeNull()
+    expect(form.querySelector('input[aria-label="DDD"]')).toBeNull()
     expect(within(form).getByRole('textbox', { name: 'Telefone' })).toBeRequired()
     expect(within(form).queryByRole('textbox', { name: 'CEP' })).not.toBeInTheDocument()
     expect(within(form).queryByRole('button', { name: 'Salvar e pedir' })).not.toBeInTheDocument()
@@ -343,7 +344,7 @@ describe('cart and checkout', () => {
     const form = screen.getByRole('dialog', { name: 'Dados para entrega' })
     expect(within(form).getByText('Finalize seu cadastro.')).toBeInTheDocument()
     expect(firebaseMocks.signInWithEmailAndPassword).not.toHaveBeenCalled()
-    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '88887777')
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
     await user.type(within(form).getByRole('textbox', { name: 'CEP' }), '01001000')
     await user.type(await within(form).findByRole('textbox', { name: 'Nome' }), 'João Lima')
 
@@ -395,7 +396,7 @@ describe('cart and checkout', () => {
     await user.click(screen.getByRole('button', { name: 'Fazer Pedido' }))
 
     const form = screen.getByRole('dialog', { name: 'Dados para entrega' })
-    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '88887777')
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
     await user.type(within(form).getByRole('textbox', { name: 'CEP' }), '99999999')
 
     const street = await within(form).findByRole('textbox', { name: 'Endereço' })

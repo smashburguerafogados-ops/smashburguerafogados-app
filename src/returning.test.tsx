@@ -80,7 +80,7 @@ describe('returning customer in a new browser session', () => {
     const user = userEvent.setup()
     const form = await openDeliveryForm(user)
 
-    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '88887777')
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
 
     expect(await within(form).findByText('Encontramos seu cadastro. Confira os dados e peça.')).toBeInTheDocument()
     expect(within(form).getByRole('textbox', { name: 'Nome' })).toHaveValue('Jameson')
@@ -115,7 +115,7 @@ describe('returning customer in a new browser session', () => {
     const form = await openDeliveryForm(user)
 
     await user.type(within(form).getByRole('textbox', { name: 'Nome' }), 'Jameson S')
-    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '88887777')
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
     await user.type(within(form).getByRole('textbox', { name: 'CEP' }), '56300000')
     await user.type(await within(form).findByRole('textbox', { name: 'Endereço' }), 'Rua Nova')
     await user.type(within(form).getByRole('textbox', { name: 'Número' }), '7')
@@ -143,7 +143,7 @@ describe('returning customer in a new browser session', () => {
     const form = await openDeliveryForm(user)
 
     await user.type(within(form).getByRole('textbox', { name: 'Nome' }), 'Jameson')
-    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '88887777')
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
     await user.type(within(form).getByRole('textbox', { name: 'CEP' }), '56300000')
     await user.type(await within(form).findByRole('textbox', { name: 'Endereço' }), 'Rua das Flores')
     await user.type(within(form).getByRole('textbox', { name: 'Número' }), '42')
@@ -169,7 +169,7 @@ describe('returning customer in a new browser session', () => {
     const user = userEvent.setup()
     const form = await openDeliveryForm(user)
 
-    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '88887777')
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
     expect(await within(form).findByDisplayValue('Rua das Flores')).toBeInTheDocument()
     await user.click(within(form).getByRole('button', { name: 'Salvar e pedir' }))
 
@@ -185,7 +185,7 @@ describe('returning customer in a new browser session', () => {
     const user = userEvent.setup()
     const form = await openDeliveryForm(user)
 
-    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '88887777')
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
 
     await waitFor(() => expect(firebaseMocks.signOut).toHaveBeenCalled())
     expect(within(form).getByRole('textbox', { name: 'Nome' })).toHaveValue('')
@@ -206,7 +206,7 @@ describe('returning customer in a new browser session', () => {
     await user.click(within(cart).getByRole('button', { name: 'Fazer Pedido' }))
     const form = screen.getByRole('dialog', { name: 'Dados para retirada' })
 
-    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '88887777')
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
 
     expect(await screen.findByText('Pedido enviado')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Salvar e pedir' })).not.toBeInTheDocument()

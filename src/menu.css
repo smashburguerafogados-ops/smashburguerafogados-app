@@ -862,14 +862,6 @@ html[data-theme='sao-joao'] .menu__content {
   min-width: 0;
 }
 
-.field .phone-join__ddd {
-  width: 2.75rem;
-  flex: 0 0 2.75rem;
-  padding-right: 8px;
-  padding-left: 8px;
-  text-align: center;
-}
-
 .money-join {
   display: flex;
   align-items: stretch;
@@ -2583,14 +2575,6 @@ html .chips .chip.chip--destaque {
 
 .menu .field .phone-join__prefix {
   color: var(--muted);
-}
-
-.menu .field .phone-join__ddd {
-  width: 2.4rem;
-  flex: 0 0 2.4rem;
-  padding: 2px 0;
-  color: var(--text);
-  text-align: center;
 }
 
 .menu .money-join input {
