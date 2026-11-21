@@ -62,6 +62,25 @@ it('shows only the first name in the header once the customer has one', async ()
   expect(screen.getByRole('button', { name: 'Smash Burger' })).toBeInTheDocument()
 })
 
+it('shows the SMASH BURGER wordmark with a gold rule, with or without a name', async () => {
+  renderMenu()
+  const wordmark = document.querySelector('.menu__brand .menu__wordmark') as HTMLElement
+  expect(wordmark).toHaveTextContent('Smash Burger')
+  expect(wordmark.querySelector('.menu__wordmark-gold')).toHaveTextContent('Burger')
+  expect(getComputedStyle(wordmark).textTransform).toBe('uppercase')
+  expect(wordmark.nextElementSibling).toHaveClass('menu__rule')
+  expect(document.querySelector('.menu__title')).toBeNull()
+  expect(document.querySelector('.menu__brand .eyebrow')).toBeNull()
+
+  signInAs(customerProfile)
+  renderMenu()
+  const title = await screen.findByRole('heading', { name: 'Ana' })
+  const brand = title.closest('.menu__brand') as HTMLElement
+  expect(brand.children[0]).toHaveClass('menu__wordmark')
+  expect(brand.children[1]).toHaveClass('menu__rule')
+  expect(brand.children[2]).toBe(title)
+})
+
 it('opens on Início and lists products from every category', () => {
   renderMenu()
   const chips = within(screen.getByRole('toolbar', { name: 'Categorias' })).getAllByRole('button')
