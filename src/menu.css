@@ -3103,7 +3103,7 @@ html .chips .chip.chip--destaque {
 
 .reorder__card {
   flex: none;
-  width: min(300px, calc(100vw - 56px));
+  width: min(312px, calc(100vw - 48px));
   height: 64px;
   display: flex;
   align-items: center;
@@ -3122,9 +3122,9 @@ html .chips .chip.chip--destaque {
 }
 
 .reorder__thumbs img {
-  width: 38px;
-  height: 38px;
-  margin-left: -15px;
+  width: 34px;
+  height: 34px;
+  margin-left: -14px;
   border: 2px solid #101012;
   border-radius: 50%;
   object-fit: cover;
@@ -3143,14 +3143,16 @@ html .chips .chip.chip--destaque {
 .reorder__meta {
   margin: 0 0 2px;
   font-family: var(--font-price);
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 500;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
   text-transform: uppercase;
   color: #9a9aa2;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .reorder__total {
@@ -3160,12 +3162,13 @@ html .chips .chip.chip--destaque {
   font-weight: 700;
   line-height: 1;
   color: var(--gold);
+  white-space: nowrap;
   font-variant-numeric: lining-nums tabular-nums;
 }
 
 .reorder__btn {
   flex: none;
-  width: 86px;
+  width: 94px;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
@@ -3204,5 +3207,19 @@ html .chips .chip.chip--destaque {
 @media (prefers-reduced-motion: reduce) {
   .reorder__scroll {
     scroll-behavior: auto;
+  }
+}
+
+@media (max-width: 340px) {
+  .reorder__thumbs img:nth-child(3) {
+    display: none;
+  }
+
+  .reorder__btn {
+    width: 78px;
+  }
+
+  .reorder__btn svg {
+    display: none;
   }
 }
