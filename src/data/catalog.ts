@@ -9,6 +9,7 @@ export type Category = {
   name: string
   order: number
   destaque?: boolean
+  icon?: string
 }
 
 export type Product = {

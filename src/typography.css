@@ -53,9 +53,13 @@
   font-size: 1.15rem;
 }
 
-.menu .chip,
 .menu .dock__label {
   font-weight: 600;
+}
+
+.menu .chip {
+  font-family: var(--font-price);
+  font-weight: 500;
 }
 
 .menu .item__price,

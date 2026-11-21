@@ -68,6 +68,7 @@ vi.mock('firebase/firestore', async () => {
     deleteDoc: (...args: unknown[]) => mocks.deleteDoc(...args),
     onSnapshot: (...args: unknown[]) => mocks.onSnapshot(...args),
     serverTimestamp: vi.fn(() => 'SERVER_TIME'),
+    deleteField: vi.fn(() => 'DELETE_FIELD'),
   }
 })
 

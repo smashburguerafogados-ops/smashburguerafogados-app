@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react'
 import type { Category } from '../data/catalog'
-import { createCategory, deleteCategory, renameCategory, setCategoryDestaque, watchCategories } from '../lib/adminCatalog'
+import {
+  createCategory,
+  deleteCategory,
+  renameCategory,
+  setCategoryDestaque,
+  setCategoryIcon,
+  watchCategories,
+} from '../lib/adminCatalog'
+import { CategoryIcon, iconForCategory } from '../lib/categoryIcons'
+import { IconPicker } from './IconPicker'
 import { CloseButton } from './Overlay'
 
 function PencilIcon() {
@@ -56,6 +65,8 @@ export function CategoryScreen({ onClose }: { onClose: () => void }) {
   const [pending, setPending] = useState<Category | null>(null)
   const [editingId, setEditingId] = useState('')
   const [draftName, setDraftName] = useState('')
+  const [icon, setIcon] = useState('')
+  const [draftIcon, setDraftIcon] = useState('')
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -84,8 +95,9 @@ export function CategoryScreen({ onClose }: { onClose: () => void }) {
     setBusy(true)
     try {
       const order = categories.reduce((max, category) => Math.max(max, category.order), 0) + 1
-      await createCategory(name, destaque, order)
+      await createCategory(name, destaque, order, icon)
       setName('')
+      setIcon('')
       setDestaque(false)
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Não foi possível criar a categoria.')
@@ -98,12 +110,14 @@ export function CategoryScreen({ onClose }: { onClose: () => void }) {
     setActionError('')
     setEditingId(category.id)
     setDraftName(category.name)
+    setDraftIcon(category.icon ?? '')
   }
 
   async function saveName(category: Category) {
     setActionError('')
     try {
       await renameCategory(category.id, draftName)
+      if (draftIcon !== (category.icon ?? '')) await setCategoryIcon(category.id, draftIcon)
       setEditingId('')
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Não foi possível salvar a categoria.')
@@ -159,6 +173,7 @@ export function CategoryScreen({ onClose }: { onClose: () => void }) {
           <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => void create()}>
             Criar categoria
           </button>
+          <IconPicker name={name} value={icon} onChange={setIcon} />
         </div>
         {categories.length === 0 ? (
           <p className="muted">Nenhuma categoria.</p>
@@ -180,7 +195,10 @@ export function CategoryScreen({ onClose }: { onClose: () => void }) {
                         }}
                       />
                     ) : (
-                      <strong>{category.name}</strong>
+                      <strong className="category-name">
+                        <CategoryIcon iconKey={iconForCategory(category.name, category.icon)} size={18} />
+                        {category.name}
+                      </strong>
                     )}
                     <div className="catalog__tools">
                       <button
@@ -210,6 +228,9 @@ export function CategoryScreen({ onClose }: { onClose: () => void }) {
                       </button>
                     </div>
                   </article>
+                  {editing && (
+                    <IconPicker name={draftName} value={draftIcon} onChange={setDraftIcon} />
+                  )}
                 </li>
               )
             })}

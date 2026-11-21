@@ -32,6 +32,7 @@ import { Overlay } from './Overlay'
 import { ProductDialog, descriptionItems } from './ProductDialog'
 import { DeliveryForm } from './DeliveryForm'
 import type { UserProfile } from '../types'
+import { CategoryIcon, iconForCategory } from '../lib/categoryIcons'
 
 type Sheet = 'cart' | 'profile' | 'whatsapp' | 'orders' | null
 
@@ -308,6 +309,7 @@ export function MenuScreen() {
           aria-pressed={!activeCategory}
           onClick={() => chooseCategory('')}
         >
+          <CategoryIcon iconKey="home" />
           {HOME_LABEL}
         </button>
         {categories.map((category) => {
@@ -322,6 +324,7 @@ export function MenuScreen() {
               aria-pressed={activeCategory === category.id}
               onClick={() => chooseCategory(category.id)}
             >
+              <CategoryIcon iconKey={iconForCategory(category.name, category.icon)} />
               {category.name}
               {category.destaque && <span className="chip__sun" aria-hidden="true" />}
             </button>

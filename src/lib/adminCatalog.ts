@@ -3,6 +3,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDocs,
   onSnapshot,
@@ -14,6 +15,7 @@ import {
 } from 'firebase/firestore'
 import type { Category, Extra } from '../data/catalog'
 import { db } from './firebase'
+import { isCategoryIconKey } from './categoryIcons'
 import { sortCategories } from './menu'
 
 export function categoryName(name: string): string {
@@ -38,6 +40,7 @@ export function watchCategories(onNext: (categories: Category[]) => void, onErro
           name: data.name,
           order: typeof data.order === 'number' ? data.order : 0,
           destaque: data.destaque === true,
+          ...(isCategoryIconKey(data.icon) ? { icon: data.icon } : {}),
         })
       })
       onNext(sortCategories(categories))
@@ -46,12 +49,18 @@ export function watchCategories(onNext: (categories: Category[]) => void, onErro
   )
 }
 
-export async function createCategory(name: string, destaque: boolean, order: number): Promise<string> {
+export async function createCategory(
+  name: string,
+  destaque: boolean,
+  order: number,
+  icon = '',
+): Promise<string> {
   const clean = categoryName(name)
   const ref = await addDoc(collection(db, 'categories'), {
     name: clean,
     destaque,
     order,
+    ...(isCategoryIconKey(icon) ? { icon } : {}),
     createdAt: serverTimestamp(),
   })
   return ref.id
@@ -59,6 +68,10 @@ export async function createCategory(name: string, destaque: boolean, order: num
 
 export async function setCategoryDestaque(id: string, destaque: boolean): Promise<void> {
   await updateDoc(doc(db, 'categories', id), { destaque })
+}
+
+export async function setCategoryIcon(id: string, icon: string): Promise<void> {
+  await updateDoc(doc(db, 'categories', id), { icon: isCategoryIconKey(icon) ? icon : deleteField() })
 }
 
 export async function renameCategory(id: string, name: string): Promise<void> {

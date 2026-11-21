@@ -1,6 +1,7 @@
 import { collection, onSnapshot, query, where, type Unsubscribe } from 'firebase/firestore'
 import type { Catalog, Category, Extra, Product } from '../data/catalog'
 import { db } from './firebase'
+import { isCategoryIconKey } from './categoryIcons'
 import { sortCategories } from './menu'
 
 const FALLBACK_IMAGE = `${import.meta.env.BASE_URL}menu/smash.svg`
@@ -21,6 +22,7 @@ function readCategory(id: string, data: Record<string, unknown>): Category | nul
     name: data.name,
     order: typeof data.order === 'number' ? data.order : 0,
     destaque: data.destaque === true,
+    ...(isCategoryIconKey(data.icon) ? { icon: data.icon } : {}),
   }
 }
 
