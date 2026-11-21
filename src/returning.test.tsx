@@ -73,39 +73,42 @@ describe('customer logins', () => {
 })
 
 describe('returning customer in a new browser session', () => {
-  it('reopens the saved customer when the same WhatsApp is typed, prefilling name and address', async () => {
+  it('loads the saved customer and the session when the same WhatsApp is typed in Conta', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new Error('ViaCEP must not run for a saved address'))))
     loginsThatOpen(PRIMARY, saved.uid)
     userDocs({ [`users/${saved.uid}`]: saved })
     const user = userEvent.setup()
     const form = await openDeliveryForm(user)
+    expect(within(form).queryByRole('textbox', { name: 'CEP' })).not.toBeInTheDocument()
 
     await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
 
-    expect(await within(form).findByText('Encontramos seu cadastro. Confira os dados e peça.')).toBeInTheDocument()
-    expect(within(form).getByRole('textbox', { name: 'Nome' })).toHaveValue('Jameson')
-    expect(within(form).getByRole('textbox', { name: 'CEP' })).toHaveValue('56300-000')
-    expect(within(form).getByRole('textbox', { name: 'Endereço' })).toHaveValue('Rua das Flores')
-    expect(within(form).getByRole('textbox', { name: 'Número' })).toHaveValue('42')
-    expect(within(form).getByRole('textbox', { name: 'Bairro' })).toHaveValue('Centro')
-    expect(within(form).getByRole('textbox', { name: 'Cidade' })).toHaveValue('Petrolina')
+    const dialog = screen.getByRole('dialog', { name: 'Dados para entrega' })
+    await within(dialog).findByRole('textbox', { name: 'CEP' })
+    expect(dialog.querySelector('.account__name')).toHaveTextContent('Jameson')
+    expect(within(dialog).getByRole('textbox', { name: 'Telefone' })).toHaveValue('(87) 98888-7777')
+    expect(within(dialog).getByRole('textbox', { name: 'CEP' })).toHaveValue('56300-000')
+    expect(within(dialog).getByRole('textbox', { name: 'Endereço' })).toHaveValue('Rua das Flores')
+    expect(within(dialog).getByRole('textbox', { name: 'Número' })).toHaveValue('42')
+    expect(within(dialog).getByRole('textbox', { name: 'Bairro' })).toHaveValue('Centro')
+    expect(within(dialog).getByRole('textbox', { name: 'Cidade' })).toHaveValue('Petrolina')
+    expect(localStorage.getItem('smash.customerId')).toBe(saved.uid)
+    expect(firebaseMocks.createUserWithEmailAndPassword).not.toHaveBeenCalled()
+    expect(firebaseMocks.setDoc).not.toHaveBeenCalled()
+    expect(firebaseMocks.updateDoc).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
+    expect(screen.queryByText(/senha/i)).not.toBeInTheDocument()
 
-    await user.click(within(form).getByRole('button', { name: 'Salvar e pedir' }))
-
+    await user.click(within(dialog).getByRole('button', { name: 'Salvar endereço' }))
     await waitFor(() => expect(firebaseMocks.updateDoc).toHaveBeenCalled())
     expect(firebaseMocks.updateDoc).toHaveBeenCalledWith(
       { path: `users/${saved.uid}` },
       expect.objectContaining({ nome: 'Jameson', whatsapp: NUMBER, address: saved.address }),
     )
-    expect(firebaseMocks.createUserWithEmailAndPassword).not.toHaveBeenCalled()
-    expect(firebaseMocks.setDoc).not.toHaveBeenCalled()
-    expect(fetch).not.toHaveBeenCalled()
-    expect(localStorage.getItem('smash.customerId')).toBe(saved.uid)
-    expect(screen.queryByText(/senha/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('dialog', { name: 'Dados para entrega' })).not.toBeInTheDocument()
   })
 
-  it('reopens on save even if the person typed everything before the lookup finished', async () => {
+  it('reopens on save even if the lookup could not finish before the cadastro was filled', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({ erro: true }) })))
     loginsThatOpen(PRIMARY, saved.uid)
     userDocs({ [`users/${saved.uid}`]: saved })
@@ -114,14 +117,15 @@ describe('returning customer in a new browser session', () => {
     const user = userEvent.setup()
     const form = await openDeliveryForm(user)
 
-    await user.type(within(form).getByRole('textbox', { name: 'Nome' }), 'Jameson S')
     await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
+    expect(await within(form).findByText('Finalize seu cadastro.')).toBeInTheDocument()
     await user.type(within(form).getByRole('textbox', { name: 'CEP' }), '56300000')
     await user.type(await within(form).findByRole('textbox', { name: 'Endereço' }), 'Rua Nova')
+    await user.type(within(form).getByRole('textbox', { name: 'Nome' }), 'Jameson S')
     await user.type(within(form).getByRole('textbox', { name: 'Número' }), '7')
     await user.type(within(form).getByRole('textbox', { name: 'Bairro' }), 'Centro')
     await user.type(within(form).getByRole('textbox', { name: 'Cidade' }), 'Petrolina')
-    await user.click(within(form).getByRole('button', { name: 'Salvar e pedir' }))
+    await user.click(within(form).getByRole('button', { name: 'Salvar cadastro' }))
 
     await waitFor(() => expect(firebaseMocks.updateDoc).toHaveBeenCalled())
     expect(firebaseMocks.updateDoc).toHaveBeenCalledWith(
@@ -142,14 +146,15 @@ describe('returning customer in a new browser session', () => {
     const user = userEvent.setup()
     const form = await openDeliveryForm(user)
 
-    await user.type(within(form).getByRole('textbox', { name: 'Nome' }), 'Jameson')
     await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
+    expect(await within(form).findByText('Finalize seu cadastro.')).toBeInTheDocument()
     await user.type(within(form).getByRole('textbox', { name: 'CEP' }), '56300000')
     await user.type(await within(form).findByRole('textbox', { name: 'Endereço' }), 'Rua das Flores')
+    await user.type(within(form).getByRole('textbox', { name: 'Nome' }), 'Jameson')
     await user.type(within(form).getByRole('textbox', { name: 'Número' }), '42')
     await user.type(within(form).getByRole('textbox', { name: 'Bairro' }), 'Centro')
     await user.type(within(form).getByRole('textbox', { name: 'Cidade' }), 'Petrolina')
-    await user.click(within(form).getByRole('button', { name: 'Salvar e pedir' }))
+    await user.click(within(form).getByRole('button', { name: 'Salvar cadastro' }))
 
     await waitFor(() => expect(firebaseMocks.setDoc).toHaveBeenCalled())
     const emails = firebaseMocks.createUserWithEmailAndPassword.mock.calls.map((call) => call[1])
@@ -159,7 +164,6 @@ describe('returning customer in a new browser session', () => {
     expect(profile).toMatchObject({ uid: 'cliente-recuperado', role: 'customer', nome: 'Jameson', whatsapp: NUMBER })
     expect(localStorage.getItem('smash.customerId')).toBe('cliente-recuperado')
     expect(screen.queryByText(/senha/i)).not.toBeInTheDocument()
-    expect(screen.queryByRole('dialog', { name: 'Dados para entrega' })).not.toBeInTheDocument()
   })
 
   it('comes back through the recovery login on later visits instead of making another account', async () => {
@@ -170,8 +174,8 @@ describe('returning customer in a new browser session', () => {
     const form = await openDeliveryForm(user)
 
     await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
-    expect(await within(form).findByDisplayValue('Rua das Flores')).toBeInTheDocument()
-    await user.click(within(form).getByRole('button', { name: 'Salvar e pedir' }))
+    expect(await screen.findByDisplayValue('Rua das Flores')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Salvar endereço' }))
 
     await waitFor(() => expect(firebaseMocks.updateDoc).toHaveBeenCalled())
     expect(firebaseMocks.signInWithEmailAndPassword.mock.calls[0][1]).toBe(RECOVERY)
@@ -188,7 +192,8 @@ describe('returning customer in a new browser session', () => {
     await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
 
     await waitFor(() => expect(firebaseMocks.signOut).toHaveBeenCalled())
-    expect(within(form).getByRole('textbox', { name: 'Nome' })).toHaveValue('')
+    expect(await screen.findByText('Finalize seu cadastro.')).toBeInTheDocument()
+    expect(screen.queryByText('Admin')).not.toBeInTheDocument()
     expect(screen.queryByText('Encontramos seu cadastro. Confira os dados e peça.')).not.toBeInTheDocument()
   })
 

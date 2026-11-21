@@ -43,6 +43,36 @@ const EMPTY_CUSTOMER: UserProfile = {
   role: 'customer',
 }
 
+/** Signed out: phone first, same lookup as the order. Signed in: the account as before. */
+function ContaSheet({ onClose }: { onClose: () => void }) {
+  const { session } = useAuth()
+  const customer = session.status === 'ready' && session.profile.role === 'customer' ? session.profile : null
+  const [identify] = useState(() => !customer)
+  const [opened, setOpened] = useState<UserProfile | null>(null)
+
+  if (identify && !opened) {
+    return (
+      <DeliveryForm
+        key="identify"
+        profile={customer ?? EMPTY_CUSTOMER}
+        ordering
+        fromAccount
+        onClose={onClose}
+        onSaved={(saved) => setOpened(saved)}
+      />
+    )
+  }
+
+  return (
+    <DeliveryForm
+      key="account"
+      profile={opened ?? customer ?? EMPTY_CUSTOMER}
+      onClose={onClose}
+      onSaved={onClose}
+    />
+  )
+}
+
 function linkedProductId(): string {
   try {
     return new URLSearchParams(window.location.search).get('produto') ?? ''
@@ -363,13 +393,7 @@ export function MenuScreen() {
           onPlaced={() => setLines([])}
         />
       )}
-      {sheet === 'profile' && (
-        <DeliveryForm
-          profile={session.status === 'ready' && session.profile.role === 'customer' ? session.profile : EMPTY_CUSTOMER}
-          onClose={() => setSheet(null)}
-          onSaved={() => setSheet(null)}
-        />
-      )}
+      {sheet === 'profile' && <ContaSheet onClose={() => setSheet(null)} />}
       {sheet === 'whatsapp' && <AttendancePrompt onClose={() => setSheet(null)} />}
       {sheet === 'orders' && (
         <Overlay label="Meus pedidos" onClose={() => setSheet(null)} back>

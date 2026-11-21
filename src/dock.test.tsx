@@ -89,8 +89,8 @@ it('leaves room under the address, product, cart and account buttons', async () 
   const addressSpacer = address.querySelector('.dock-spacer') as HTMLElement
   expect(parseFloat(getComputedStyle(addressSpacer).height)).toBe(108)
   expect(getComputedStyle(addressSpacer).boxSizing).toBe('content-box')
-  const save = within(address).getByRole('button', { name: 'Salvar e pedir' })
-  expect(save.compareDocumentPosition(addressSpacer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  const phone = within(address).getByRole('textbox', { name: 'Telefone' })
+  expect(phone.compareDocumentPosition(addressSpacer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   await user.click(within(address).getByRole('button', { name: 'Fechar' }))
 
   await user.click(screen.getByRole('button', { name: /Smash da casa/ }))
