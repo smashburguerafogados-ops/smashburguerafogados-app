@@ -63,9 +63,11 @@ export const firebaseMocks = {
 
 export type FakeDoc = { id: string } & Record<string, unknown>
 
-export function snapshotOf(docs: FakeDoc[]) {
+export function snapshotOf(docs: FakeDoc[], fromCache = false) {
   return {
+    empty: docs.length === 0,
     docs: docs.map(({ id, ...data }) => ({ id, data: () => data })),
+    metadata: { fromCache },
   }
 }
 
@@ -73,6 +75,13 @@ export function snapshotOf(docs: FakeDoc[]) {
 export function emit(path: string, docs: FakeDoc[]): number {
   const targets = listeners.filter((listener) => listener.active && listener.ref.path === path)
   targets.forEach((listener) => listener.next(snapshotOf(docs)))
+  return targets.length
+}
+
+/** Pushes an offline snapshot answered from the local cache. */
+export function emitCached(path: string, docs: FakeDoc[]): number {
+  const targets = listeners.filter((listener) => listener.active && listener.ref.path === path)
+  targets.forEach((listener) => listener.next(snapshotOf(docs, true)))
   return targets.length
 }
 

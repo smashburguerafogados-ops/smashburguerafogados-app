@@ -292,9 +292,16 @@ export function MenuScreen() {
       </label>
 
       {catalogError && (
-        <p className="alert" role="alert">
-          Não foi possível carregar o cardápio.
-        </p>
+        <div className="menu-retry">
+          <p className="alert" role="alert">
+            Não foi possível carregar o cardápio.
+          </p>
+          {!catalog && (
+            <button type="button" className="btn" onClick={() => window.location.reload()}>
+              Tentar de novo
+            </button>
+          )}
+        </div>
       )}
       {!catalog && !catalogError && (
         <p className="menu-loading" role="status" aria-label="Carregando o cardápio." aria-busy="true">
