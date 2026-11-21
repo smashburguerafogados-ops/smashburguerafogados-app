@@ -8,6 +8,8 @@ import { stepDock } from './lib/dockScroll'
 import { emitSeedCatalog } from './test/render'
 import './index.css'
 import './menu.css'
+import menuCss from './menu.css?raw'
+import indexHtml from '../index.html?raw'
 
 function renderMenu() {
   const view = render(
@@ -55,12 +57,29 @@ it('slides the bar away when the page scrolls down and brings it back when scrol
   expect(dock).toHaveClass('is-away')
   expect(getComputedStyle(dock).opacity).toBe('0')
   expect(getComputedStyle(dock).pointerEvents).toBe('none')
-  expect(getComputedStyle(dock).transform).toContain('48')
+  expect(getComputedStyle(dock).transform).toBe('translateY(100%)')
 
   setWindowScroll(40)
   await flushScroll()
   expect(dock).not.toHaveClass('is-away')
   expect(getComputedStyle(dock).pointerEvents).not.toBe('none')
+})
+
+it('sticks the bar to the bottom edge, full width, with the safe area as inner padding', () => {
+  renderMenu()
+  const style = getComputedStyle(screen.getByRole('navigation', { name: 'Atalhos' }))
+  expect(style.position).toBe('fixed')
+  expect(style.bottom).toBe('0px')
+  expect(style.left).toBe('0px')
+  expect(style.right).toBe('0px')
+  expect(style.width).toBe('100%')
+  expect(style.borderBottomLeftRadius).toBe('0px')
+  expect(style.borderTopLeftRadius).toBe('18px')
+})
+
+it('opts in to the full screen so the safe area can be used as padding', () => {
+  expect(indexHtml).toContain('viewport-fit=cover')
+  expect(menuCss).toMatch(/\.dock \{[^}]*padding:[^;]*var\(--safe-bottom\)/)
 })
 
 it('hides the bar when the cart sheet scrolls down', async () => {
