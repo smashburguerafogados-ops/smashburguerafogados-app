@@ -124,15 +124,6 @@ export function publicImage(src: string): string {
   return ''
 }
 
-export function productLink(productId: string): string {
-  const base = typeof window !== 'undefined' ? `${window.location.origin}${import.meta.env.BASE_URL}` : ''
-  return `${base}?produto=${encodeURIComponent(productId)}`
-}
-
-export function photoLink(item: Pick<OrderItem, 'image' | 'productId'>): string {
-  return item.image || productLink(item.productId)
-}
-
 /** Pickup never pays the fee. An unset or invalid fee is 0. */
 export function deliveryCharge(fulfillment: Fulfillment, feeCents: number): number {
   if (fulfillment !== 'entrega') return 0
