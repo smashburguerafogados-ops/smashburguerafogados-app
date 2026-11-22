@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { seedCatalog } from './data/catalog'
@@ -74,6 +74,21 @@ describe('recentOrders and planReorder', () => {
   })
 })
 
+describe('planReorder lines', () => {
+  it('flags sold-out and missing items without a price', () => {
+    const plan = planReorder(
+      order({ id: 'x', items: [item('smash-casa', 'Smash da casa'), item('lata', 'Lata', 2), item('apagado', 'Saiu', 1)] }),
+      products.map((product) => (product.id === 'lata' ? { ...product, available: false } : product)),
+    )
+    expect(plan.lines.map((line) => [line.name, line.status, line.unitCents])).toEqual([
+      ['Smash da casa', 'ok', 2800],
+      ['Refrigerante lata', 'esgotado', null],
+      ['Saiu', 'ausente', null],
+    ])
+    expect(new Set(plan.lines.map((line) => line.key)).size).toBe(3)
+  })
+})
+
 describe('Pedir de novo on the cardápio', () => {
   it('hides while loading, with no purchases and for a signed-out visitor', async () => {
     await openMenu(null)
@@ -110,7 +125,13 @@ describe('Pedir de novo on the cardápio', () => {
     expect(cards[0]).toHaveTextContent('4 itens')
     expect(cards[0]).toHaveTextContent('R$ 80,00')
 
-    await user.click(within(cards[0]).getByRole('button', { name: /Pedir de novo/ }))
+    expect(within(cards[0]).queryByText('Pedir de novo')).not.toBeInTheDocument()
+    await user.click(within(cards[0]).getByRole('button', { name: /Ver itens/ }))
+    const sheet = screen.getByRole('dialog', { name: /Compra/ })
+    expect(within(sheet).getByText('2 × R$ 28,00')).toBeInTheDocument()
+    expect(within(sheet).getByText('sem cebola')).toBeInTheDocument()
+    await user.click(within(sheet).getByRole('button', { name: 'Adicionar ao carrinho' }))
+    expect(screen.queryByRole('dialog', { name: /Compra/ })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Abrir carrinho, 4 itens' })).toBeInTheDocument()
     expect(screen.getByText('4 itens do pedido')).toBeInTheDocument()
 
@@ -133,9 +154,37 @@ describe('Pedir de novo on the cardápio', () => {
     ])
     const cards = within(screen.getByRole('region', { name: 'Pedir de novo' })).getAllByRole('listitem')
     expect(cards[0]).toHaveTextContent('1 de 3 itens disponíveis')
-    expect(within(cards[0]).getByRole('button', { name: /Pedir de novo/ })).toBeEnabled()
     expect(cards[1]).toHaveTextContent('0 de 1 itens disponíveis')
-    expect(within(cards[1]).getByRole('button', { name: /Pedir de novo/ })).toBeDisabled()
+
+    await userEvent.click(within(cards[0]).getByRole('button', { name: /Ver itens/ }))
+    const first = screen.getByRole('dialog', { name: /Compra/ })
+    expect(first).toHaveTextContent('1 de 3 itens disponíveis')
+    expect(within(first).getByText('Não está mais no cardápio')).toBeInTheDocument()
+    expect(within(first).getByRole('button', { name: 'Adicionar ao carrinho' })).toBeEnabled()
+    await userEvent.click(within(first).getByRole('button', { name: 'Fechar' }))
+
+    await userEvent.click(within(cards[1]).getByRole('button', { name: /Ver itens/ }))
+    const second = screen.getByRole('dialog', { name: /Compra/ })
+    expect(within(second).getByRole('button', { name: 'Adicionar ao carrinho' })).toBeDisabled()
+  })
+
+  it('shows extras, notes and the current price inside the panel', async () => {
+    const user = userEvent.setup()
+    await openMenu([
+      order({
+        id: 'a',
+        status: 'finalizado',
+        createdAtMs: 3,
+        items: [item('smash-casa', 'Smash da casa + Cheddar, Molho que saiu', 2, 'ponto bem passado', 2000)],
+      }),
+    ])
+    await user.click(screen.getByRole('button', { name: /Ver itens/ }))
+    const sheet = screen.getByRole('dialog', { name: /Compra/ })
+    expect(within(sheet).getByText('Smash da casa')).toBeInTheDocument()
+    expect(within(sheet).getByText('+ Cheddar')).toBeInTheDocument()
+    expect(within(sheet).getByText('Adicional indisponível: Molho que saiu')).toBeInTheDocument()
+    expect(within(sheet).getByText('ponto bem passado')).toBeInTheDocument()
+    expect(within(sheet).getByText('2 × R$ 32,00')).toBeInTheDocument()
   })
 
   it('goes away while searching or inside a category, and comes back on Início', async () => {
@@ -148,6 +197,102 @@ describe('Pedir de novo on the cardápio', () => {
     expect(screen.getByRole('region', { name: 'Pedir de novo' })).toBeInTheDocument()
     await user.type(screen.getByRole('searchbox', { name: 'Buscar' }), 'smash')
     expect(screen.queryByRole('region', { name: 'Pedir de novo' })).not.toBeInTheDocument()
+  })
+
+  it('opens exactly the purchase of the tapped card, whatever the order, and adds only that one', async () => {
+    const user = userEvent.setup()
+    await openMenu([
+      order({ id: 'p1', status: 'finalizado', createdAtMs: 3, items: [item('smash-casa', 'Smash da casa', 2, 'sem cebola')] }),
+      order({ id: 'p2', status: 'finalizado', createdAtMs: 2, items: [item('batata', 'Batata', 3), item('lata', 'Lata')] }),
+      order({ id: 'p3', status: 'finalizado', createdAtMs: 1, items: [item('suco', 'Suco', 1, 'sem gelo')] }),
+    ])
+    const region = screen.getByRole('region', { name: 'Pedir de novo' })
+    const openers = () => within(region).getAllByRole('button', { name: /Ver itens/ })
+    expect(openers()).toHaveLength(3)
+
+    const expectOnly = (sheet: HTMLElement, shown: string[], hidden: string[]) => {
+      for (const name of shown) expect(within(sheet).getByText(name)).toBeInTheDocument()
+      for (const name of hidden) expect(within(sheet).queryByText(name)).not.toBeInTheDocument()
+    }
+
+    await user.click(openers()[2])
+    let sheet = screen.getByRole('dialog', { name: /Compra/ })
+    expectOnly(sheet, ['Suco da casa', 'sem gelo'], ['Smash da casa', 'Batata rústica', 'Refrigerante lata'])
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog', { name: /Compra/ })).not.toBeInTheDocument()
+
+    await user.click(openers()[1])
+    sheet = screen.getByRole('dialog', { name: /Compra/ })
+    expectOnly(sheet, ['Batata rústica', 'Refrigerante lata'], ['Smash da casa', 'Suco da casa'])
+    expect(sheet).toHaveTextContent('R$ 56,00')
+    await user.click(within(sheet).getByRole('button', { name: 'Fechar' }))
+
+    await user.click(openers()[0])
+    sheet = screen.getByRole('dialog', { name: /Compra/ })
+    expectOnly(sheet, ['Smash da casa', 'sem cebola'], ['Batata rústica', 'Suco da casa'])
+    await user.click(within(sheet).getByRole('button', { name: 'Fechar' }))
+
+    await user.click(openers()[1])
+    sheet = screen.getByRole('dialog', { name: /Compra/ })
+    expectOnly(sheet, ['Batata rústica', 'Refrigerante lata'], ['Smash da casa', 'Suco da casa'])
+    await user.click(within(sheet).getByRole('button', { name: 'Adicionar ao carrinho' }))
+
+    expect(screen.queryByRole('dialog', { name: /Compra/ })).not.toBeInTheDocument()
+    expect(screen.getByText('4 itens do pedido')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Abrir carrinho, 4 itens' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Ir ao carrinho' }))
+    const cart = screen.getByRole('dialog', { name: 'Carrinho' })
+    expect(within(cart).getByText('Batata rústica')).toBeInTheDocument()
+    expect(within(cart).getByText('Refrigerante lata')).toBeInTheDocument()
+    expect(within(cart).queryByText('Suco da casa')).not.toBeInTheDocument()
+    expect(within(cart).queryByText('Smash da casa')).not.toBeInTheDocument()
+  })
+
+  it('keeps the right purchase open when the list updates, and closes it if the purchase disappears', async () => {
+    const user = userEvent.setup()
+    await openMenu([
+      order({ id: 'p1', status: 'finalizado', createdAtMs: 3, items: [item('smash-casa', 'Smash da casa')] }),
+      order({ id: 'p2', status: 'finalizado', createdAtMs: 2, items: [item('batata', 'Batata')] }),
+    ])
+    await user.click(within(screen.getByRole('region', { name: 'Pedir de novo' })).getAllByRole('button', { name: /Ver itens/ })[1])
+    expect(within(screen.getByRole('dialog', { name: /Compra/ })).getByText('Batata rústica')).toBeInTheDocument()
+    await act(async () => {
+      emit('orders', [
+        order({ id: 'p0', status: 'finalizado', createdAtMs: 9, items: [item('lata', 'Lata')] }),
+        order({ id: 'p1', status: 'finalizado', createdAtMs: 3, items: [item('smash-casa', 'Smash da casa')] }),
+        order({ id: 'p2', status: 'finalizado', createdAtMs: 2, items: [item('batata', 'Batata')] }),
+      ] as unknown as never[])
+    })
+    const sheet = screen.getByRole('dialog', { name: /Compra/ })
+    expect(within(sheet).getByText('Batata rústica')).toBeInTheDocument()
+    expect(within(sheet).queryByText('Refrigerante lata')).not.toBeInTheDocument()
+    await act(async () => {
+      emit('orders', [order({ id: 'p1', status: 'finalizado', createdAtMs: 3, items: [item('smash-casa', 'Smash da casa')] })] as unknown as never[])
+    })
+    expect(screen.queryByRole('dialog', { name: /Compra/ })).not.toBeInTheDocument()
+  })
+
+  it('does not open when the carousel is only scrolled, and closes on backdrop tap', async () => {
+    const user = userEvent.setup()
+    await openMenu([
+      order({ id: 'p1', status: 'finalizado', createdAtMs: 3, items: [item('smash-casa', 'Smash da casa')] }),
+      order({ id: 'p2', status: 'finalizado', createdAtMs: 2, items: [item('batata', 'Batata')] }),
+    ])
+    const scroller = document.querySelector('.reorder__scroll') as HTMLElement
+    fireEvent.scroll(scroller, { target: { scrollLeft: 200 } })
+    fireEvent.touchMove(scroller)
+    expect(screen.queryByRole('dialog', { name: /Compra/ })).not.toBeInTheDocument()
+
+    const opener = within(screen.getByRole('region', { name: 'Pedir de novo' })).getAllByRole('button', { name: /Ver itens/ })[0]
+    await user.click(opener)
+    const sheet = screen.getByRole('dialog', { name: /Compra/ })
+    expect(sheet).toHaveAttribute('aria-modal', 'true')
+    expect(sheet).toHaveFocus()
+    expect(document.body.style.overflow).toBe('hidden')
+    await user.click(sheet.parentElement as HTMLElement)
+    expect(screen.queryByRole('dialog', { name: /Compra/ })).not.toBeInTheDocument()
+    expect(document.body.style.overflow).not.toBe('hidden')
+    expect(opener).toHaveFocus()
   })
 
   it('styles the carousel and respects reduced motion', () => {
