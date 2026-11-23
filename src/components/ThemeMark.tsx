@@ -213,13 +213,8 @@ export function ThemeDecor({ theme }: { theme: ThemeId }) {
               { icon: themeIcons.christmasTree, kind: 'tree', slot: 'l1', attrs: { 'data-theme-tree': '' } },
               { icon: themeIcons.snowman, kind: 'snowman', slot: 'l2', attrs: { 'data-theme-ball': '' } },
               { icon: themeIcons.candy, kind: 'candy', slot: 'l3' },
-              { icon: themeIcons.wrappedGift, kind: 'gift', slot: 'r1' },
-              { icon: themeIcons.bell, kind: 'bell', slot: 'r2' },
-              { icon: themeIcons.pine, kind: 'pine', slot: 'r3' },
               { icon: themeIcons.santa, kind: 'santa', slot: 'stl', splash: true },
-              { icon: themeIcons.ribbon, kind: 'ribbon', slot: 'str', splash: true },
               { icon: themeIcons.star, kind: 'star', slot: 'sbl', splash: true },
-              { icon: themeIcons.snowflake, kind: 'snowflake', slot: 'sbr', splash: true },
             ]}
           />
         </>
@@ -236,12 +231,8 @@ export function ThemeDecor({ theme }: { theme: ThemeId }) {
               { icon: themeIcons.glasses, kind: 'glasses', slot: 'l1' },
               { icon: themeIcons.cork, kind: 'cork', slot: 'l2' },
               { icon: themeIcons.partying, kind: 'partying', slot: 'l3' },
-              { icon: themeIcons.sparkler, kind: 'sparkler', slot: 'r2' },
-              { icon: themeIcons.mirrorBall, kind: 'mirror', slot: 'r3' },
               { icon: themeIcons.partyPopper, kind: 'popper', slot: 'stl', splash: true },
-              { icon: themeIcons.balloon, kind: 'balloon', slot: 'str', splash: true },
               { icon: themeIcons.confettiBall, kind: 'confetti', slot: 'sbl', splash: true },
-              { icon: themeIcons.shootingStar, kind: 'shooting', slot: 'sbr', splash: true },
             ]}
           />
         </>
@@ -254,13 +245,8 @@ export function ThemeDecor({ theme }: { theme: ThemeId }) {
               { icon: themeIcons.performingArts, kind: 'mask', slot: 'l1', attrs: { 'data-theme-mask': '' } },
               { icon: themeIcons.dancer, kind: 'dancer', slot: 'l2' },
               { icon: themeIcons.maracas, kind: 'maracas', slot: 'l3' },
-              { icon: themeIcons.flagYellow, kind: 'flag', slot: 'r1', attrs: { 'data-theme-flag': '' } },
-              { icon: themeIcons.saxophone, kind: 'saxophone', slot: 'r2' },
-              { icon: themeIcons.parrot, kind: 'parrot', slot: 'r3' },
               { icon: themeIcons.drum, kind: 'drum', slot: 'stl', splash: true },
-              { icon: themeIcons.umbrella, kind: 'umbrella', slot: 'str', splash: true },
               { icon: themeIcons.notes, kind: 'notes', slot: 'sbl', splash: true },
-              { icon: themeIcons.mirrorBall, kind: 'mirror', slot: 'sbr', splash: true },
             ]}
           />
         </>
@@ -273,13 +259,8 @@ export function ThemeDecor({ theme }: { theme: ThemeId }) {
               { icon: themeIcons.egg, kind: 'egg', slot: 'l1', attrs: { 'data-theme-egg': '' } },
               { icon: themeIcons.chick, kind: 'chick', slot: 'l2' },
               { icon: themeIcons.tulip, kind: 'tulip', slot: 'l3' },
-              { icon: themeIcons.rabbit, kind: 'rabbit', slot: 'r1', attrs: { 'data-theme-bunny': '' } },
-              { icon: themeIcons.butterfly, kind: 'butterfly', slot: 'r2' },
-              { icon: themeIcons.basket, kind: 'basket', slot: 'r3' },
               { icon: themeIcons.hatching, kind: 'hatching', slot: 'stl', splash: true },
-              { icon: themeIcons.rabbitFace, kind: 'rabbit-face', slot: 'str', splash: true },
               { icon: themeIcons.blossom, kind: 'blossom', slot: 'sbl', splash: true },
-              { icon: themeIcons.carrot, kind: 'carrot', slot: 'sbr', splash: true },
             ]}
           />
         </>
@@ -289,13 +270,8 @@ export function ThemeDecor({ theme }: { theme: ThemeId }) {
           <Falling pieces={JUNE_FALL} mark="data-theme-fall" />
           <Pins
             pins={[
-              { icon: themeIcons.fire, kind: 'fire', slot: 'r1', attrs: { 'data-theme-fire': '' } },
-              { icon: themeIcons.accordion, kind: 'accordion', slot: 'r2' },
-              { icon: themeIcons.lantern, kind: 'lantern', slot: 'r3', attrs: { 'data-theme-glow': '' } },
               { icon: themeIcons.corn, kind: 'corn', slot: 'stl', splash: true },
-              { icon: themeIcons.popcorn, kind: 'popcorn', slot: 'str', splash: true },
               { icon: themeIcons.pepper, kind: 'pepper', slot: 'sbl', splash: true },
-              { icon: themeIcons.balloon, kind: 'balloon', slot: 'sbr', splash: true },
             ]}
           />
         </>

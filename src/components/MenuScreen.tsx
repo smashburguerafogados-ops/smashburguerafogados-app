@@ -38,6 +38,7 @@ import { DeliveryForm } from './DeliveryForm'
 import type { UserProfile } from '../types'
 import { CategoryIcon, iconForCategory } from '../lib/categoryIcons'
 import { ReorderStrip } from './ReorderStrip'
+import { ThemeAccent } from './ThemeAccent'
 import type { ReorderEntry } from '../lib/reorder'
 
 type Sheet = 'cart' | 'profile' | 'whatsapp' | 'orders' | null
@@ -267,15 +268,19 @@ export function MenuScreen() {
         </section>
       )}
       <div className="menu__content">
+      <ThemeAccent place="garland" />
       <header className="menu__top">
         <button type="button" className="menu__logo" aria-label="Smash Burger" {...hold}>
           <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" draggable={false} />
+          <ThemeAccent place="logo" />
         </button>
         <div className="menu__brand">
           <p className="menu__wordmark">
             <span>Smash</span> <span className="menu__wordmark-gold">Burger</span>
           </p>
-          <i className="menu__rule" aria-hidden="true" />
+          <i className="menu__rule" aria-hidden="true">
+            <ThemeAccent place="rule" />
+          </i>
           {firstName ? <h1 className="menu__title">{firstName}</h1> : null}
         </div>
         <button
@@ -352,8 +357,9 @@ export function MenuScreen() {
         >
           <CategoryIcon iconKey="home" />
           {HOME_LABEL}
+          <ThemeAccent place="chip" index={0} />
         </button>
-        {categories.map((category) => {
+        {categories.map((category, categoryIndex) => {
           const classes = ['chip']
           if (category.destaque) classes.push('chip--destaque')
           if (activeCategory === category.id) classes.push('is-active')
@@ -368,6 +374,7 @@ export function MenuScreen() {
               <CategoryIcon iconKey={iconForCategory(category.name, category.icon)} />
               {category.name}
               {category.destaque && <span className="chip__sun" aria-hidden="true" />}
+              <ThemeAccent place="chip" index={categoryIndex + 1} />
             </button>
           )
         })}
@@ -381,8 +388,9 @@ export function MenuScreen() {
         <p className="muted">Nenhum item encontrado.</p>
       ) : (
         <ul className="items">
-          {visible.map((item) => (
+          {visible.map((item, itemIndex) => (
             <li key={item.id}>
+              <ThemeAccent place="card" index={itemIndex} />
               <button
                 type="button"
                 className={item.available ? 'item' : 'item item--sold'}
