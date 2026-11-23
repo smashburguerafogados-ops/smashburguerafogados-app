@@ -6,6 +6,8 @@ type OverlayProps = {
   onClose: () => void
   variant?: 'sheet' | 'popup' | 'drawer'
   back?: boolean
+  /** Extra class for the panel, for styles that depend on what it holds. */
+  panelClass?: string
   /** On by default: moves focus into the panel, keeps Tab inside, locks the page scroll and gives focus back on close. */
   modal?: boolean
   children: ReactNode
@@ -82,7 +84,15 @@ function unlockPage() {
   }
 }
 
-export function Overlay({ label, onClose, variant = 'sheet', back = false, modal = true, children }: OverlayProps) {
+export function Overlay({
+  label,
+  onClose,
+  variant = 'sheet',
+  back = false,
+  panelClass = '',
+  modal = true,
+  children,
+}: OverlayProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const id = useRef<symbol>(Symbol(label))
   const closeRef = useRef(onClose)
@@ -172,7 +182,7 @@ export function Overlay({ label, onClose, variant = 'sheet', back = false, modal
   }, [])
 
   const root = variant
-  const panel = `${variant}__panel`
+  const panel = panelClass ? `${variant}__panel ${variant}__panel--${panelClass}` : `${variant}__panel`
 
   return (
     <div className={root} onClick={onClose}>

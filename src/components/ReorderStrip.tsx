@@ -70,7 +70,7 @@ function ReorderSheet({ plan, onClose, onAdd }: { plan: ReorderPlan; onClose: ()
   const when = formatOrderWhen(plan.createdAtMs)
   const title = when ? `Compra de ${when}` : 'Sua compra'
   return (
-    <Overlay label={title} onClose={onClose} modal>
+    <Overlay label={title} onClose={onClose} modal panelClass="reorder">
       <div className="reorder-sheet">
         <h2>{title}</h2>
         <p className="reorder-sheet__count">

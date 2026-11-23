@@ -6,6 +6,7 @@ import {
   BUSINESS_WHATSAPP,
   SAFE_SYMBOLS,
   SYMBOLS,
+  WEB_FALLBACK_MS,
   acceptedMessage,
   attendanceMessage,
   broadcastMessage,
@@ -126,6 +127,7 @@ describe('WhatsApp messages', () => {
   })
 
   it('opens the WhatsApp app on Android with the customer name, and keeps wa.me on iPhone', () => {
+    vi.useFakeTimers()
     const agent = vi.spyOn(window.navigator, 'userAgent', 'get')
     const assign = vi.spyOn(page, 'assign').mockImplementation(() => undefined)
 
@@ -149,6 +151,54 @@ describe('WhatsApp messages', () => {
 
     agent.mockRestore()
     assign.mockRestore()
+    vi.useRealTimers()
+  })
+
+  describe('Android without the app', () => {
+    const android = 'Mozilla/5.0 (Linux; Android 14; SM-T510) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36'
+
+    function setup() {
+      vi.useFakeTimers()
+      const agent = vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(android)
+      const assign = vi.spyOn(page, 'assign').mockImplementation(() => undefined)
+      return {
+        assign,
+        done() {
+          agent.mockRestore()
+          assign.mockRestore()
+          vi.useRealTimers()
+        },
+      }
+    }
+
+    it('opens wa.me in a new tab when the page is still visible after 1.5s', () => {
+      const { assign, done } = setup()
+      const app = openWhatsapp(BUSINESS_WHATSAPP, 'oi')
+      expect(assign).toHaveBeenCalledWith(app)
+      vi.advanceTimersByTime(WEB_FALLBACK_MS - 1)
+      expect(window.open).not.toHaveBeenCalled()
+      vi.advanceTimersByTime(2)
+      expect(String(vi.mocked(window.open).mock.calls[0][0])).toBe(`https://wa.me/${BUSINESS_WHATSAPP}?text=oi`)
+      done()
+    })
+
+    it('does nothing more when the app took the screen', () => {
+      const { done } = setup()
+      openWhatsapp(BUSINESS_WHATSAPP, 'oi')
+      document.dispatchEvent(new Event('visibilitychange'))
+      vi.advanceTimersByTime(WEB_FALLBACK_MS * 2)
+      expect(window.open).not.toHaveBeenCalled()
+      done()
+    })
+
+    it('leaves the page in the same tab when the browser blocks the new tab', () => {
+      const { assign, done } = setup()
+      vi.mocked(window.open).mockReturnValue(null)
+      openWhatsapp(BUSINESS_WHATSAPP, 'oi')
+      vi.advanceTimersByTime(WEB_FALLBACK_MS + 1)
+      expect(assign).toHaveBeenLastCalledWith(`https://wa.me/${BUSINESS_WHATSAPP}?text=oi`)
+      done()
+    })
   })
 
   it('routes every send point through lib/whatsapp', () => {

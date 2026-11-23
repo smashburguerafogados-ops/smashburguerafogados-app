@@ -1,6 +1,5 @@
-import { useCallback, useState } from 'react'
+import { lazy, Suspense, useCallback, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { AdminRoute } from './components/AdminRoute'
 import { Griddle } from './components/Griddle'
 import { MenuScreen } from './components/MenuScreen'
 import { Splash } from './components/Splash'
@@ -10,6 +9,8 @@ import { UpdateNotice } from './components/UpdateNotice'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { OrdersProvider, useBootReady } from './context/OrdersContext'
 
+const AdminRoute = lazy(() => import('./components/AdminRoute').then((module) => ({ default: module.AdminRoute })))
+
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
 
 function AppRoutes() {
@@ -18,7 +19,14 @@ function AppRoutes() {
       <CustomerTheme>
         <Routes>
           <Route path="/" element={<MenuScreen />} />
-          <Route path="/admin" element={<AdminRoute />} />
+          <Route
+            path="/admin"
+            element={
+              <Suspense fallback={<p className="muted admin-loading" role="status">Abrindo o painel.</p>}>
+                <AdminRoute />
+              </Suspense>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </CustomerTheme>

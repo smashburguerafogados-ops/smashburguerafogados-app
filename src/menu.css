@@ -24,7 +24,8 @@
   --menu-gutter: 14px;
   width: min(680px, 100%);
   margin: 0 auto;
-  padding: 12px var(--menu-gutter) calc(112px + var(--safe-bottom));
+  padding: 12px max(var(--menu-gutter), env(safe-area-inset-right, 0px)) calc(112px + var(--safe-bottom))
+    max(var(--menu-gutter), env(safe-area-inset-left, 0px));
 }
 
 .menu__top {
@@ -41,6 +42,10 @@
   border: 0;
   background: transparent;
   flex: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .menu__wordmark {
@@ -171,6 +176,9 @@
 
 .menu__logo img {
   width: 100%;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
 }
 
 .menu__brand {
@@ -547,9 +555,11 @@
     transform: translate3d(var(--x), -40px, 0) rotate(0deg);
   }
   50% {
+    transform: translate3d(calc(var(--x) + var(--drift)), 54vh, 0) rotate(280deg);
     transform: translate3d(calc(var(--x) + var(--drift)), 54dvh, 0) rotate(280deg);
   }
   100% {
+    transform: translate3d(var(--x), 112vh, 0) rotate(620deg);
     transform: translate3d(var(--x), 112dvh, 0) rotate(620deg);
   }
 }
@@ -929,7 +939,7 @@
 .popup {
   display: grid;
   place-items: center;
-  padding: 18px;
+  padding: 18px max(18px, env(safe-area-inset-right, 0px)) 18px max(18px, env(safe-area-inset-left, 0px));
 }
 
 .mark-btn {
@@ -1041,6 +1051,7 @@
   position: relative;
   width: min(520px, 100%);
   max-height: min(88vh, 820px);
+  max-height: min(88dvh, 820px);
   overflow: auto;
   overscroll-behavior: contain;
   background: #1c1d21;
@@ -1076,8 +1087,8 @@
   margin: 0;
 }
 
-.sheet__panel:has(.overlay__close.mark-btn) h2,
-.popup__panel:has(.overlay__close.mark-btn) h2 {
+.sheet__panel h2,
+.popup__panel h2 {
   padding-right: 42px;
 }
 
@@ -1187,12 +1198,14 @@
   background: transparent;
   width: min(92vw, 720px);
   max-height: calc(100vh - 96px);
+  max-height: calc(100dvh - 96px);
 }
 
 .photo-zoom__photo img {
   display: block;
   width: 100%;
   max-height: calc(100vh - 96px);
+  max-height: calc(100dvh - 96px);
   object-fit: contain;
   border-radius: 16px;
 }
@@ -1564,7 +1577,8 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 8px max(8px, calc(50% - 220px)) calc(8px + var(--safe-bottom));
+  padding: 8px max(8px, calc(50% - 220px), env(safe-area-inset-right, 0px)) calc(8px + var(--safe-bottom))
+    max(8px, calc(50% - 220px), env(safe-area-inset-left, 0px));
   background: #141416;
   color: #f4f5f6;
   border-top: 1px solid var(--edge);
@@ -1685,9 +1699,10 @@
   max-width: 100%;
   overflow: hidden;
   color: var(--muted);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: 1.1;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2048,6 +2063,7 @@ html .chips .chip.chip--destaque {
 
 .admin {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -2061,7 +2077,7 @@ html .chips .chip.chip--destaque {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));
   background: #000;
   border-bottom: 1px solid #1c1c1c;
 }
@@ -2075,7 +2091,7 @@ html .chips .chip.chip--destaque {
 .admin__main {
   width: min(720px, 100%);
   margin: 0 auto;
-  padding: 20px 16px 40px;
+  padding: 20px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px));
 }
 
 .admin .drawer__panel {
@@ -2814,7 +2830,7 @@ html .chips .chip.chip--destaque {
   text-align: center;
 }
 
-.menu .popup__panel:has(> .product) {
+.menu .popup__panel.popup__panel--product {
   padding-top: 14px;
 }
 
@@ -2980,6 +2996,13 @@ html .chips .chip.chip--destaque {
 .menu .pay__option:has(input:focus-visible) {
   outline: 2px solid var(--gold);
   outline-offset: 2px;
+}
+
+@supports not selector(:has(*)) {
+  .menu .pay__option:focus-within {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
 }
 
 .account {
@@ -3394,7 +3417,7 @@ html .chips .chip.chip--destaque {
   min-height: 0;
 }
 
-.menu .sheet__panel:has(> .reorder-sheet) {
+.menu .sheet__panel.sheet__panel--reorder {
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -3402,11 +3425,11 @@ html .chips .chip.chip--destaque {
   outline: none;
 }
 
-.menu .sheet__panel:has(> .reorder-sheet) > .dock-spacer {
+.menu .sheet__panel.sheet__panel--reorder > .dock-spacer {
   flex: none;
 }
 
-.menu .sheet__panel:has(> .reorder-sheet) > .reorder-sheet {
+.menu .sheet__panel.sheet__panel--reorder > .reorder-sheet {
   flex: 1 1 auto;
   min-height: 0;
 }

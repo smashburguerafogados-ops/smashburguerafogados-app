@@ -46,7 +46,7 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
   }, [zoom])
 
   return (
-    <Overlay label={product.name} onClose={onClose} variant="popup" back>
+    <Overlay label={product.name} onClose={onClose} variant="popup" back panelClass="product">
       <div className="product">
         <button type="button" className="product__zoom" aria-label={`Ampliar foto de ${product.name}`} onClick={() => setZoom(true)}>
           <img src={product.image} alt="" />

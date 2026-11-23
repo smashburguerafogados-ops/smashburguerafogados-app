@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import indexHtml from '../index.html?raw'
+import manifestJson from '../public/manifest.webmanifest?raw'
 import indexCss from './index.css?raw'
 import menuCss from './menu.css?raw'
 import printCss from './print.css?raw'
@@ -9,9 +11,9 @@ const read = (name: string) => files[name]
 /** The first declaration block of a selector, as one string. */
 function rule(css: string, selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const match = css.match(new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]*)\\}`))
-  if (!match) throw new Error(`rule not found: ${selector}`)
-  return match[1]
+  const blocks = Array.from(css.matchAll(new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]*)\\}`, 'g')))
+  if (blocks.length === 0) throw new Error(`rule not found: ${selector}`)
+  return blocks.map((match) => match[1]).join('\n')
 }
 
 describe('admin drawer', () => {
@@ -44,5 +46,59 @@ describe('print', () => {
     expect(css).toMatch(/\.popup \.actions[\s\S]*display:\s*none/)
     expect(css).toMatch(/white-space:\s*nowrap/)
     expect(rule(read('menu.css'), '.order-items li > span:last-child')).toMatch(/white-space:\s*nowrap/)
+  })
+})
+
+describe('legibility and safe areas', () => {
+  it('draws the bar labels at 0.75rem or more with tabular numbers, so R$ 0,00 reads as a price', () => {
+    const label = rule(read('menu.css'), '.dock__label')
+    expect(parseFloat(label.match(/font-size:\s*([\d.]+)rem/)![1])).toBeGreaterThanOrEqual(0.75)
+    expect(label).toMatch(/tabular-nums/)
+  })
+
+  it('keeps the page, bar, popups and admin out from under a notch in landscape', () => {
+    const menu = read('menu.css')
+    for (const selector of ['.menu__content', '.dock', '.popup', '.admin__bar', '.admin__main']) {
+      const block = rule(menu, selector)
+      expect(block, selector).toMatch(/env\(safe-area-inset-left/)
+      expect(block, selector).toMatch(/env\(safe-area-inset-right/)
+    }
+  })
+})
+
+describe('older browsers', () => {
+  it('uses dvh only after a vh fallback', () => {
+    for (const css of [read('menu.css'), read('index.css')]) {
+      for (const match of css.matchAll(/^(\s*)([a-z-]+):[^;\n]*\d+dvh[^;\n]*;/gm)) {
+        const before = css.slice(0, match.index)
+        const lastLine = before.trimEnd().split('\n').pop() ?? ''
+        expect(lastLine, match[0]).toMatch(new RegExp(`${match[2]}:[^;]*\\dvh`))
+      }
+    }
+  })
+
+  it('does not depend on :has() for layout, only for an optional focus ring', () => {
+    const lines = read('menu.css')
+      .split('\n')
+      .filter((line) => line.includes(':has(') && !line.includes(':has(*)'))
+    expect(lines).toEqual(['.menu .pay__option:has(input:focus-visible) {'])
+    expect(read('menu.css')).toMatch(/@supports not selector\(:has\(\*\)\)[\s\S]*?\.pay__option:focus-within/)
+  })
+})
+
+describe('home screen', () => {
+  it('ships a manifest and an iPhone icon', () => {
+    expect(indexHtml).toContain('rel="manifest"')
+    expect(indexHtml).toContain('rel="apple-touch-icon"')
+    const manifest = JSON.parse(manifestJson) as { display: string; start_url: string; icons: { sizes: string }[] }
+    expect(manifest.display).toBe('standalone')
+    expect(manifest.start_url).toBe('./')
+    expect(manifest.icons.map((icon) => icon.sizes)).toEqual(['192x192', '512x512'])
+  })
+
+  it('stops the logo press from opening the iOS image menu', () => {
+    const logo = rule(read('menu.css'), '.menu__logo')
+    expect(logo).toMatch(/-webkit-touch-callout:\s*none/)
+    expect(logo).toMatch(/user-select:\s*none/)
   })
 })
