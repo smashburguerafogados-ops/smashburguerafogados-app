@@ -17,12 +17,13 @@ async function openContacts() {
   const user = userEvent.setup()
   renderApp('/admin')
   await screen.findByRole('heading', { name: 'Painel' })
+  expect(activeListeners('users')).toHaveLength(0)
+  await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
+  await user.click(screen.getByRole('button', { name: 'Contato' }))
   await waitFor(() => expect(activeListeners('users')).toHaveLength(1))
   await act(async () => {
     emit('users', customers)
   })
-  await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
-  await user.click(screen.getByRole('button', { name: 'Contato' }))
   return { user, sheet: screen.getByRole('dialog', { name: 'Contato' }) }
 }
 
@@ -73,12 +74,12 @@ async function openBroadcast() {
   const user = userEvent.setup()
   renderApp('/admin')
   await screen.findByRole('heading', { name: 'Painel' })
+  await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
+  await user.click(screen.getByRole('button', { name: 'Enviar WhatsApp' }))
   await waitFor(() => expect(activeListeners('users')).toHaveLength(1))
   await act(async () => {
     emit('users', customers)
   })
-  await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
-  await user.click(screen.getByRole('button', { name: 'Enviar WhatsApp' }))
   return { user, sheet: screen.getByRole('dialog', { name: 'Enviar WhatsApp' }) }
 }
 

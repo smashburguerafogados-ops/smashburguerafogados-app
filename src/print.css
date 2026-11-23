@@ -1,0 +1,89 @@
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  html,
+  body,
+  #root {
+    background: #fff !important;
+    color: #000 !important;
+    min-height: 0;
+  }
+
+  body * {
+    visibility: hidden !important;
+    animation: none !important;
+  }
+
+  .popup,
+  .popup * {
+    visibility: visible !important;
+  }
+
+  .popup {
+    position: absolute;
+    inset: 0 auto auto 0;
+    display: block;
+    width: 100%;
+    padding: 0;
+    background: #fff;
+  }
+
+  .popup__panel,
+  .menu .popup__panel {
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: #fff;
+    box-shadow: none;
+    color: #000;
+  }
+
+  .popup__panel *,
+  .menu .popup__panel * {
+    color: #000 !important;
+    background: transparent !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+
+  .popup__panel h2 {
+    padding-right: 0;
+    margin-top: 0;
+    font-size: 18pt;
+  }
+
+  .popup .eyebrow,
+  .popup dt {
+    font-size: 8pt;
+    letter-spacing: 0.08em;
+  }
+
+  .popup dd {
+    font-size: 11pt;
+  }
+
+  .popup .order-items li,
+  .popup .order-details > div {
+    break-inside: avoid;
+  }
+
+  .popup .order-items li > span:last-child,
+  .popup .order-total {
+    white-space: nowrap;
+  }
+
+  .popup .actions,
+  .popup .reason-box,
+  .popup .overlay__close,
+  .popup .overlay__back,
+  .popup .dock-spacer,
+  .popup button,
+  .popup .alert {
+    display: none !important;
+  }
+}

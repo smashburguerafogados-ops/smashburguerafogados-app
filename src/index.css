@@ -327,11 +327,22 @@ form {
 }
 
 .btn--ghost {
+  position: relative;
   width: auto;
   background: transparent;
   color: var(--text);
   border: 1px solid rgba(227, 177, 90, 0.55);
   padding: 8px 12px;
+}
+
+.btn--ghost::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: max(100%, 44px);
+  transform: translateY(-50%);
 }
 
 .btn--ghost:hover:not(:disabled) {

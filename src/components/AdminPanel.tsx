@@ -4,6 +4,7 @@ import {
   FULFILLMENT_LABEL,
   columnOf,
   orderMatches,
+  ordersSince,
   watchAllOrders,
   type Order,
   type OrderColumn,
@@ -12,6 +13,7 @@ import { keepListening } from '../lib/listen'
 import { OrderDialog } from './OrderDialog'
 
 const COLUMNS: OrderColumn[] = ['novos', 'andamento', 'finalizados']
+const PAGE_SIZE = 20
 
 function orderItems(order: Order): string[] {
   if (order.items.length === 0) return ['Sem itens']
@@ -25,6 +27,8 @@ export function AdminPanel() {
   const [blink, setBlink] = useState(false)
   const [openId, setOpenId] = useState('')
   const [query, setQuery] = useState('')
+  const [allTime, setAllTime] = useState(false)
+  const [shown, setShown] = useState(PAGE_SIZE)
   const known = useRef<Set<string> | null>(null)
 
   useEffect(
@@ -39,14 +43,15 @@ export function AdminPanel() {
             known.current = new Set(next.map((order) => order.id))
             setOrders(next)
             setStatus('ready')
-          }, fail),
+          }, fail, allTime ? null : ordersSince(Date.now())),
         () => setStatus('error'),
       ),
-    [],
+    [allTime],
   )
 
   function choose(next: OrderColumn) {
     setColumn(next)
+    setShown(PAGE_SIZE)
     if (next === 'novos') setBlink(false)
   }
 
@@ -55,6 +60,8 @@ export function AdminPanel() {
     ? orders.filter((order) => orderMatches(order, query))
     : orders.filter((order) => columnOf(order.status) === column)
   const open = orders.find((order) => order.id === openId) ?? null
+  const paged = !searching && column === 'finalizados'
+  const rows = paged ? visible.slice(0, shown) : visible
 
   return (
     <section className="board" aria-label="Pedidos" aria-busy={status === 'loading'}>
@@ -64,7 +71,10 @@ export function AdminPanel() {
           type="search"
           placeholder="Nome, WhatsApp ou nº do pedido"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setQuery(event.target.value)
+            setShown(PAGE_SIZE)
+          }}
         />
       </label>
       <div className="board__columns" role="tablist" aria-label="Colunas">
@@ -104,7 +114,7 @@ export function AdminPanel() {
 
       {status === 'ready' && visible.length > 0 && (
       <ul className="board__list" aria-label={searching ? 'Resultado da busca' : COLUMN_LABEL[column]}>
-        {visible.map((order) => (
+        {rows.map((order) => (
           <li key={order.id}>
             <button
               type="button"
@@ -122,6 +132,17 @@ export function AdminPanel() {
           </li>
         ))}
       </ul>
+      )}
+
+      {status === 'ready' && rows.length < visible.length && (
+        <button type="button" className="btn btn--ghost board__more" onClick={() => setShown((count) => count + PAGE_SIZE)}>
+          Mostrar mais ({visible.length - rows.length})
+        </button>
+      )}
+      {status === 'ready' && !allTime && (searching || column === 'finalizados') && (
+        <button type="button" className="text-btn board__older" onClick={() => setAllTime(true)}>
+          Ver pedidos com mais de 30 dias
+        </button>
       )}
 
       {open && <OrderDialog key={open.id} order={open} onClose={() => setOpenId('')} />}
