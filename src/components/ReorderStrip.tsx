@@ -4,6 +4,7 @@ import type { Order } from '../lib/orders'
 import { formatOrderWhen, planReorder, recentOrders, type ReorderEntry, type ReorderLine, type ReorderPlan } from '../lib/reorder'
 import type { Product } from '../data/catalog'
 import { Overlay } from './Overlay'
+import { ProductPhoto } from './ProductPhoto'
 
 export const REORDER_AUTOPLAY_MS = 3000
 const REORDER_SETTLE_MS = 800
@@ -45,7 +46,7 @@ function LineRow({ line }: { line: ReorderLine }) {
   const off = line.status !== 'ok'
   return (
     <li className={off ? 'reorder-line is-off' : 'reorder-line'}>
-      {line.image ? <img className="reorder-line__img" src={line.image} alt="" /> : <span className="reorder-line__img" aria-hidden="true" />}
+      {line.image ? <ProductPhoto className="reorder-line__img" src={line.image} eager /> : <span className="reorder-line__img" aria-hidden="true" />}
       <div className="reorder-line__info">
         <strong className="reorder-line__name">{line.name}</strong>
         <span className="reorder-line__qty">
@@ -311,7 +312,7 @@ export function ReorderStrip({ orders, products, onReorder }: ReorderStripProps)
               >
                 <span className="reorder__thumbs" aria-hidden="true">
                   {plan.images.slice(0, 3).map((image) => (
-                    <img key={image} src={image} alt="" />
+                    <ProductPhoto key={image} src={image} />
                   ))}
                 </span>
                 <span className="reorder__info">

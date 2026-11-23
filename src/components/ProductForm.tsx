@@ -13,6 +13,7 @@ import {
 import { formatPrice, maskPrice, toCents } from '../lib/money'
 import { readPhoto } from '../lib/photo'
 import { ChoiceList } from './ChoiceList'
+import { ProductPhoto } from './ProductPhoto'
 import { CloseButton } from './Overlay'
 
 type ProductFormProps = {
@@ -108,7 +109,7 @@ export function ProductForm({ onClose, onSaved, product }: ProductFormProps) {
     setBusy(true)
     try {
       if (product) {
-        await updateProduct(product.id, { ...draft, available })
+        await updateProduct(product.id, { ...draft, available }, product.image)
         setSaved(`${name.trim()} atualizado no cardápio.`)
       } else {
         await createProduct(draft)
@@ -142,7 +143,7 @@ export function ProductForm({ onClose, onSaved, product }: ProductFormProps) {
 
         <div className="photo-pick">
           <span className="photo-pick__label">Foto</span>
-          {photo ? <img className="photo-pick__preview" src={photo} alt="Prévia da foto" /> : null}
+          {photo ? <ProductPhoto className="photo-pick__preview" src={photo} alt="Prévia da foto" eager /> : null}
           <div className="actions">
             <label className="btn btn--ghost photo-pick__btn">
               Câmera

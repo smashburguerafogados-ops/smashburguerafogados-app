@@ -33,6 +33,7 @@ import { CartSheet } from './CartSheet'
 import { OrderHistory } from './OrderHistory'
 import { Overlay } from './Overlay'
 import { ProductDialog, descriptionItems } from './ProductDialog'
+import { ProductPhoto } from './ProductPhoto'
 import { DeliveryForm } from './DeliveryForm'
 import type { UserProfile } from '../types'
 import { CategoryIcon, iconForCategory } from '../lib/categoryIcons'
@@ -387,7 +388,7 @@ export function MenuScreen() {
                 className={item.available ? 'item' : 'item item--sold'}
                 onClick={() => setProduct(item)}
               >
-                <img src={item.image} alt="" />
+                <ProductPhoto src={item.image} />
                 <span className="item__copy">
                   <span className="item__name">{item.name}</span>
                   <span className="item__price">{formatPrice(toCents(item.price))}</span>

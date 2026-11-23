@@ -3,6 +3,7 @@ import type { Product } from '../data/catalog'
 import { formatPrice, toCents } from '../lib/money'
 import { BackIcon, HandIcon } from './Marks'
 import { CloseButton, Overlay } from './Overlay'
+import { ProductPhoto } from './ProductPhoto'
 
 type ProductDialogProps = {
   product: Product
@@ -49,7 +50,7 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
     <Overlay label={product.name} onClose={onClose} variant="popup" back panelClass="product">
       <div className="product">
         <button type="button" className="product__zoom" aria-label={`Ampliar foto de ${product.name}`} onClick={() => setZoom(true)}>
-          <img src={product.image} alt="" />
+          <ProductPhoto src={product.image} eager />
         </button>
         <h2>{product.name}</h2>
         <p className="product__price">{formatPrice(toCents(product.price))}</p>
@@ -131,7 +132,7 @@ export function ProductDialog({ product, onClose, onAdd }: ProductDialogProps) {
           </button>
           <CloseButton className="photo-zoom__close" label="Fechar foto" onClick={() => setZoom(false)} />
           <button type="button" className="photo-zoom__photo" aria-label="Foto ampliada" onClick={() => setZoom(false)}>
-            <img src={product.image} alt="" />
+            <ProductPhoto src={product.image} eager />
           </button>
           <p className="photo-zoom__hint" aria-hidden="true">
             <HandIcon />

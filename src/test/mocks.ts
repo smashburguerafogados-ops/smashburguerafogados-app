@@ -121,7 +121,7 @@ export function resetFirebaseMocks(): void {
   firebaseMocks.createUserWithEmailAndPassword.mockReset()
   firebaseMocks.createUserWithEmailAndPassword.mockResolvedValue({ user: { uid: 'cliente-novo' } })
   firebaseMocks.signOut.mockClear()
-  firebaseMocks.setDoc.mockClear()
+  firebaseMocks.setDoc.mockReset()
   firebaseMocks.addDoc.mockReset()
   firebaseMocks.addDoc.mockResolvedValue({ id: 'pedido-abc12' })
   firebaseMocks.updateDoc.mockReset()

@@ -777,6 +777,22 @@
   flex: none;
 }
 
+img.is-loading {
+  animation: photo-wait 1.4s ease-in-out infinite;
+}
+
+@keyframes photo-wait {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  img.is-loading {
+    animation: none;
+  }
+}
+
 .item__copy {
   display: grid;
   align-content: start;

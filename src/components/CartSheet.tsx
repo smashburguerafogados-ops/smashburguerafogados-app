@@ -21,6 +21,7 @@ import { BagIcon, TrashIcon, TruckIcon } from './Marks'
 import { DeliveryForm } from './DeliveryForm'
 import { PickupForm } from './PickupForm'
 import { Overlay } from './Overlay'
+import { ProductPhoto } from './ProductPhoto'
 import { useRaffle } from './RaffleProvider'
 import { localDay } from '../lib/raffle'
 import type { UserProfile } from '../types'
@@ -141,7 +142,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
           {lines.map((line) => (
             <li key={line.key}>
               {line.image ? (
-                <img className="cart__thumb" src={line.image} alt="" />
+                <ProductPhoto className="cart__thumb" src={line.image} eager />
               ) : (
                 <span className="cart__thumb" aria-hidden="true" />
               )}

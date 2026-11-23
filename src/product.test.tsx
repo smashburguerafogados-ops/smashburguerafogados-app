@@ -42,6 +42,12 @@ function lastAdd(path: string): Record<string, unknown> {
   return call[1] as Record<string, unknown>
 }
 
+function lastSet(path: string): Record<string, unknown> {
+  const call = firebaseMocks.setDoc.mock.calls.filter(([ref]) => (ref as { path: string }).path === path).pop()
+  if (!call) throw new Error(`no setDoc on ${path}`)
+  return call[1] as Record<string, unknown>
+}
+
 describe('Criar Produto', () => {
   it('reads prices typed the Brazilian way', () => {
     expect(parsePrice('28')).toBe(28)
@@ -125,15 +131,44 @@ describe('Criar Produto', () => {
     await user.click(within(form).getByRole('button', { name: 'Salvar produto' }))
 
     expect(await within(form).findByRole('status')).toHaveTextContent('Smash Bacon salvo no cardápio.')
-    expect(lastAdd('products')).toMatchObject({
+    expect(lastSet('productPhotos/novo-produto')).toEqual({
+      image: 'data:image/jpeg;base64,QUJD',
+      updatedAtMs: expect.any(Number),
+    })
+    const saved = lastSet('products/novo-produto')
+    expect(saved).toMatchObject({
       name: 'Smash Bacon',
       categoryId: 'promo',
       price: 29.9,
       description: 'Blend 90g, bacon e cheddar.',
-      image: 'data:image/jpeg;base64,QUJD',
+      photoVersion: lastSet('productPhotos/novo-produto').updatedAtMs,
       extras: [{ id: 'addon-bacon', name: 'Bacon', price: 4 }],
       available: true,
     })
+    expect(saved).not.toHaveProperty('image')
+    expect(firebaseMocks.addDoc.mock.calls.filter(([ref]) => (ref as { path: string }).path === 'products')).toHaveLength(0)
+  })
+
+  it('keeps the photo inside the product while the new rules are not published', async () => {
+    firebaseMocks.setDoc.mockImplementation(async (ref: unknown) => {
+      if ((ref as { path: string }).path.startsWith('productPhotos/')) {
+        throw Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' })
+      }
+    })
+    const { user, form } = await openForm()
+    await user.type(within(form).getByRole('textbox', { name: 'Nome' }), 'Smash Bacon')
+    await user.upload(
+      within(form).getByLabelText('Escolher foto da galeria'),
+      new File(['abc'], 'smash.jpg', { type: 'image/jpeg' }),
+    )
+    await pickCategory(user, form, 'Lanches')
+    await user.type(within(form).getByRole('textbox', { name: 'Valor (R$)' }), '2990')
+    await user.click(within(form).getByRole('button', { name: 'Salvar produto' }))
+
+    expect(await within(form).findByRole('status')).toHaveTextContent('Smash Bacon salvo no cardápio.')
+    const saved = lastSet('products/novo-produto')
+    expect(saved).toMatchObject({ name: 'Smash Bacon', image: 'data:image/jpeg;base64,QUJD', available: true })
+    expect(saved).not.toHaveProperty('photoVersion')
   })
 
   it('refuses to save without a photo or a valid price', async () => {
