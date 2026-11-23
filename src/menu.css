@@ -21,9 +21,10 @@
 .menu__content {
   position: relative;
   z-index: 1;
+  --menu-gutter: 14px;
   width: min(680px, 100%);
   margin: 0 auto;
-  padding: 12px 16px calc(112px + var(--safe-bottom));
+  padding: 12px var(--menu-gutter) calc(112px + var(--safe-bottom));
 }
 
 .menu__top {
@@ -481,13 +482,10 @@
   transform: translateX(-50%);
 }
 
-html[data-theme='natal'] .menu__content,
-html[data-theme='ano-novo'] .menu__content,
-html[data-theme='carnaval'] .menu__content,
-html[data-theme='pascoa'] .menu__content,
-html[data-theme='sao-joao'] .menu__content {
-  padding-left: 30px;
-  padding-right: 30px;
+@media (min-width: 600px) {
+  .menu__content {
+    --menu-gutter: 24px;
+  }
 }
 
 .raffle-hourglass {
@@ -691,8 +689,8 @@ html[data-theme='sao-joao'] .menu__content {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  margin: 0 -16px;
-  padding: 14px 16px 14px;
+  margin: 0 calc(var(--menu-gutter) * -1);
+  padding: 14px var(--menu-gutter) 14px;
   scrollbar-width: none;
 }
 
@@ -3155,12 +3153,12 @@ html .chips .chip.chip--destaque {
 .reorder__scroll {
   display: flex;
   gap: 10px;
-  margin: 0 -16px;
-  padding: 0 16px 2px;
+  margin: 0 calc(var(--menu-gutter) * -1);
+  padding: 0 var(--menu-gutter) 2px;
   list-style: none;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  scroll-padding-inline: 16px;
+  scroll-padding-inline: var(--menu-gutter);
   scrollbar-width: none;
 }
 
