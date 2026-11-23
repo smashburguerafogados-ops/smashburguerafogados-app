@@ -4,6 +4,7 @@ import type { Order } from '../lib/orders'
 import { formatOrderWhen, planReorder, recentOrders, type ReorderEntry, type ReorderLine, type ReorderPlan } from '../lib/reorder'
 import type { Product } from '../data/catalog'
 import { Overlay } from './Overlay'
+import { ThemeAccent } from './ThemeAccent'
 import { ProductPhoto } from './ProductPhoto'
 
 export const REORDER_AUTOPLAY_MS = 3000
@@ -315,6 +316,7 @@ export function ReorderStrip({ orders, products, firstName = '', onReorder }: Re
           <b>Pedir de novo</b>
           {name && '?'}
         </span>
+        <ThemeAccent place="label" />
       </p>
       {plans.length > 1 && !fits && (
         <span className="reorder__dots" aria-hidden="true">

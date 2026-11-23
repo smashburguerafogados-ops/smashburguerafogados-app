@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react'
 import './index.css'
 import indexCss from './index.css?raw'
+import menuCss from './menu.css?raw'
 import './griddle.css'
 import './menu.css'
 import userEvent from '@testing-library/user-event'
@@ -9,10 +10,15 @@ import treeSvg from './assets/theme/christmas-tree.svg?raw'
 import flagSvg from './assets/theme/flag-yellow.svg?raw'
 import maskSvg from './assets/theme/performing-arts.svg?raw'
 import { Splash } from './components/Splash'
+import { ReorderStrip } from './components/ReorderStrip'
 import { ThemeFrame } from './components/ThemeMark'
+import { seedCatalog } from './data/catalog'
+import type { Order } from './lib/orders'
+import { ThemeContext } from './lib/theme'
 import { AuthProvider } from './context/AuthContext'
 import { activeListeners, emitDoc, firebaseMocks } from './test/mocks'
-import { adminProfile, renderApp, signInAs } from './test/render'
+import { adminProfile, makeOrder, renderApp, signInAs } from './test/render'
+import { ACCENT_LEVEL, accentShown } from './lib/themeAccents'
 
 afterEach(() => {
   delete document.documentElement.dataset.theme
@@ -39,6 +45,7 @@ it('keeps the current look until an admin confirms another theme', async () => {
   await waitFor(() => expect(activeListeners('settings/theme')).toHaveLength(1))
   expect(document.documentElement).not.toHaveAttribute('data-theme')
   expect(document.querySelector('[data-theme-ornament]')).toBeNull()
+  expect(document.querySelector('[data-theme-accent]')).toBeNull()
 
   await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
   await user.click(screen.getByRole('button', { name: 'Temas' }))
@@ -141,7 +148,7 @@ it('shows customers the confirmed theme and hides the picker', async () => {
   })
   expect(document.querySelector('[data-theme-confetti] img')).toBeInTheDocument()
   expect(document.querySelector('[data-theme-mask] img')).toBeInTheDocument()
-  expect(document.querySelector('[data-theme-flag] img')).toBeInTheDocument()
+  expect(document.querySelector('[data-theme-flag]')).toBeNull()
   const carnaval = getComputedStyle(document.documentElement)
   expect(carnaval.getPropertyValue('--gold').trim().toLowerCase()).toBe('#e3b15a')
   expect(carnaval.getPropertyValue('--orange').trim().toLowerCase()).toBe('#e3b15a')
@@ -164,7 +171,7 @@ it('shows customers the confirmed theme and hides the picker', async () => {
     emitDoc('settings/theme', { theme: 'pascoa' })
   })
   expect(document.querySelector('[data-theme-egg] img')).toBeInTheDocument()
-  expect(document.querySelector('[data-theme-bunny] img')).toBeInTheDocument()
+  expect(document.querySelector('[data-theme-bunny]')).toBeNull()
   expect(getComputedStyle(document.documentElement).getPropertyValue('--theme-scene').trim()).toBe('easter')
 
   await act(async () => {
@@ -172,8 +179,8 @@ it('shows customers the confirmed theme and hides the picker', async () => {
   })
   expect(document.querySelector('[data-theme-flags]')).toBeNull()
   expect(document.querySelector('.theme-flags')).toBeNull()
-  expect(document.querySelectorAll('[data-theme-ornament="sao-joao"] [data-theme-pin]').length).toBeGreaterThan(2)
-  expect(document.querySelector('[data-theme-glow]')).toBeInTheDocument()
+  expect(document.querySelectorAll('[data-theme-ornament="sao-joao"] [data-theme-pin]').length).toBeGreaterThan(1)
+  expect(document.querySelector('[data-theme-glow]')).toBeNull()
   expect(getComputedStyle(document.documentElement).getPropertyValue('--theme-scene').trim()).toBe('festa-junina')
 
   const scenes = ['natal', 'ano-novo', 'carnaval', 'pascoa', 'sao-joao'] as const
@@ -191,7 +198,7 @@ it('shows customers the confirmed theme and hides the picker', async () => {
       ),
     )
     expect(kinds.size).toBeGreaterThan(1)
-    expect(document.querySelectorAll(`[data-theme-ornament="${theme}"] [data-theme-pin]`).length).toBeGreaterThan(2)
+    expect(document.querySelectorAll(`[data-theme-ornament="${theme}"] [data-theme-pin]`).length).toBeGreaterThan(1)
     expect(getComputedStyle(document.querySelector(`[data-theme-ornament="${theme}"] .theme-pin`)!).pointerEvents).toBe('none')
   }
 
@@ -235,5 +242,75 @@ it('decorates the opening screen with the confirmed theme', async () => {
   })
   expect(document.querySelector('[data-theme-flags]')).toBeNull()
   expect(document.querySelector('.theme-flags')).toBeNull()
-  expect(document.querySelectorAll('[data-theme-ornament="sao-joao"] [data-theme-pin]').length).toBeGreaterThan(2)
+  expect(document.querySelectorAll('[data-theme-ornament="sao-joao"] [data-theme-pin]').length).toBeGreaterThan(1)
+})
+
+const RIGHT_SIDE = '.theme-pin--r1, .theme-pin--r2, .theme-pin--r3, .theme-pin--str, .theme-pin--sbr'
+
+it('never pins icons on the right edge of the screen', async () => {
+  renderApp()
+  await waitFor(() => expect(activeListeners('settings/theme')).toHaveLength(1))
+  for (const theme of ['natal', 'ano-novo', 'carnaval', 'pascoa', 'sao-joao'] as const) {
+    await act(async () => {
+      emitDoc('settings/theme', { theme })
+    })
+    expect(document.querySelector(`[data-theme-ornament="${theme}"]`)).toBeInTheDocument()
+    expect(document.querySelector(RIGHT_SIDE)).toBeNull()
+  }
+})
+
+it('keeps the year of Ano Novo off the menu and only on the opening screen', () => {
+  expect(menuCss).toMatch(/\.theme-year \{\s*display: none;/)
+  expect(menuCss).toMatch(/\.splash \.theme-year \{\s*display: flex;/)
+})
+
+it('puts fixed theme icons next to the menu UI, behind taps, and none on the dock', async () => {
+  renderApp()
+  await waitFor(() => expect(activeListeners('settings/theme')).toHaveLength(1))
+  expect(document.querySelector('[data-theme-accent]')).toBeNull()
+
+  for (const theme of ['natal', 'ano-novo', 'carnaval', 'pascoa', 'sao-joao'] as const) {
+    await act(async () => {
+      emitDoc('settings/theme', { theme })
+    })
+    const logo = document.querySelector('.menu__logo [data-theme-accent="logo"]') as HTMLElement
+    expect(logo).toBeInTheDocument()
+    expect(logo).toHaveAttribute('aria-hidden', 'true')
+    expect(getComputedStyle(logo).pointerEvents).toBe('none')
+    expect(document.querySelector('.menu__rule [data-theme-accent="rule"]')).toBeInTheDocument()
+    await waitFor(() => expect(document.querySelectorAll('.chip [data-theme-accent="chip"]')).toHaveLength(1))
+    expect(document.querySelector('.dock [data-theme-accent]')).toBeNull()
+  }
+
+  await act(async () => {
+    emitDoc('settings/theme', { theme: 'atual' })
+  })
+  expect(document.querySelector('[data-theme-accent]')).toBeNull()
+})
+
+it('scales the fixed icons by level', () => {
+  expect(ACCENT_LEVEL).toBe('medio')
+  expect(accentShown('logo', 0, 'sutil')).toBe(true)
+  expect(accentShown('label', 0, 'sutil')).toBe(false)
+  expect(accentShown('label', 0, 'medio')).toBe(true)
+  expect(accentShown('garland', 0, 'medio')).toBe(false)
+  expect(accentShown('garland', 0, 'festivo')).toBe(true)
+  expect(accentShown('chip', 1, 'medio')).toBe(false)
+  expect(accentShown('chip', 2, 'festivo')).toBe(true)
+  expect(accentShown('card', 1, 'festivo')).toBe(true)
+  expect(accentShown('card', 2, 'festivo')).toBe(false)
+})
+
+it('puts the theme icon beside the reorder title only inside a theme', () => {
+  const orders = [makeOrder({ id: 'r1', status: 'finalizado', createdAtMs: 1 }) as unknown as Order]
+  const strip = <ReorderStrip orders={orders} products={seedCatalog.products} onReorder={() => {}} />
+  const plain = render(strip)
+  expect(document.querySelector('.reorder__label [data-theme-accent="label"]')).toBeNull()
+  plain.unmount()
+
+  render(<ThemeContext.Provider value="natal">{strip}</ThemeContext.Provider>)
+  const accent = document.querySelector('.reorder__label [data-theme-accent="label"]') as HTMLElement
+  expect(accent).toBeInTheDocument()
+  expect(accent.querySelector('img')).toBeInTheDocument()
+  expect(getComputedStyle(accent).pointerEvents).toBe('none')
 })
