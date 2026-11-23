@@ -93,11 +93,37 @@ export function openWhatsappTab(number: string, text: string): boolean {
   return true
 }
 
+export const WEB_FALLBACK_MS = 1500
+
+/**
+ * whatsapp:// does nothing without the app (a tablet, a phone without it). If the
+ * page is still in front after a moment, nothing took the link, so open wa.me in
+ * a new tab, which offers WhatsApp Web or the store. Opening the app hides the page,
+ * and that cancels this.
+ */
+function fallBackToWeb(number: string, text: string) {
+  const cancel = () => {
+    clearTimeout(timer)
+    document.removeEventListener('visibilitychange', cancel)
+    window.removeEventListener('pagehide', cancel)
+    window.removeEventListener('blur', cancel)
+  }
+  const timer = setTimeout(() => {
+    cancel()
+    if (document.visibilityState !== 'visible') return
+    if (!openWhatsappTab(number, text)) page.assign(whatsappUrl(number, text))
+  }, WEB_FALLBACK_MS)
+  document.addEventListener('visibilitychange', cancel)
+  window.addEventListener('pagehide', cancel)
+  window.addEventListener('blur', cancel)
+}
+
 /** Call from the click handler itself so mobile browsers treat it as a user action. */
 export function openWhatsapp(number: string, text: string): string {
   if (isAndroidDevice()) {
     const app = whatsappAppUrl(number, text)
     page.assign(app)
+    fallBackToWeb(number, text)
     return app
   }
   const url = whatsappUrl(number, text)

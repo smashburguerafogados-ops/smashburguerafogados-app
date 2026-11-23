@@ -1,7 +1,9 @@
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { resetFirebaseMocks } from './mocks'
+
+configure({ asyncUtilTimeout: 3000 })
 
 afterEach(() => {
   cleanup()
