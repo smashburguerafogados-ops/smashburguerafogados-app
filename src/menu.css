@@ -3123,7 +3123,32 @@ html .chips .chip.chip--destaque {
 }
 
 .reorder {
+  position: relative;
   margin: 2px 0 10px;
+}
+
+.reorder__dots {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 15px;
+  pointer-events: none;
+}
+
+.reorder__dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.4);
+  transition: width 0.25s ease, background-color 0.25s ease;
+}
+
+.reorder__dots i.is-on {
+  width: 14px;
+  background: var(--gold);
 }
 
 .reorder__label {
@@ -3420,6 +3445,10 @@ html .chips .chip.chip--destaque {
 @media (prefers-reduced-motion: reduce) {
   .reorder__scroll {
     scroll-behavior: auto;
+  }
+
+  .reorder__dots i {
+    transition: none;
   }
 }
 
