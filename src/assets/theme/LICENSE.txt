@@ -22,4 +22,4 @@ SOFTWARE.
 
 Color icons in this folder are Fluent Emoji (Color), from
 https://github.com/microsoft/fluentui-emoji
-The São João bandeirinhas keep that triangular-flag artwork and only change the cloth color.
+The Carnaval flag keeps that triangular-flag artwork.

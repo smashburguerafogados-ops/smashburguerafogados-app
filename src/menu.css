@@ -284,7 +284,6 @@
 .theme-piece,
 .theme-ornament,
 .theme-pin,
-.theme-flags,
 .theme-glow,
 .theme-year {
   pointer-events: none;
@@ -313,7 +312,6 @@
 }
 
 .theme-pin,
-.theme-flags,
 .theme-year {
   display: none;
 }
@@ -362,7 +360,6 @@
 .theme-piece img,
 .theme-ornament img,
 .theme-pin img,
-.theme-flags img,
 .theme-year img {
   width: 100%;
   height: 100%;
@@ -407,45 +404,6 @@
 .theme-pin--str { top: 10px; right: 10px; }
 .theme-pin--sbl { bottom: 14px; left: 10px; }
 .theme-pin--sbr { bottom: 14px; right: 10px; }
-
-.theme-flags {
-  position: absolute;
-  top: 148px;
-  bottom: 124px;
-  left: 3px;
-  right: auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  width: 22px;
-  padding: 0;
-  border: 0;
-  overflow: hidden;
-  background: none;
-}
-
-.theme-flags span {
-  width: 20px;
-  height: 26px;
-}
-
-.splash .theme-flags {
-  top: 12px;
-  bottom: auto;
-  left: 58px;
-  right: 58px;
-  width: auto;
-  height: auto;
-  overflow: visible;
-  flex-direction: row;
-  justify-content: center;
-  gap: 8px;
-}
-
-.splash .theme-flags span {
-  width: 22px;
-  height: 28px;
-}
 
 .theme-year {
   position: absolute;

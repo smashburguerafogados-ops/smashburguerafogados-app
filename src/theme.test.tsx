@@ -100,7 +100,7 @@ it('shows customers the confirmed theme and hides the picker', async () => {
   const dock = document.querySelector('.dock') as HTMLElement
   expect(Number(getComputedStyle(decor).zIndex)).toBeLessThan(Number(getComputedStyle(menu).zIndex))
   expect(Number(getComputedStyle(decor).zIndex)).toBeLessThan(Number(getComputedStyle(dock).zIndex))
-  expect(Number(getComputedStyle(document.querySelector('.theme-flags, .theme-pin')!).zIndex) || 0).toBeLessThanOrEqual(
+  expect(Number(getComputedStyle(document.querySelector('.theme-pin')!).zIndex) || 0).toBeLessThanOrEqual(
     Number(getComputedStyle(decor).zIndex) || 0,
   )
   const natalKinds = new Set(
@@ -170,7 +170,9 @@ it('shows customers the confirmed theme and hides the picker', async () => {
   await act(async () => {
     emitDoc('settings/theme', { theme: 'sao-joao' })
   })
-  expect(document.querySelectorAll('[data-theme-flags] img').length).toBeGreaterThan(1)
+  expect(document.querySelector('[data-theme-flags]')).toBeNull()
+  expect(document.querySelector('.theme-flags')).toBeNull()
+  expect(document.querySelectorAll('[data-theme-ornament="sao-joao"] [data-theme-pin]').length).toBeGreaterThan(2)
   expect(document.querySelector('[data-theme-glow]')).toBeInTheDocument()
   expect(getComputedStyle(document.documentElement).getPropertyValue('--theme-scene').trim()).toBe('festa-junina')
 
@@ -228,4 +230,10 @@ it('decorates the opening screen with the confirmed theme', async () => {
     [...document.querySelectorAll('[data-theme-ornament="natal"] [data-fall-kind]')].map((node) => node.getAttribute('data-fall-kind')),
   )
   expect(splashKinds.size).toBeGreaterThan(1)
+  await act(async () => {
+    emitDoc('settings/theme', { theme: 'sao-joao' })
+  })
+  expect(document.querySelector('[data-theme-flags]')).toBeNull()
+  expect(document.querySelector('.theme-flags')).toBeNull()
+  expect(document.querySelectorAll('[data-theme-ornament="sao-joao"] [data-theme-pin]').length).toBeGreaterThan(2)
 })
