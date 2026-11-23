@@ -22,6 +22,8 @@ import {
 import { formatPrice, toCents } from '../lib/money'
 import { watchRemoteCatalog } from '../lib/remoteCatalog'
 import { scrollTopOf, stepDock } from '../lib/dockScroll'
+import { clearSavedCart, readSavedCart, restoreCart, restoreNotice, saveCart } from '../lib/cartStorage'
+import { useKeyboardOpen } from '../lib/keyboard'
 import { useShop } from '../lib/shop'
 import { AdminPrompt } from './AdminPrompt'
 import { ClosedScreen } from './ClosedScreen'
@@ -101,7 +103,27 @@ export function MenuScreen() {
   const [linkedId, setLinkedId] = useState(linkedProductId)
   const [notice, setNotice] = useState<{ id: number; text: string } | null>(null)
   const [dockAway, setDockAway] = useState(false)
+  const keyboardOpen = useKeyboardOpen()
+  const [cartNotice, setCartNotice] = useState('')
+  const savedCart = useRef(readSavedCart())
+  const cartRestored = useRef(false)
   const noticeId = useRef(0)
+
+  useEffect(() => {
+    if (!cartRestored.current) return
+    saveCart(lines)
+  }, [lines])
+
+  useEffect(() => {
+    if (!catalog || cartRestored.current) return
+    cartRestored.current = true
+    const saved = savedCart.current
+    savedCart.current = []
+    if (saved.length === 0) return
+    const restored = restoreCart(saved, catalog.products)
+    setLines((current) => restored.lines.reduce((acc, line) => addCartLine(acc, line, line.qty), current))
+    setCartNotice(restoreNotice(restored))
+  }, [catalog])
 
   useEffect(() => {
     const anchors = new WeakMap<EventTarget, number>()
@@ -227,6 +249,18 @@ export function MenuScreen() {
             </button>
             <button type="button" className="btn btn--ghost" onClick={() => setNotice(null)}>
               Continuar no cardápio
+            </button>
+          </div>
+        </section>
+      )}
+      {cartNotice && (
+        <section className="added" aria-label="Carrinho restaurado">
+          <p className="added__text" role="status">
+            <span className="added__label">Carrinho:</span> {cartNotice}
+          </p>
+          <div className="added__actions">
+            <button type="button" className="btn" onClick={() => setCartNotice('')}>
+              Entendi
             </button>
           </div>
         </section>
@@ -382,7 +416,7 @@ export function MenuScreen() {
         sheet={sheet}
         count={count}
         totalCents={total}
-        away={dockAway}
+        away={dockAway || keyboardOpen}
         orderLive={orderLive}
         onOrders={() => toggle('orders')}
         onProfile={() => toggle('profile')}
@@ -403,7 +437,10 @@ export function MenuScreen() {
           lines={lines}
           onClose={() => setSheet(null)}
           onRemove={(key) => setLines((current) => removeCartLine(current, key))}
-          onPlaced={() => setLines([])}
+          onPlaced={() => {
+            clearSavedCart()
+            setLines([])
+          }}
         />
       )}
       {sheet === 'profile' && <ContaSheet onClose={() => setSheet(null)} />}

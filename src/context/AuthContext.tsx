@@ -18,6 +18,7 @@ import {
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 import { auth, authReady, db } from '../lib/firebase'
 import { blockKeyFromEmail, isPhoneBlocked, watchBlocked } from '../lib/blocked'
+import { clearSavedCart } from '../lib/cartStorage'
 import { clearSavedCustomerId, saveCustomerId } from '../lib/customerId'
 import { mapAuthError, mapCustomerError } from '../lib/errors'
 import {
@@ -470,6 +471,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
       async logout() {
+        clearSavedCart()
         await signOut(auth)
       },
     }),
