@@ -1,5 +1,8 @@
-const MAX_SIDE = 640
-const QUALITY = 0.72
+// Cards show the photo at ~180 CSS px and the zoom at up to 720, so 560 keeps
+// it sharp while a menu photo stays around 20 KB instead of ~70 KB.
+export const MAX_SIDE = 560
+const WEBP_QUALITY = 0.72
+const JPEG_QUALITY = 0.7
 // Firestore documents cap at 1 MiB; leave room for the rest of the product.
 export const MAX_PHOTO_CHARS = 700_000
 
@@ -21,7 +24,14 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   })
 }
 
-/** Returns a JPEG data URL small enough to live on the product document. */
+/** WebP where the browser can encode it (Chrome, Firefox, Safari 17+), JPEG otherwise. */
+export function encodeCanvas(canvas: HTMLCanvasElement): string {
+  const webp = canvas.toDataURL('image/webp', WEBP_QUALITY)
+  if (webp.startsWith('data:image/webp')) return webp
+  return canvas.toDataURL('image/jpeg', JPEG_QUALITY)
+}
+
+/** Returns a WebP or JPEG data URL small enough to live on a Firestore document. */
 export async function readPhoto(file: File): Promise<string> {
   if (!file.type.startsWith('image/')) throw new Error('Escolha uma imagem.')
   const original = await readAsDataUrl(file)
@@ -34,7 +44,7 @@ export async function readPhoto(file: File): Promise<string> {
     const context = canvas.getContext('2d')
     if (!context) throw new Error('canvas')
     context.drawImage(image, 0, 0, canvas.width, canvas.height)
-    const compressed = canvas.toDataURL('image/jpeg', QUALITY)
+    const compressed = encodeCanvas(canvas)
     if (compressed.length <= MAX_PHOTO_CHARS) return compressed
   } catch {
     // Fall through to the original when the browser cannot redraw it.

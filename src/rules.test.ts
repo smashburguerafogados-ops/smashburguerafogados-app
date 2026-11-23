@@ -36,6 +36,21 @@ describe('firestore.rules', () => {
     expect(rules).toContain(".data.role == 'admin'")
   })
 
+  it('lets anyone get one product photo by id and only admins list or write photos', () => {
+    const photos = block('productPhotos')
+    expect(photos.match(/allow [a-z, ]+:.*;/g)).toEqual([
+      'allow get: if true;',
+      'allow list: if isAdmin();',
+      'allow create, update: if photoWrite();',
+      'allow delete: if isAdmin();',
+    ])
+    expect(rules).toContain("data.keys().hasOnly(['image', 'updatedAtMs'])")
+    expect(rules).toContain('data.image.size() <= 1000000')
+    const backups = block('productPhotoBackups')
+    expect(backups).toContain('allow read, write: if isAdmin();')
+    expect(backups).not.toContain('if true')
+  })
+
   it('keeps orders private to their customer and the admin', () => {
     const orders = block('orders')
     const reads = orders.match(/allow read:.*;/g) ?? []

@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { browserLocalPersistence, getAuth, setPersistence } from 'firebase/auth'
+import { browserLocalPersistence, initializeAuth, setPersistence } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
 function required(name: keyof ImportMetaEnv): string {
@@ -21,7 +21,9 @@ const firebaseConfig = {
 }
 
 export const app = initializeApp(firebaseConfig)
-export const auth = getAuth(app)
+// Sign-in is email and password only. Without a popup/redirect resolver the
+// SDK skips the hidden authDomain iframe and gapi download on every visit.
+export const auth = initializeAuth(app, { persistence: browserLocalPersistence })
 auth.languageCode = 'pt-BR'
 
 export const db = getFirestore(app)

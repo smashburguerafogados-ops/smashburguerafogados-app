@@ -9,13 +9,14 @@ import {
 } from '../lib/adminCatalog'
 import { formatPrice, maskPrice, toCents } from '../lib/money'
 import { CloseButton } from './Overlay'
+import { PhotoMigration } from './PhotoMigration'
 import { ProductForm } from './ProductForm'
 
 type ProductDeskProps = {
   onClose: () => void
 }
 
-type Pending = { id: string; name: string }
+type Pending = { id: string; name: string; image: string }
 
 export function ProductDesk({ onClose }: ProductDeskProps) {
   const [products, setProducts] = useState<ListedProduct[]>([])
@@ -88,7 +89,7 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
     setBusy(true)
     setActionError('')
     try {
-      await deleteProduct(pending.id)
+      await deleteProduct(pending.id, pending.image)
       setPending(null)
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Não foi possível excluir.')
@@ -110,6 +111,7 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
             {loadError}
           </p>
         )}
+        <PhotoMigration products={products} />
         <h3 className="catalog__heading">Itens do cardápio</h3>
         {products.length === 0 ? (
           <p className="muted">Nenhum produto no cardápio.</p>
@@ -160,7 +162,7 @@ export function ProductDesk({ onClose }: ProductDeskProps) {
                       <button
                         type="button"
                         className="btn btn--ghost"
-                        onClick={() => setPending({ id: product.id, name: product.name })}
+                        onClick={() => setPending({ id: product.id, name: product.name, image: product.image })}
                       >
                         Excluir
                       </button>

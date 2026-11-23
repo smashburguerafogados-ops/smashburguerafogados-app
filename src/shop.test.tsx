@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('./lib/photo', () => ({
-  readPhoto: vi.fn(async () => 'data:image/jpeg;base64,QUJD'),
+  readPhoto: vi.fn(async () => 'data:image/webp;base64,Tk9WQQ'),
 }))
 import { DEFAULT_CLOSED_MESSAGE } from './lib/shop'
 import { activeListeners, emit, emitDoc, firebaseMocks } from './test/mocks'
@@ -111,6 +111,10 @@ describe('Produtos', () => {
     await user.click(within(form).getByRole('button', { name: 'Salvar produto' }))
 
     expect(await within(form).findByRole('status')).toHaveTextContent('Smash duplo atualizado no cardápio.')
+    expect(firebaseMocks.setDoc).toHaveBeenCalledWith(
+      { path: 'productPhotos/smash' },
+      { image: 'data:image/webp;base64,Tk9WQQ', updatedAtMs: expect.any(Number) },
+    )
     expect(firebaseMocks.updateDoc).toHaveBeenCalledWith(
       { path: 'products/smash' },
       {
@@ -118,7 +122,8 @@ describe('Produtos', () => {
         categoryId: 'bebidas',
         price: 32.5,
         description: 'Dois blends.',
-        image: 'data:image/jpeg;base64,QUJD',
+        photoVersion: expect.any(Number),
+        image: 'DELETE_FIELD',
         extras: [
           { id: 'addon-bacon', name: 'Bacon', price: 4 },
           { id: 'addon-cheddar', name: 'Cheddar', price: 3 },

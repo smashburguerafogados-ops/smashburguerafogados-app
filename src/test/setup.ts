@@ -2,6 +2,8 @@ import { cleanup, configure } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { resetFirebaseMocks } from './mocks'
+import { forgetCatalogState } from '../lib/remoteCatalog'
+import { forgetPhotos } from '../lib/productPhotos'
 
 configure({ asyncUtilTimeout: 3000 })
 
@@ -58,7 +60,11 @@ vi.mock('firebase/firestore', async () => {
     collection: vi.fn((_db: unknown, name: string) => ({ path: name })),
     query: vi.fn((ref: { path: string }, ...constraints: unknown[]) => ({ path: ref.path, constraints })),
     where: vi.fn((field: string, op: string, value: unknown) => ({ field, op, value })),
-    doc: vi.fn((_db: unknown, ...segments: string[]) => ({ path: segments.join('/') })),
+    doc: vi.fn((parent: { path?: string } | undefined, ...segments: string[]) =>
+      segments.length === 0 && parent?.path
+        ? { path: `${parent.path}/novo-produto`, id: 'novo-produto' }
+        : { path: segments.join('/') },
+    ),
     getDoc: async (ref: { path: string }, ...rest: unknown[]) => {
       if (ref.path.startsWith('blocked/')) return mocks.blockedLookup(ref.path.slice('blocked/'.length))
       return mocks.getDoc(ref, ...rest)
@@ -101,5 +107,7 @@ beforeEach(() => {
   sessionStorage.clear()
   localStorage.clear()
   resetFirebaseMocks()
+  forgetCatalogState()
+  forgetPhotos()
   window.open = vi.fn(() => ({ opener: {} }) as unknown as Window)
 })

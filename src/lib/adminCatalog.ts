@@ -5,6 +5,7 @@ import {
   deleteDoc,
   deleteField,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
@@ -17,6 +18,16 @@ import type { Category, Extra } from '../data/catalog'
 import { db } from './firebase'
 import { isCategoryIconKey } from './categoryIcons'
 import { sortCategories } from './menu'
+import { productImage } from './remoteCatalog'
+import {
+  PHOTO_BACKUPS,
+  PHOTOS,
+  deletePhotoDoc,
+  isPermissionDenied,
+  isPhotoRef,
+  readPhotoDoc,
+  savePhotoDoc,
+} from './productPhotos'
 
 export function categoryName(name: string): string {
   const clean = name.trim().replace(/\s+/g, ' ')
@@ -78,8 +89,9 @@ export async function renameCategory(id: string, name: string): Promise<void> {
   await updateDoc(doc(db, 'categories', id), { name: categoryName(name) })
 }
 
-export async function deleteProduct(id: string): Promise<void> {
+export async function deleteProduct(id: string, image = ''): Promise<void> {
   await deleteDoc(doc(db, 'products', id))
+  if (isPhotoRef(image)) await deletePhotoDoc(id)
 }
 
 export async function deleteCategory(id: string): Promise<void> {
@@ -126,7 +138,7 @@ export function watchProducts(onNext: (products: ListedProduct[]) => void, onErr
           price: typeof data.price === 'number' ? data.price : 0,
           available: data.available !== false,
           description: typeof data.description === 'string' ? data.description : '',
-          image: typeof data.image === 'string' ? data.image : '',
+          image: productImage(entry.id, data, ''),
           extras,
         })
       })
@@ -164,20 +176,35 @@ export function parsePrice(input: string): number | null {
   return value > 0 ? value : null
 }
 
-export async function updateProduct(id: string, product: NewProduct & { available: boolean }): Promise<void> {
+/** A new photo goes to productPhotos/{id}; when the rules refuse it, it stays inside the product, as before. */
+function photoFields(image: string, version: number | null): Record<string, unknown> {
+  return version === null ? { image, photoVersion: deleteField() } : { photoVersion: version, image: deleteField() }
+}
+
+/** previousImage is what the form opened with: an unchanged photo is not written again. */
+export async function updateProduct(
+  id: string,
+  product: NewProduct & { available: boolean },
+  previousImage = '',
+): Promise<void> {
   if (!product.name.trim()) throw new Error('Informe o nome do produto.')
   if (!product.categoryId) throw new Error('Escolha uma categoria.')
   if (!(product.price > 0)) throw new Error('Informe um valor válido.')
   if (!product.image) throw new Error('Escolha uma foto.')
-  await updateDoc(doc(db, 'products', id), {
+  const fields = {
     name: product.name.trim(),
     categoryId: product.categoryId,
     price: product.price,
     description: product.description.trim(),
-    image: product.image,
     extras: product.extras,
     available: product.available,
-  })
+  }
+  if (product.image === previousImage) {
+    await updateDoc(doc(db, 'products', id), fields)
+    return
+  }
+  const version = await savePhotoDoc(id, product.image)
+  await updateDoc(doc(db, 'products', id), { ...fields, ...photoFields(product.image, version) })
 }
 
 export type CatalogAddon = {
@@ -308,15 +335,97 @@ export async function createProduct(product: NewProduct): Promise<string> {
   if (!product.name.trim()) throw new Error('Informe o nome do produto.')
   if (!product.categoryId) throw new Error('Escolha uma categoria.')
   if (!(product.price > 0)) throw new Error('Informe um valor válido.')
-  const ref = await addDoc(collection(db, 'products'), {
+  const ref = doc(collection(db, 'products'))
+  const version = await savePhotoDoc(ref.id, product.image)
+  await setDoc(ref, {
     name: product.name.trim(),
     categoryId: product.categoryId,
     price: product.price,
     description: product.description.trim(),
-    image: product.image,
+    ...(version === null ? { image: product.image } : { photoVersion: version }),
     extras: product.extras,
     available: true,
     createdAt: serverTimestamp(),
   })
   return ref.id
+}
+
+/** Legacy products carry the photo inline as a data URL. */
+export function hasInlinePhoto(product: Pick<ListedProduct, 'image'>): boolean {
+  return product.image.startsWith('data:')
+}
+
+/**
+ * True when the published rules let the admin use productPhotos. A read of a
+ * missing document is allowed by the new rules and refused by the old ones.
+ */
+export async function photoRulesPublished(): Promise<boolean> {
+  try {
+    await getDoc(doc(db, PHOTOS, '_regras'))
+    return true
+  } catch (error) {
+    if (isPermissionDenied(error)) return false
+    throw error
+  }
+}
+
+export type PhotoMoveResult = { done: number; failed: string[] }
+
+/**
+ * Opt-in, one product at a time, safe to run again. For each legacy photo:
+ * copy it to productPhotoBackups/{id}, copy it to productPhotos/{id}, read the
+ * copy back, and only then swap the inline photo for photoVersion. A product
+ * that fails keeps its inline photo. Photos are moved as they are, not
+ * re-encoded.
+ */
+export async function movePhotosOut(
+  products: ListedProduct[],
+  onStep: (done: number, total: number) => void = () => undefined,
+  now: () => number = Date.now,
+): Promise<PhotoMoveResult> {
+  const todo = products.filter(hasInlinePhoto)
+  const failed: string[] = []
+  let done = 0
+  for (const product of todo) {
+    try {
+      const version = now()
+      await setDoc(doc(db, PHOTO_BACKUPS, product.id), { image: product.image, savedAtMs: version })
+      await setDoc(doc(db, PHOTOS, product.id), { image: product.image, updatedAtMs: version })
+      if ((await readPhotoDoc(product.id)) !== product.image) throw new Error('A cópia da foto não confere.')
+      await updateDoc(doc(db, 'products', product.id), { photoVersion: version, image: deleteField() })
+      done += 1
+    } catch {
+      failed.push(product.name)
+    }
+    onStep(done + failed.length, todo.length)
+  }
+  return { done, failed }
+}
+
+async function readBackup(id: string): Promise<string> {
+  const snapshot = await getDoc(doc(db, PHOTO_BACKUPS, id))
+  const data = snapshot.exists() ? (snapshot.data() as Record<string, unknown>) : undefined
+  return typeof data?.image === 'string' ? data.image : ''
+}
+
+/** Undo: puts each photo back inside its product (the current photo, or the backup when it is missing). */
+export async function movePhotosBack(
+  products: ListedProduct[],
+  onStep: (done: number, total: number) => void = () => undefined,
+): Promise<PhotoMoveResult> {
+  const todo = products.filter((product) => isPhotoRef(product.image))
+  const failed: string[] = []
+  let done = 0
+  for (const product of todo) {
+    try {
+      const image = (await readPhotoDoc(product.id)) || (await readBackup(product.id))
+      if (!image) throw new Error('Foto não encontrada.')
+      await updateDoc(doc(db, 'products', product.id), { image, photoVersion: deleteField() })
+      done += 1
+    } catch {
+      failed.push(product.name)
+    }
+    onStep(done + failed.length, todo.length)
+  }
+  return { done, failed }
 }

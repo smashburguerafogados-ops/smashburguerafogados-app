@@ -5,7 +5,8 @@ import { FIRE_PLAYBACK_RATE } from './components/FireBackdrop'
 import { Splash } from './components/Splash'
 import { AuthProvider } from './context/AuthContext'
 import { emitSeedCatalog, signInAs, customerProfile } from './test/render'
-import { authState, emitDoc, firebaseMocks } from './test/mocks'
+import { activeListeners, authState, emitDoc, firebaseMocks } from './test/mocks'
+import { prefetchRemoteCatalog } from './lib/remoteCatalog'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -19,11 +20,17 @@ function renderSplash(onDone = vi.fn(), ready = true) {
   )
 }
 
-it('plays the shipped fire loop and does not draw the old grill', () => {
+it('plays the shipped fire loop once the menu answers and does not draw the old grill', () => {
   const onDone = vi.fn()
   const { container } = renderSplash(onDone)
 
   expect(screen.getByText('Preparando a chapa')).toBeInTheDocument()
+  expect(container.querySelector('video')).toBeNull()
+  expect(container.querySelector('img.fire__video')).toHaveAttribute('src', expect.stringContaining('fire-poster.jpg'))
+  act(() => {
+    prefetchRemoteCatalog()
+    emitSeedCatalog()
+  })
   const video = container.querySelector('video')
   expect(video).not.toBeNull()
   const src = video?.getAttribute('src') ?? ''
@@ -34,6 +41,27 @@ it('plays the shipped fire loop and does not draw the old grill', () => {
   expect(container.querySelector('.grill__grate')).toBeNull()
   expect(container.querySelector('.grill__flame')).toBeNull()
   expect(screen.getByRole('img', { name: 'Smash Burger' })).toBeInTheDocument()
+})
+
+it('keeps the still poster with data saver on, even after the menu answers', () => {
+  Object.defineProperty(navigator, 'connection', { configurable: true, value: { saveData: true, effectiveType: '4g' } })
+  try {
+    const { container } = renderSplash()
+    act(() => {
+      prefetchRemoteCatalog()
+      emitSeedCatalog()
+    })
+    expect(container.querySelector('video')).toBeNull()
+    expect(container.querySelector('img.fire__video')).toHaveAttribute('src', expect.stringContaining('fire-poster.jpg'))
+  } finally {
+    Reflect.deleteProperty(navigator, 'connection')
+  }
+})
+
+it('starts reading the menu during the opening screen', () => {
+  render(<App />)
+  expect(activeListeners('categories')).toHaveLength(1)
+  expect(activeListeners('products')).toHaveLength(1)
 })
 
 it('leaves the splash on the menu, not a login wall', async () => {

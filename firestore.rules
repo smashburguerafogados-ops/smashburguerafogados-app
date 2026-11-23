@@ -18,6 +18,14 @@ rules_version = '2';
 // can listen to the whole collection. Writes, including delete, require
 // users/{uid}.role == 'admin'.
 //
+// productPhotos/{productId} holds one product photo, so the menu lists names
+// and prices without downloading every photo first. Anyone can get one photo
+// by id; only an admin can list the collection or write it. products/{id}
+// .photoVersion points at it. Products saved before this rule keep the photo
+// in products/{id}.image, and the app still reads that.
+// productPhotoBackups/{productId} is the admin-only copy taken before a photo
+// leaves its product, for the undo.
+//
 // addons is the shared add-on catalog: name and price only. Everyone can
 // read it. Only an admin can write it. The public read is its own rule.
 // It is not combined with an admin check in one OR.
@@ -131,6 +139,27 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow read: if resource.data.available == true;
       allow write: if isAdmin();
+    }
+
+    function photoWrite() {
+      let data = request.resource.data;
+      return isAdmin()
+        && data.keys().hasOnly(['image', 'updatedAtMs'])
+        && data.image is string
+        && data.image.size() > 0
+        && data.image.size() <= 1000000
+        && data.updatedAtMs is int;
+    }
+
+    match /productPhotos/{productId} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create, update: if photoWrite();
+      allow delete: if isAdmin();
+    }
+
+    match /productPhotoBackups/{productId} {
+      allow read, write: if isAdmin();
     }
 
     function orderCreate() {

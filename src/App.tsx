@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Griddle } from './components/Griddle'
 import { MenuScreen } from './components/MenuScreen'
@@ -8,6 +8,7 @@ import { RaffleProvider } from './components/RaffleProvider'
 import { UpdateNotice } from './components/UpdateNotice'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { OrdersProvider, useBootReady } from './context/OrdersContext'
+import { prefetchRemoteCatalog } from './lib/remoteCatalog'
 
 const AdminRoute = lazy(() => import('./components/AdminRoute').then((module) => ({ default: module.AdminRoute })))
 
@@ -39,6 +40,11 @@ function Boot() {
   const { session } = useAuth()
   const [booting, setBooting] = useState(true)
   const finishBoot = useCallback(() => setBooting(false), [])
+
+  useEffect(() => {
+    if (/\/admin\/?$/.test(window.location.pathname)) return
+    return prefetchRemoteCatalog()
+  }, [])
 
   if (session.status === 'blocked') return <Splash locked ready={false} onDone={finishBoot} />
 
