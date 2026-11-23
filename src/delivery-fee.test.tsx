@@ -138,7 +138,7 @@ describe('delivery fee', () => {
       emit('orders', [makeOrder({ deliveryFeeCents: 500, totalCents: 6100 })])
     })
     const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: 'Meus pedidos' }))
+    await user.click(screen.getByRole('button', { name: /^(Meus pedidos|Histórico)/ }))
     const card = screen.getByRole('listitem', { name: 'Pedido #00001' })
     expect(card).toHaveTextContent('Taxa de entrega: R$ 5,00')
     expect(card).toHaveTextContent('R$ 61,00')

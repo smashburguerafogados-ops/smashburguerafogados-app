@@ -61,7 +61,7 @@ describe('modal panels', () => {
     for (const [open, name] of [
       [screen.getByRole('button', { name: /Smash da casa/ }), 'Smash da casa'],
       [screen.getByRole('button', { name: 'Conta' }), 'Dados para entrega'],
-      [screen.getByRole('button', { name: 'Meus pedidos' }), 'Meus pedidos'],
+      [screen.getByRole('button', { name: /^(Meus pedidos|Histórico)/ }), 'Meus pedidos'],
     ] as const) {
       await user.click(open)
       const dialog = screen.getByRole('dialog', { name })

@@ -6,7 +6,7 @@ type BottomBarProps = {
   count: number
   totalCents: number
   away?: boolean
-  orderLive?: boolean
+  openOrders?: number
   onOrders: () => void
   onProfile: () => void
   onCart: () => void
@@ -81,17 +81,19 @@ export function BottomBar({
   count,
   totalCents,
   away = false,
-  orderLive = false,
+  openOrders = 0,
   onOrders,
   onProfile,
   onCart,
   onWhatsapp,
 }: BottomBarProps) {
   const itemWord = count === 1 ? 'item' : 'itens'
+  const orderLive = openOrders > 0
+  const orderNote = openOrders === 1 ? 'pedido em andamento' : `${openOrders} pedidos em andamento`
   const items = [
     {
       key: 'orders',
-      label: 'Meus pedidos',
+      label: orderLive ? `Histórico, ${orderNote}` : 'Meus pedidos',
       icon: <PageIcon />,
       onClick: onOrders,
       live: orderLive,
@@ -173,6 +175,9 @@ export function BottomBar({
           </Fragment>
         ))}
       </div>
+      <span className="sr-only" role="status">
+        {orderLive ? `Você tem ${orderNote}` : ''}
+      </span>
     </nav>
   )
 }

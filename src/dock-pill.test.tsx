@@ -26,7 +26,7 @@ function renderMenu() {
 const dockEl = () => screen.getByRole('navigation', { name: 'Atalhos' })
 const pill = () => dockEl().querySelector('.dock__pill') as HTMLElement
 
-const names = ['Meus pedidos', 'WhatsApp', /^Carrinho,/, 'Conta']
+const names = [/^(Meus pedidos|Histórico)/, 'WhatsApp', /^Carrinho,/, 'Conta']
 
 it('keeps one hidden decorative pill inside the bar while nothing is selected', () => {
   renderMenu()
@@ -55,7 +55,7 @@ it('moves the pill and aria-current to each of the four items', async () => {
 it('slides between items without hiding the pill in between', async () => {
   const user = userEvent.setup()
   renderMenu()
-  await user.click(screen.getByRole('button', { name: 'Meus pedidos' }))
+  await user.click(screen.getByRole('button', { name: /^(Meus pedidos|Histórico)/ }))
   expect(pill()).toHaveClass('is-entering')
   await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
   expect(pill()).not.toHaveClass('is-entering')
@@ -75,7 +75,7 @@ it('fades out when the sheet closes and slides in from there on the next selecti
   await user.click(screen.getByRole('button', { name: 'Fechar' }))
   expect(pill()).not.toHaveClass('is-visible')
   expect(pill().style.getPropertyValue('--dock-index')).toBe('3')
-  await user.click(screen.getByRole('button', { name: 'Meus pedidos' }))
+  await user.click(screen.getByRole('button', { name: /^(Meus pedidos|Histórico)/ }))
   expect(pill()).toHaveClass('is-visible')
   expect(pill()).not.toHaveClass('is-entering')
   expect(pill().style.getPropertyValue('--dock-index')).toBe('0')

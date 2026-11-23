@@ -83,7 +83,7 @@ describe('customer orders listener', () => {
     act(() => {
       emit('orders', [makeOrder({ status: 'andamento' })])
     })
-    expect(screen.getByRole('button', { name: 'Meus pedidos' })).toHaveClass('dock__item--live')
+    expect(screen.getByRole('button', { name: /^Histórico/ })).toHaveClass('dock__item--live')
   })
 })
 

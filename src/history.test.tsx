@@ -5,6 +5,7 @@ import { activeListeners, emit, firebaseMocks } from './test/mocks'
 import { adminProfile, customerProfile, makeOrder, renderApp, signInAs } from './test/render'
 import './index.css'
 import './menu.css'
+import menuCss from './menu.css?raw'
 
 const GOLD = 'rgb(227, 177, 90)'
 
@@ -22,7 +23,7 @@ async function openHistory(orders = [
     emit('orders', orders)
   })
   expect(screen.queryByRole('button', { name: 'Abrir menu' })).not.toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: 'Meus pedidos' }))
+  await user.click(screen.getByRole('button', { name: /^(Meus pedidos|Histórico)/ }))
   return user
 }
 
@@ -31,35 +32,105 @@ function card(id: string): HTMLElement {
 }
 
 describe('orders icon on the dock', () => {
-  it('blinks gold while an order is accepted or out for delivery and stops once finished', async () => {
+  const BLUE = 'rgb(77, 163, 255)'
+
+  async function setup() {
     signInAs(customerProfile)
     renderApp()
     await waitFor(() => expect(activeListeners('orders')).toHaveLength(1))
-    const button = () => screen.getByRole('button', { name: 'Meus pedidos' })
+    return () => screen.getByRole('button', { name: /^(Meus pedidos|Histórico)/ })
+  }
+  const iconOf = (button: HTMLElement) => getComputedStyle(button.querySelector('svg') as SVGElement)
+
+  it('pulses blue while any order is not finished and stops once all are', async () => {
+    const button = await setup()
+    expect(button()).toHaveAccessibleName('Meus pedidos')
 
     await act(async () => {
       emit('orders', [makeOrder({ id: 'pedido-00001', status: 'novo' })])
     })
-    expect(button()).not.toHaveClass('dock__item--live')
-
-    await act(async () => {
-      emit('orders', [makeOrder({ id: 'pedido-00001', status: 'andamento' })])
-    })
     expect(button()).toHaveClass('dock__item--live')
-    const icon = getComputedStyle(button().querySelector('svg') as SVGElement)
-    expect(icon.color).toBe(GOLD)
-    expect(icon.animationName).toBe('order-live')
+    expect(button()).toHaveAccessibleName('Histórico, pedido em andamento')
+    expect(iconOf(button()).color).toBe(BLUE)
+    expect(iconOf(button()).animationName).toBe('order-open')
+    expect(screen.getByRole('status')).toHaveTextContent('Você tem pedido em andamento')
 
-    await act(async () => {
-      emit('orders', [makeOrder({ id: 'pedido-00001', status: 'enviado' })])
-    })
-    expect(button()).toHaveClass('dock__item--live')
+    for (const status of ['andamento', 'enviado'] as const) {
+      await act(async () => {
+        emit('orders', [makeOrder({ id: 'pedido-00001', status })])
+      })
+      expect(button()).toHaveClass('dock__item--live')
+    }
 
     await act(async () => {
       emit('orders', [makeOrder({ id: 'pedido-00001', status: 'finalizado' })])
     })
     expect(button()).not.toHaveClass('dock__item--live')
-    expect(getComputedStyle(button().querySelector('svg') as SVGElement).animationName).not.toBe('order-live')
+    expect(button()).toHaveAccessibleName('Meus pedidos')
+    expect(iconOf(button()).animationName).not.toBe('order-open')
+    expect(screen.getByRole('status')).toBeEmptyDOMElement()
+  })
+
+  it('keeps pulsing while one of several orders is still open and ignores refused or cancelled ones', async () => {
+    const button = await setup()
+    await act(async () => {
+      emit('orders', [
+        makeOrder({ id: 'pedido-00001', status: 'recusado', reason: 'Fora da área' }),
+        makeOrder({ id: 'pedido-00002', status: 'cancelado' }),
+        makeOrder({ id: 'pedido-00003', status: 'finalizado' }),
+      ])
+    })
+    expect(button()).not.toHaveClass('dock__item--live')
+
+    await act(async () => {
+      emit('orders', [
+        makeOrder({ id: 'pedido-00001', status: 'novo' }),
+        makeOrder({ id: 'pedido-00002', status: 'andamento' }),
+        makeOrder({ id: 'pedido-00003', status: 'finalizado' }),
+      ])
+    })
+    expect(button()).toHaveAccessibleName('Histórico, 2 pedidos em andamento')
+
+    await act(async () => {
+      emit('orders', [
+        makeOrder({ id: 'pedido-00001', status: 'finalizado' }),
+        makeOrder({ id: 'pedido-00002', status: 'andamento' }),
+      ])
+    })
+    expect(button()).toHaveClass('dock__item--live')
+    await act(async () => {
+      emit('orders', [
+        makeOrder({ id: 'pedido-00001', status: 'finalizado' }),
+        makeOrder({ id: 'pedido-00002', status: 'finalizado' }),
+      ])
+    })
+    expect(button()).not.toHaveClass('dock__item--live')
+  })
+
+  it('keeps the blue icon on the active item and in reduced motion', async () => {
+    const button = await setup()
+    await act(async () => {
+      emit('orders', [makeOrder({ id: 'pedido-00001', status: 'novo' })])
+    })
+    await userEvent.setup().click(button())
+    expect(button()).toHaveAttribute('aria-current', 'true')
+    expect(button()).toHaveClass('is-active', 'dock__item--live')
+    expect(iconOf(button()).color).toBe(BLUE)
+  })
+
+  it('stays out of the way of the admin', async () => {
+    signInAs(adminProfile)
+    renderApp()
+    await screen.findByText('Gerente')
+    expect(activeListeners('orders').filter((l) => (l.ref.constraints as { field: string }[] | undefined)?.some((c) => c.field === 'customerId'))).toHaveLength(0)
+    expect(document.querySelector('.dock__item--live')).toBeNull()
+    expect(screen.queryByText(/Você tem/)).not.toBeInTheDocument()
+  })
+
+  it('has no animation under prefers-reduced-motion but stays blue', () => {
+    const css = menuCss.slice(menuCss.indexOf('.dock__item--live svg {'))
+    expect(css).toMatch(/\.dock__item--live svg \{\s*color: #4da3ff;/)
+    expect(css).toMatch(/prefers-reduced-motion: reduce\) \{\s*\.dock__item--live svg \{\s*animation: none;/)
   })
 })
 

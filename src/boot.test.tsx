@@ -59,7 +59,7 @@ describe('boot', () => {
     vi.useRealTimers()
 
     expect(screen.queryByRole('button', { name: 'Abrir menu' })).not.toBeInTheDocument()
-    screen.getByRole('button', { name: 'Meus pedidos' }).click()
+    screen.getByRole('button', { name: /^(Meus pedidos|Histórico)/ }).click()
     await act(async () => {})
 
     const dialog = screen.getByRole('dialog', { name: 'Meus pedidos' })

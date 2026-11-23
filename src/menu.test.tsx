@@ -637,7 +637,7 @@ it('hides the hamburger and shows history with short dividers on the customer ba
   expect(document.querySelector('.menu__burger')).toBeNull()
 
   const dock = screen.getByRole('navigation', { name: 'Atalhos' })
-  const history = screen.getByRole('button', { name: 'Meus pedidos' })
+  const history = screen.getByRole('button', { name: /^(Meus pedidos|Histórico)/ })
   expect(history.closest('nav')).toBe(dock)
   expect(history.querySelector('circle')).toBeNull()
   expect(history.querySelector('svg')).not.toBeNull()

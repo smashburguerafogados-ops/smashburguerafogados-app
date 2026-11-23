@@ -94,6 +94,11 @@ export function columnOf(status: OrderStatus): OrderColumn {
   return 'finalizados'
 }
 
+/** Still waiting on the kitchen or the courier: neither finished nor turned away. */
+export function isOpenOrder(status: OrderStatus): boolean {
+  return status === 'novo' || isAccepted(status)
+}
+
 export function isAccepted(status: OrderStatus): boolean {
   return status === 'andamento' || status === 'enviado'
 }

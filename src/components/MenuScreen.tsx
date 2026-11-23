@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { Catalog, Product } from '../data/catalog'
 import { useAuth } from '../context/AuthContext'
 import { useOrders } from '../context/OrdersContext'
-import { isAccepted } from '../lib/orders'
+import { isOpenOrder } from '../lib/orders'
 import { useLongPress } from '../lib/longPress'
 import {
   addCartLine,
@@ -185,7 +185,7 @@ export function MenuScreen() {
   const count = cartCount(lines)
   const total = cartTotal(lines)
   const isAdmin = session.status === 'ready' && session.profile.role === 'admin'
-  const orderLive = history.status === 'ready' && history.orders.some((order) => isAccepted(order.status))
+  const openOrders = history.orders.filter((order) => isOpenOrder(order.status)).length
 
   function chooseCategory(id: string) {
     const next = activeCategory === id ? '' : id
@@ -426,7 +426,7 @@ export function MenuScreen() {
         count={count}
         totalCents={total}
         away={dockAway || keyboardOpen}
-        orderLive={orderLive}
+        openOrders={openOrders}
         onOrders={() => toggle('orders')}
         onProfile={() => toggle('profile')}
         onCart={() => toggle('cart')}
