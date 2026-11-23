@@ -12,6 +12,8 @@ const REORDER_SETTLE_MS = 800
 type ReorderStripProps = {
   orders: Order[]
   products: Product[]
+  /** First name of the signed-in customer, for the title. Empty when unknown. */
+  firstName?: string
   onReorder: (entries: ReorderEntry[], label: string) => void
 }
 
@@ -26,14 +28,6 @@ function RefreshIcon() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-    </svg>
-  )
-}
-
-function ChevronIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M9 5.5 15.5 12 9 18.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -257,39 +251,72 @@ function useReorderAutoplay(scrollRef: RefObject<HTMLUListElement | null>, listK
   }, [scrollRef, listKey, count, panelOpen])
 }
 
-function useCurrentCard(scrollRef: RefObject<HTMLUListElement | null>, listKey: string, count: number): number {
+/** Which card is in front, and whether every card already fits on screen (then there is nothing to scroll). */
+function useCurrentCard(scrollRef: RefObject<HTMLUListElement | null>, listKey: string, count: number) {
   const [index, setIndex] = useState(0)
+  const [fits, setFits] = useState(false)
   useEffect(() => {
     const scroller = scrollRef.current
     if (!scroller || count < 2) return
-    const update = () => setIndex(nearestIndex(scroller))
+    const update = () => {
+      setIndex(nearestIndex(scroller))
+      setFits(scroller.scrollWidth > 0 && scroller.scrollWidth <= scroller.clientWidth + 1)
+    }
     update()
     scroller.addEventListener('scroll', update, { passive: true })
-    return () => scroller.removeEventListener('scroll', update)
+    window.addEventListener('resize', update)
+    let resize: ResizeObserver | undefined
+    if (typeof ResizeObserver === 'function') {
+      resize = new ResizeObserver(update)
+      resize.observe(scroller)
+      cardsOf(scroller).forEach((card) => resize!.observe(card))
+    }
+    return () => {
+      scroller.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+      resize?.disconnect()
+    }
   }, [scrollRef, listKey, count])
-  return Math.min(index, Math.max(0, count - 1))
+  return { current: Math.min(index, Math.max(0, count - 1)), fits }
 }
 
-export function ReorderStrip({ orders, products, onReorder }: ReorderStripProps) {
+/** "2× X milho, Coca +1": what the order had, for the one-order chip. */
+function itemsLabel(plan: ReorderPlan, max = 2): string {
+  const shown = plan.lines.filter((line) => line.status === 'ok')
+  const lines = shown.length > 0 ? shown : plan.lines
+  const names = lines.map((line) => (line.qty > 1 ? `${line.qty}× ${line.name}` : line.name))
+  return names.length > max ? `${names.slice(0, max).join(', ')} +${names.length - max}` : names.join(', ')
+}
+
+export function ReorderStrip({ orders, products, firstName = '', onReorder }: ReorderStripProps) {
   const [openId, setOpenId] = useState<string | null>(null)
   const scrollRef = useRef<HTMLUListElement>(null)
   const plans = recentOrders(orders).map((order) => planReorder(order, products))
   const listKey = plans.map((plan) => plan.orderId).join('|')
   const openPlanId = plans.some((plan) => plan.orderId === openId) ? openId : null
   useReorderAutoplay(scrollRef, listKey, plans.length, openPlanId !== null)
-  const current = useCurrentCard(scrollRef, listKey, plans.length)
+  const { current, fits } = useCurrentCard(scrollRef, listKey, plans.length)
   if (plans.length === 0) return null
   const openPlan = plans.find((plan) => plan.orderId === openId)
+  const name = firstName.trim()
+  const single = plans.length === 1
+
+  function addPlan(plan: ReorderPlan) {
+    onReorder(plan.entries, `${plan.available} ${plan.available === 1 ? 'item' : 'itens'} do pedido`)
+  }
 
   return (
     <section className="reorder" aria-label="Pedir de novo">
       <p className="reorder__label">
         <RefreshIcon />
-        <span>
-          Peça de <b>novo</b>
+        <span className="reorder__title">
+          {name && <span className="reorder__name">{name}</span>}
+          {name && ', '}
+          <b>Pedir de novo</b>
+          {name && '?'}
         </span>
       </p>
-      {plans.length > 1 && (
+      {plans.length > 1 && !fits && (
         <span className="reorder__dots" aria-hidden="true">
           {plans.map((plan, index) => (
             <i key={plan.orderId} className={index === current ? 'is-on' : undefined} />
@@ -301,13 +328,16 @@ export function ReorderStrip({ orders, products, onReorder }: ReorderStripProps)
           const none = plan.available === 0
           const partial = !none && plan.available < plan.wanted
           const when = formatOrderWhen(plan.createdAtMs)
+          const classes = ['reorder__card']
+          if (none) classes.push('is-off')
+          if (single) classes.push('is-single')
           return (
-            <li key={plan.orderId} className={none ? 'reorder__card is-off' : 'reorder__card'}>
+            <li key={plan.orderId} className={classes.join(' ')}>
               <button
                 type="button"
                 className="reorder__open"
                 aria-haspopup="dialog"
-                aria-label={`Ver itens do pedido${when ? ` de ${when}` : ''}`}
+                aria-label={`Ver itens do pedido${when ? ` de ${when}` : ''}, ${unitsLabel(plan.wanted)}`}
                 onClick={() => setOpenId(plan.orderId)}
               >
                 <span className="reorder__thumbs" aria-hidden="true">
@@ -316,15 +346,22 @@ export function ReorderStrip({ orders, products, onReorder }: ReorderStripProps)
                   ))}
                 </span>
                 <span className="reorder__info">
-                  <span className="reorder__meta">
-                    {partial || none
-                      ? `${plan.available} de ${plan.wanted} itens disponíveis`
-                      : `${unitsLabel(plan.wanted)}${when ? ` · ${when}` : ''}`}
-                  </span>
                   <strong className="reorder__total">{none ? 'Indisponível' : formatPrice(plan.totalCents)}</strong>
+                  <span className="reorder__meta">
+                    {partial || none ? `${plan.available} de ${plan.wanted} disponíveis` : when || unitsLabel(plan.wanted)}
+                  </span>
                 </span>
-                <span className="reorder__chevron" aria-hidden="true">
-                  <ChevronIcon />
+                {single && <span className="reorder__items">{itemsLabel(plan)}</span>}
+              </button>
+              <button
+                type="button"
+                className="reorder__again"
+                disabled={none}
+                aria-label={`Repetir pedido${when ? ` de ${when}` : ''}`}
+                onClick={() => (partial ? setOpenId(plan.orderId) : addPlan(plan))}
+              >
+                <span aria-hidden="true">
+                  <RefreshIcon />
                 </span>
               </button>
             </li>
@@ -336,7 +373,7 @@ export function ReorderStrip({ orders, products, onReorder }: ReorderStripProps)
           plan={openPlan}
           onClose={() => setOpenId(null)}
           onAdd={() => {
-            onReorder(openPlan.entries, `${openPlan.available} ${openPlan.available === 1 ? 'item' : 'itens'} do pedido`)
+            addPlan(openPlan)
             setOpenId(null)
           }}
         />

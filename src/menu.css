@@ -3243,7 +3243,8 @@ html .chips .chip.chip--destaque {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 0 2px 6px;
+  max-width: calc(100% - 44px);
+  margin: 0 2px 8px;
   font-family: var(--font-display);
   font-size: 0.95rem;
   letter-spacing: 0.1em;
@@ -3255,17 +3256,32 @@ html .chips .chip.chip--destaque {
 .reorder__label svg {
   width: 15px;
   height: 15px;
+  flex: none;
   color: var(--gold);
 }
 
+.reorder__title {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  white-space: pre;
+}
+
+.reorder__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .reorder__label b {
+  flex: none;
   color: var(--gold);
   font-weight: 400;
 }
 
 .reorder__scroll {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   margin: 0 calc(var(--menu-gutter) * -1);
   padding: 0 var(--menu-gutter) 2px;
   list-style: none;
@@ -3281,24 +3297,31 @@ html .chips .chip.chip--destaque {
 
 .reorder__card {
   flex: none;
-  width: min(312px, calc(100vw - 48px));
-  height: 64px;
+  max-width: calc(100vw - 2 * var(--menu-gutter));
+  height: 52px;
+  display: flex;
+  align-items: center;
   scroll-snap-align: start;
-  border: 1px solid rgba(227, 177, 90, 0.32);
-  border-top-color: rgba(227, 177, 90, 0.8);
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(227, 177, 90, 0.06), rgba(0, 0, 0, 0) 45%), #101012;
+  border: 1px solid rgba(227, 177, 90, 0.38);
+  border-radius: 999px;
+  background: #101012;
+}
+
+.reorder__card.is-single {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .reorder__open {
-  width: 100%;
   height: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 8px 0 10px;
+  gap: 9px;
+  padding: 0 0 0 7px;
   border: 0;
-  border-radius: 13px;
+  border-radius: 999px 0 0 999px;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -3307,7 +3330,8 @@ html .chips .chip.chip--destaque {
   -webkit-tap-highlight-color: transparent;
 }
 
-.reorder__open:focus-visible {
+.reorder__open:focus-visible,
+.reorder__again:focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: -3px;
 }
@@ -3318,8 +3342,8 @@ html .chips .chip.chip--destaque {
 }
 
 .reorder__thumbs img {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   margin-left: -14px;
   border: 2px solid #101012;
   border-radius: 50%;
@@ -3332,29 +3356,15 @@ html .chips .chip.chip--destaque {
 }
 
 .reorder__info {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.reorder__meta {
-  margin: 0 0 2px;
-  font-family: var(--font-price);
-  font-size: 0.66rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  line-height: 1.15;
-  text-transform: uppercase;
-  color: #9a9aa2;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  flex: none;
+  display: grid;
+  gap: 3px;
 }
 
 .reorder__total {
   display: block;
   font-family: var(--font-price);
-  font-size: 1.15rem;
+  font-size: 1.02rem;
   font-weight: 700;
   line-height: 1;
   color: var(--gold);
@@ -3362,27 +3372,70 @@ html .chips .chip.chip--destaque {
   font-variant-numeric: lining-nums tabular-nums;
 }
 
-.reorder__chevron {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  color: var(--gold);
+.reorder__meta {
+  font-family: var(--font-price);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: #9a9aa2;
+  white-space: nowrap;
 }
 
-.reorder__chevron svg {
-  width: 18px;
-  height: 18px;
+.reorder__items {
+  min-width: 0;
+  flex: 1 1 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #d9d9de;
+}
+
+.reorder__again {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  margin-right: 3px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gold);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.reorder__again > span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gold-soft);
+}
+
+.reorder__again svg {
+  width: 16px;
+  height: 16px;
+}
+
+.reorder__again:active:not(:disabled) > span {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.reorder__again:disabled {
+  color: #7d7d85;
 }
 
 .reorder__card.is-off .reorder__total {
   color: #7d7d85;
-  font-size: 0.95rem;
-}
-
-.reorder__card.is-off .reorder__chevron {
-  color: #7d7d85;
+  font-size: 0.9rem;
 }
 
 .reorder-sheet {
@@ -3542,6 +3595,10 @@ html .chips .chip.chip--destaque {
 
 @media (max-width: 340px) {
   .reorder__thumbs img:nth-child(3) {
+    display: none;
+  }
+
+  .reorder__items {
     display: none;
   }
 }

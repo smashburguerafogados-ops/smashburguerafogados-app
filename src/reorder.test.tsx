@@ -122,8 +122,9 @@ describe('Pedir de novo on the cardápio', () => {
     expect(region.compareDocumentPosition(document.querySelector('.items') as HTMLElement) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     const cards = within(region).getAllByRole('listitem')
     expect(cards).toHaveLength(2)
-    expect(cards[0]).toHaveTextContent('4 itens')
+    expect(within(cards[0]).getByRole('button', { name: /4 itens/ })).toBeInTheDocument()
     expect(cards[0]).toHaveTextContent('R$ 80,00')
+    expect(cards[0]).not.toHaveTextContent('Smash da casa')
 
     expect(within(cards[0]).queryByText('Pedir de novo')).not.toBeInTheDocument()
     await user.click(within(cards[0]).getByRole('button', { name: /Ver itens/ }))
@@ -153,8 +154,9 @@ describe('Pedir de novo on the cardápio', () => {
       order({ id: 'b', status: 'finalizado', createdAtMs: 2, items: [item('apagado', 'Saiu do cardápio')] }),
     ])
     const cards = within(screen.getByRole('region', { name: 'Pedir de novo' })).getAllByRole('listitem')
-    expect(cards[0]).toHaveTextContent('1 de 3 itens disponíveis')
-    expect(cards[1]).toHaveTextContent('0 de 1 itens disponíveis')
+    expect(cards[0]).toHaveTextContent('1 de 3 disponíveis')
+    expect(cards[1]).toHaveTextContent('0 de 1 disponíveis')
+    expect(within(cards[1]).getByRole('button', { name: /Repetir pedido/ })).toBeDisabled()
 
     await userEvent.click(within(cards[0]).getByRole('button', { name: /Ver itens/ }))
     const first = screen.getByRole('dialog', { name: /Compra/ })
@@ -299,5 +301,61 @@ describe('Pedir de novo on the cardápio', () => {
     const css = (import.meta.glob('./menu.css', { query: '?raw', import: 'default', eager: true }) as Record<string, string>)['./menu.css']
     expect(css).toMatch(/\.reorder__scroll \{[^}]*overflow-x: auto/)
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.reorder__scroll \{\s*scroll-behavior: auto/)
+  })
+
+  it('greets by first name and falls back to a plain title when the name is missing', async () => {
+    const orders = [order({ id: 'p1', status: 'finalizado', createdAtMs: 3, items: [item('smash-casa', 'Smash da casa')] })]
+    const view = await openMenu(orders)
+    const region = screen.getByRole('region', { name: 'Pedir de novo' })
+    expect(region).toHaveTextContent('Ana, Pedir de novo?')
+    view.unmount()
+
+    signInAs({ ...customerProfile, nome: '   ' })
+    renderApp()
+    await waitFor(() => expect(activeListeners('orders')).toHaveLength(1))
+    await act(async () => {
+      emit('orders', orders as unknown as never[])
+    })
+    const bare = screen.getByRole('region', { name: 'Pedir de novo' })
+    const title = bare.querySelector('.reorder__label') as HTMLElement
+    expect(title).toHaveTextContent(/^Pedir de novo$/)
+  })
+
+  it('shows the item names only when there is a single purchase', async () => {
+    await openMenu([
+      order({ id: 'p1', status: 'finalizado', createdAtMs: 3, items: [item('smash-casa', 'Smash da casa', 2), item('batata', 'Batata'), item('lata', 'Lata')] }),
+    ])
+    const card = within(screen.getByRole('region', { name: 'Pedir de novo' })).getByRole('listitem')
+    expect(card).toHaveTextContent('2× Smash da casa, Batata rústica +1')
+  })
+
+  it('repeats a whole purchase straight from the chip, without opening the panel', async () => {
+    const user = userEvent.setup()
+    await openMenu([
+      order({ id: 'p1', status: 'finalizado', createdAtMs: 3, items: [item('smash-casa', 'Smash da casa', 2), item('lata', 'Lata')] }),
+      order({ id: 'p2', status: 'finalizado', createdAtMs: 2, items: [item('batata', 'Batata')] }),
+    ])
+    const cards = within(screen.getByRole('region', { name: 'Pedir de novo' })).getAllByRole('listitem')
+    await user.click(within(cards[0]).getByRole('button', { name: /Repetir pedido/ }))
+    expect(screen.queryByRole('dialog', { name: /Compra/ })).not.toBeInTheDocument()
+    expect(screen.getByText('3 itens do pedido')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Abrir carrinho, 3 itens' })).toBeInTheDocument()
+  })
+
+  it('opens the panel instead when part of the purchase is no longer available', async () => {
+    const user = userEvent.setup()
+    await openMenu([
+      order({ id: 'p1', status: 'finalizado', createdAtMs: 3, items: [item('smash-casa', 'Smash da casa'), item('apagado', 'Saiu do cardápio')] }),
+    ])
+    await user.click(within(screen.getByRole('region', { name: 'Pedir de novo' })).getByRole('button', { name: /Repetir pedido/ }))
+    const sheet = screen.getByRole('dialog', { name: /Compra/ })
+    expect(sheet).toHaveTextContent('1 de 2 itens disponíveis')
+    expect(screen.getByRole('button', { name: 'Abrir carrinho, 0 itens' })).toBeInTheDocument()
+  })
+
+  it('keeps the chip a slim 52px pill with a 44px repeat button', () => {
+    const css = (import.meta.glob('./menu.css', { query: '?raw', import: 'default', eager: true }) as Record<string, string>)['./menu.css']
+    expect(css).toMatch(/\.reorder__card \{[^}]*height: 52px[^}]*border-radius: 999px/)
+    expect(css).toMatch(/\.reorder__again \{[^}]*width: 44px;[^}]*height: 44px/)
   })
 })

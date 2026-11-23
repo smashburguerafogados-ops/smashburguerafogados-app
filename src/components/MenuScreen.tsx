@@ -374,7 +374,7 @@ export function MenuScreen() {
       </div>
 
       {history.status === 'ready' && !activeCategory && !search.trim() && (
-        <ReorderStrip orders={history.orders} products={catalog.products} onReorder={reorder} />
+        <ReorderStrip orders={history.orders} products={catalog.products} firstName={firstName} onReorder={reorder} />
       )}
 
       {visible.length === 0 ? (
