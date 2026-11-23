@@ -240,3 +240,30 @@ describe('compressão da foto', () => {
     expect(old.toDataURL).toHaveBeenLastCalledWith('image/jpeg', 0.7)
   })
 })
+
+describe('cardápio lido durante a abertura', () => {
+  it('hands the prefetched menu to the screen and counts the timeout from the screen', async () => {
+    vi.useFakeTimers()
+    try {
+      const { CATALOG_TIMEOUT_MS, prefetchRemoteCatalog, watchRemoteCatalog } = await import('./lib/remoteCatalog')
+      const release = prefetchRemoteCatalog()
+      vi.advanceTimersByTime(CATALOG_TIMEOUT_MS - 1000)
+      const onNext = vi.fn()
+      const onError = vi.fn()
+      const stop = watchRemoteCatalog(onNext, onError)
+      release()
+      expect(activeListeners('products')).toHaveLength(1)
+      vi.advanceTimersByTime(CATALOG_TIMEOUT_MS - 1000)
+      expect(onError).not.toHaveBeenCalled()
+      vi.advanceTimersByTime(2000)
+      expect(onError).toHaveBeenCalledTimes(1)
+      emit('categories', categories)
+      emit('products', [legacy])
+      expect(onNext).toHaveBeenCalledTimes(1)
+      stop()
+      expect(activeListeners('products')).toHaveLength(0)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})

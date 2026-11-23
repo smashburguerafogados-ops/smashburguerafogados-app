@@ -110,13 +110,8 @@ function openShared(): Shared {
     for (const watcher of [...state.watchers, ...state.warm]) watcher.onError()
   }
 
-  const timer = setTimeout(() => {
-    if (!state.latest) fail()
-  }, CATALOG_TIMEOUT_MS)
-
   function publish() {
     if (stopped || !categories || !products) return
-    clearTimeout(timer)
     state.latest = { categories: sortCategories(categories), products }
     state.failed = false
     markSettled()
@@ -149,7 +144,6 @@ function openShared(): Shared {
 
   state.stop = () => {
     stopped = true
-    clearTimeout(timer)
     stopCategories()
     stopProducts()
   }
@@ -182,17 +176,32 @@ export function prefetchRemoteCatalog(): Unsubscribe {
  * until both listeners have answered from the server, so neither the built-in
  * sample nor an empty offline cache flashes "Nenhum item encontrado".
  * Later snapshots (create, edit, delete) replace what is on screen.
- * If nothing arrives in CATALOG_TIMEOUT_MS, onError fires once; the listeners
- * keep running and a late answer still publishes.
+ * If nothing arrives in CATALOG_TIMEOUT_MS after this call, onError fires
+ * once; the listeners keep running and a late answer still publishes. The
+ * listeners may already be open (prefetchRemoteCatalog), and the first
+ * callback is then immediate.
  */
 export function watchRemoteCatalog(onNext: (catalog: Catalog) => void, onError: () => void): Unsubscribe {
   const state = shared ?? (shared = openShared())
-  const watcher: Watcher = { onNext, onError }
+  let timedOut = false
+  const timer = setTimeout(() => {
+    if (state.latest || timedOut) return
+    timedOut = true
+    onError()
+  }, CATALOG_TIMEOUT_MS)
+  const watcher: Watcher = {
+    onNext: (catalog) => {
+      clearTimeout(timer)
+      onNext(catalog)
+    },
+    onError,
+  }
   state.watchers.add(watcher)
   state.warm.clear()
-  if (state.latest) onNext(state.latest)
+  if (state.latest) watcher.onNext(state.latest)
   else if (state.failed) onError()
   return () => {
+    clearTimeout(timer)
     state.watchers.delete(watcher)
     release(state)
   }

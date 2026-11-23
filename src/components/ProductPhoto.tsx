@@ -30,7 +30,12 @@ export function ProductPhoto({ src, className, alt = '', eager = false }: Produc
   }
 
   useEffect(() => {
-    if (!ref || peekPhoto(src)) return
+    if (!ref) return
+    const ready = peekPhoto(src)
+    if (ready) {
+      setShown(ready)
+      return
+    }
     let cancelled = false
     let observer: IntersectionObserver | null = null
 
