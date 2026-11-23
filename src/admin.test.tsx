@@ -92,11 +92,45 @@ describe('admin board', () => {
     expect(document.querySelector('.menu__burger')).toBe(burger)
   })
 
-  it('reads the whole orders collection for the admin', async () => {
+  it('listens only to the last 30 days of orders, and does not listen to customers until the contact list opens', async () => {
+    const before = Date.now()
     await openBoard()
     const [listener] = activeListeners('orders')
     expect(listener.ref.path).toBe('orders')
-    expect(listener.ref.constraints ?? []).toEqual([])
+    const [constraint] = (listener.ref.constraints ?? []) as { field: string; op: string; value: number }[]
+    expect(constraint).toMatchObject({ field: 'createdAtMs', op: '>=' })
+    expect(constraint.value).toBeGreaterThanOrEqual(before - 30 * 24 * 60 * 60 * 1000)
+    expect(constraint.value).toBeLessThanOrEqual(Date.now() - 30 * 24 * 60 * 60 * 1000 + 1000)
+    expect(activeListeners('users')).toHaveLength(0)
+  })
+
+  it('shows 20 finished orders at a time and loads older orders only on request', async () => {
+    signInAs(adminProfile)
+    const user = userEvent.setup()
+    renderApp('/admin')
+    await screen.findByRole('heading', { name: 'Painel' })
+    await waitFor(() => expect(activeListeners('orders')).toHaveLength(1))
+    const many = Array.from({ length: 45 }, (_, index) =>
+      makeOrder({ id: `pedido-f${String(index).padStart(4, '0')}`, status: 'finalizado', customerName: `Cliente ${index}` }),
+    )
+    await act(async () => {
+      emit('orders', many)
+    })
+    await user.click(screen.getByRole('tab', { name: /Finalizados/ }))
+    expect(document.querySelectorAll('.board__list li')).toHaveLength(20)
+    await user.click(screen.getByRole('button', { name: /Mostrar mais \(25\)/ }))
+    expect(document.querySelectorAll('.board__list li')).toHaveLength(40)
+    await user.click(screen.getByRole('button', { name: /Mostrar mais \(5\)/ }))
+    expect(document.querySelectorAll('.board__list li')).toHaveLength(45)
+    expect(screen.queryByRole('button', { name: /Mostrar mais/ })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Ver pedidos com mais de 30 dias' }))
+    await waitFor(() => {
+      const live = activeListeners('orders')
+      expect(live).toHaveLength(1)
+      expect(live[0].ref.constraints ?? []).toEqual([])
+    })
+    expect(screen.queryByRole('button', { name: 'Ver pedidos com mais de 30 dias' })).not.toBeInTheDocument()
   })
 
   it('is a plain black screen without the logo, griddle, or cardápio header', async () => {

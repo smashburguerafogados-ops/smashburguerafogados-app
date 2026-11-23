@@ -267,9 +267,21 @@ export function watchCustomerOrders(
   )
 }
 
-export function watchAllOrders(onNext: (orders: Order[]) => void, onError: () => void): () => void {
+/** The admin lists the last 30 days. Older orders load only when asked for. */
+export const ORDERS_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
+
+export function ordersSince(now: number, windowMs = ORDERS_WINDOW_MS): number {
+  return Math.max(0, now - windowMs)
+}
+
+export function watchAllOrders(
+  onNext: (orders: Order[]) => void,
+  onError: () => void,
+  sinceMs: number | null = ordersSince(Date.now()),
+): () => void {
+  const orders = collection(db, 'orders')
   return onSnapshot(
-    collection(db, 'orders'),
+    sinceMs === null ? orders : query(orders, where('createdAtMs', '>=', sinceMs)),
     (snapshot) => onNext(toOrders(snapshot)),
     () => onError(),
   )

@@ -119,7 +119,7 @@ export function AdminRoute() {
   }
   const adminReady = session.status === 'ready' && session.profile.role === 'admin'
   const revenue = useRevenue(adminReady)
-  const contacts = useCustomers(adminReady)
+  const contacts = useCustomers(adminReady && (screenName === 'contact' || screenName === 'broadcast'))
   const theme = useTheme()
   useTitle('Painel | Smash Burger')
 

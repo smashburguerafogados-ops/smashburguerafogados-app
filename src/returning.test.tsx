@@ -83,8 +83,9 @@ describe('returning customer in a new browser session', () => {
 
     await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
 
-    const dialog = screen.getByRole('dialog', { name: 'Dados para entrega' })
-    await within(dialog).findByRole('textbox', { name: 'CEP' })
+    // The form is replaced when the lookup answers: query the page, never the old dialog node.
+    await screen.findByRole('textbox', { name: 'CEP' })
+    const dialog = await screen.findByRole('dialog', { name: 'Dados para entrega' })
     expect(dialog.querySelector('.account__name')).toHaveTextContent('Jameson')
     expect(within(dialog).getByRole('textbox', { name: 'Telefone' })).toHaveValue('(87) 98888-7777')
     expect(within(dialog).getByRole('textbox', { name: 'CEP' })).toHaveValue('56300-000')

@@ -5,6 +5,7 @@ import './index.css'
 import './menu.css'
 import './griddle.css'
 import './typography.css'
+import './print.css'
 
 const root = document.getElementById('root')
 if (!root) {
