@@ -22,13 +22,13 @@ function renderSplash(onDone = vi.fn(), ready = true) {
 
 it('plays the shipped fire loop once the menu answers and does not draw the old grill', () => {
   const onDone = vi.fn()
+  prefetchRemoteCatalog()
   const { container } = renderSplash(onDone)
 
   expect(screen.getByText('Preparando a chapa')).toBeInTheDocument()
   expect(container.querySelector('video')).toBeNull()
   expect(container.querySelector('img.fire__video')).toHaveAttribute('src', expect.stringContaining('fire-poster.jpg'))
   act(() => {
-    prefetchRemoteCatalog()
     emitSeedCatalog()
   })
   const video = container.querySelector('video')
@@ -41,6 +41,12 @@ it('plays the shipped fire loop once the menu answers and does not draw the old 
   expect(container.querySelector('.grill__grate')).toBeNull()
   expect(container.querySelector('.grill__flame')).toBeNull()
   expect(screen.getByRole('img', { name: 'Smash Burger' })).toBeInTheDocument()
+})
+
+it('plays the loop once the page has loaded when no menu is downloading', () => {
+  expect(document.readyState).toBe('complete')
+  const { container } = renderSplash()
+  expect(container.querySelector('video')).toHaveAttribute('src', expect.stringContaining('fire.mp4'))
 })
 
 it('keeps the still poster with data saver on, even after the menu answers', () => {
@@ -58,7 +64,12 @@ it('keeps the still poster with data saver on, even after the menu answers', () 
   }
 })
 
-it('starts reading the menu during the opening screen', () => {
+it('starts reading the menu during the opening screen only after a menu without inline photos', () => {
+  const first = render(<App />)
+  expect(activeListeners('products')).toHaveLength(0)
+  first.unmount()
+
+  localStorage.setItem('smash.cardapio.leve', '1')
   render(<App />)
   expect(activeListeners('categories')).toHaveLength(1)
   expect(activeListeners('products')).toHaveLength(1)

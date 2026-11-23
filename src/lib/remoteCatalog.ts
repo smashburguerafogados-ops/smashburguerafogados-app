@@ -84,6 +84,11 @@ export function catalogSettled(): boolean {
   return settled
 }
 
+/** True while the menu listeners are open and have not answered yet. */
+export function catalogLoading(): boolean {
+  return shared !== null && shared.latest === null && !shared.failed
+}
+
 export function onCatalogSettled(listener: () => void): () => void {
   settledListeners.add(listener)
   return () => settledListeners.delete(listener)
@@ -113,6 +118,7 @@ function openShared(): Shared {
   function publish() {
     if (stopped || !categories || !products) return
     state.latest = { categories: sortCategories(categories), products }
+    rememberWeight(products)
     state.failed = false
     markSettled()
     for (const watcher of [...state.watchers, ...state.warm]) watcher.onNext(state.latest)
@@ -154,6 +160,32 @@ function release(state: Shared) {
   if (state.watchers.size > 0 || state.warm.size > 0) return
   state.stop()
   if (shared === state) shared = null
+}
+
+const LIGHT_KEY = 'smash.cardapio.leve'
+
+/**
+ * A menu with photos inside the products answers in one multi-megabyte
+ * message. If another listener opens while it is still arriving (the opening
+ * screen hands over to the menu), Firestore's WebChannel restarts the stream
+ * and sends it all again. So the early read is only for devices whose last
+ * menu came without inline photos.
+ */
+export function lastCatalogWasLight(): boolean {
+  try {
+    return localStorage.getItem(LIGHT_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function rememberWeight(products: Product[]) {
+  try {
+    if (products.some((product) => product.image.startsWith('data:'))) localStorage.removeItem(LIGHT_KEY)
+    else localStorage.setItem(LIGHT_KEY, '1')
+  } catch {
+    // Storage can be blocked; the menu then opens without the early read.
+  }
 }
 
 /**

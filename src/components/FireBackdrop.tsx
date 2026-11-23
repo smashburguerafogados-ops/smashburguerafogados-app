@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { catalogSettled, onCatalogSettled } from '../lib/remoteCatalog'
+import { catalogLoading, catalogSettled, onCatalogSettled } from '../lib/remoteCatalog'
 
 export const FIRE_PLAYBACK_RATE = 0.25
 
@@ -19,23 +19,33 @@ export function prefersStillFire(): boolean {
   return connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g' || connection.effectiveType === '3g'
 }
 
+function mayPlay(): boolean {
+  if (catalogSettled()) return true
+  return document.readyState === 'complete' && !catalogLoading()
+}
+
 /**
- * The fire loop is decoration. It starts only after the menu has answered
- * (or given up), so on a slow connection the products come first; until then
- * the poster, a frame of the same loop, stands in.
+ * The fire loop is decoration. It starts after the page has loaded, and never
+ * while the menu is still downloading, so on a slow connection the products
+ * come first; until then the poster, a frame of the same loop, stands in.
  */
 export function FireBackdrop() {
   const base = import.meta.env.BASE_URL
   const [still] = useState(prefersStillFire)
-  const [play, setPlay] = useState(catalogSettled)
+  const [play, setPlay] = useState(mayPlay)
 
   useEffect(() => {
     if (still || play) return
-    if (catalogSettled()) {
-      setPlay(true)
-      return
+    function check() {
+      if (mayPlay()) setPlay(true)
     }
-    return onCatalogSettled(() => setPlay(true))
+    check()
+    window.addEventListener('load', check)
+    const stop = onCatalogSettled(check)
+    return () => {
+      window.removeEventListener('load', check)
+      stop()
+    }
   }, [still, play])
 
   return (

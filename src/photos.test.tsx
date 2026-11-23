@@ -258,8 +258,11 @@ describe('cardápio lido durante a abertura', () => {
       vi.advanceTimersByTime(2000)
       expect(onError).toHaveBeenCalledTimes(1)
       emit('categories', categories)
-      emit('products', [legacy])
+      emit('products', [moved])
       expect(onNext).toHaveBeenCalledTimes(1)
+      expect(localStorage.getItem('smash.cardapio.leve')).toBe('1')
+      emit('products', [moved, legacy])
+      expect(localStorage.getItem('smash.cardapio.leve')).toBeNull()
       stop()
       expect(activeListeners('products')).toHaveLength(0)
     } finally {

@@ -8,7 +8,7 @@ import { RaffleProvider } from './components/RaffleProvider'
 import { UpdateNotice } from './components/UpdateNotice'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { OrdersProvider, useBootReady } from './context/OrdersContext'
-import { prefetchRemoteCatalog } from './lib/remoteCatalog'
+import { lastCatalogWasLight, prefetchRemoteCatalog } from './lib/remoteCatalog'
 
 const AdminRoute = lazy(() => import('./components/AdminRoute').then((module) => ({ default: module.AdminRoute })))
 
@@ -42,7 +42,7 @@ function Boot() {
   const finishBoot = useCallback(() => setBooting(false), [])
 
   useEffect(() => {
-    if (/\/admin\/?$/.test(window.location.pathname)) return
+    if (/\/admin\/?$/.test(window.location.pathname) || !lastCatalogWasLight()) return
     return prefetchRemoteCatalog()
   }, [])
 
