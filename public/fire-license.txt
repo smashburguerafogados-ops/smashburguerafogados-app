@@ -10,6 +10,6 @@ worldwide, and, where that is not legally possible, granted anyone the right to
 use the work for any purpose without conditions, unless such conditions are
 required by law.
 
-This copy is a 4.5 second silent excerpt (audio removed), scaled to 640×854,
-encoded as H.264. fire.mp4 is 958,356 bytes. fire-poster.jpg is one frame from
+This copy is a 4.5 second silent excerpt (audio removed), scaled to 480×640,
+encoded as H.264. fire.mp4 is 311,873 bytes. fire-poster.jpg is one frame from
 that excerpt, 23,387 bytes. It is not a hotlink. No branding was added.
