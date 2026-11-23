@@ -626,7 +626,8 @@ it('uses a flush bottom bar with small labels and marks the active shortcut in g
   const active = dock.querySelector('.dock__item.is-active') as HTMLElement
   expect(active).toHaveAttribute('aria-label', 'Conta')
   expect(getComputedStyle(active).color).toBe('rgb(227, 177, 90)')
-  expect(getComputedStyle(active).backgroundColor).toBe('rgba(227, 177, 90, 0.14)')
+  expect(active).toHaveAttribute('aria-current', 'true')
+  expect(getComputedStyle(dock.querySelector('.dock__pill') as HTMLElement).backgroundColor).toBe('rgba(227, 177, 90, 0.14)')
   expect(getComputedStyle(active.querySelector('.dock__label') as HTMLElement).color).toBe('rgb(227, 177, 90)')
 })
 

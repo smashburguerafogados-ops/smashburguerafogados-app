@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, useEffect, useRef, type CSSProperties } from 'react'
 import { formatPrice } from '../lib/money'
 
 type BottomBarProps = {
@@ -126,30 +126,53 @@ export function BottomBar({
     },
   ]
 
+  const activeIndex = items.findIndex((item) => item.key === sheet)
+  const hasActive = activeIndex >= 0
+  const lastIndex = useRef(0)
+  const everActive = useRef(false)
+  const entering = hasActive && !everActive.current
+  if (hasActive) lastIndex.current = activeIndex
+
+  useEffect(() => {
+    if (hasActive) everActive.current = true
+  }, [hasActive])
+
+  const pillClass = ['dock__pill', hasActive ? 'is-visible' : '', entering ? 'is-entering' : '']
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <nav className={away ? 'dock is-away' : 'dock'} aria-label="Atalhos">
-      {items.map((item, index) => (
-        <Fragment key={item.key}>
-          {index > 0 && <Rule />}
-          <button
-            type="button"
-            className={[
-              'dock__item',
-              'wide' in item && item.wide ? 'dock__item--cart' : '',
-              'live' in item && item.live ? 'dock__item--live' : '',
-              sheet === item.key ? 'is-active' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            aria-pressed={sheet === item.key}
-            aria-label={item.label}
-            onClick={item.onClick}
-          >
-            {item.icon}
-            {item.text}
-          </button>
-        </Fragment>
-      ))}
+      <div className="dock__track">
+        <span
+          className={pillClass}
+          aria-hidden="true"
+          data-index={lastIndex.current}
+          style={{ '--dock-index': lastIndex.current } as CSSProperties}
+        />
+        {items.map((item, index) => (
+          <Fragment key={item.key}>
+            {index > 0 && <Rule />}
+            <button
+              type="button"
+              className={[
+                'dock__item',
+                'wide' in item && item.wide ? 'dock__item--cart' : '',
+                'live' in item && item.live ? 'dock__item--live' : '',
+                sheet === item.key ? 'is-active' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              aria-current={sheet === item.key ? 'true' : undefined}
+              aria-label={item.label}
+              onClick={item.onClick}
+            >
+              {item.icon}
+              {item.text}
+            </button>
+          </Fragment>
+        ))}
+      </div>
     </nav>
   )
 }

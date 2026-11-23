@@ -1619,8 +1619,60 @@
 }
 
 .dock__item.is-active {
-  background: var(--gold-soft);
   color: var(--gold);
+}
+
+.dock__item:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
+.dock__track {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dock__track > .dock__item,
+.dock__track > .dock__rule {
+  position: relative;
+  z-index: 1;
+}
+
+.dock__pill {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: calc((100% - 15px) / 4);
+  border-radius: 999px;
+  background: var(--gold-soft);
+  box-shadow: inset 0 0 0 1px rgba(227, 177, 90, 0.22);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(calc(var(--dock-index, 0) * (100% + 5px)));
+  transition:
+    transform 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.22s ease;
+}
+
+.dock__pill.is-visible {
+  opacity: 1;
+}
+
+.dock__pill.is-entering {
+  transition: opacity 0.22s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock__pill,
+  .dock__pill.is-entering {
+    transition: none;
+  }
 }
 
 .dock__icon {
