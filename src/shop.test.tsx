@@ -205,12 +205,13 @@ describe('shop hours', () => {
   it('shows the shop hours on the customer menu with a soft blink', async () => {
     renderApp()
     await waitFor(() => expect(activeListeners('settings/shop')).toHaveLength(1))
-    expect(screen.queryByText(/Horário:/)).not.toBeInTheDocument()
+    expect(document.querySelector('.menu__hours')).not.toBeInTheDocument()
     await act(async () => {
       emitDoc('settings/shop', { online: true, message: DEFAULT_CLOSED_MESSAGE, hours: 'Quarta a domingo, 18h às 23h' })
     })
     const hours = document.querySelector('.menu__hours')
-    expect(hours).toHaveTextContent('Horário: Quarta a domingo, 18h às 23h')
+    expect(hours).toHaveTextContent('Quarta a domingo, 18h às 23h')
+    expect(hours).not.toHaveTextContent('Horário')
     expect(getComputedStyle(hours!).animationName).toContain('hours-pulse')
     const dot = hours!.querySelector('.menu__live')
     expect(dot).toHaveAttribute('aria-hidden', 'true')
