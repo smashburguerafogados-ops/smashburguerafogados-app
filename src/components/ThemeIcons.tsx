@@ -17,10 +17,6 @@ import drum from '../assets/theme/drum.svg'
 import egg from '../assets/theme/egg.svg'
 import fire from '../assets/theme/fire.svg'
 import fireworks from '../assets/theme/fireworks.svg'
-import flagBlue from '../assets/theme/flag-blue.svg'
-import flagGreen from '../assets/theme/flag-green.svg'
-import flagOrange from '../assets/theme/flag-orange.svg'
-import flagRed from '../assets/theme/flag-red.svg'
 import flagYellow from '../assets/theme/flag-yellow.svg'
 import glasses from '../assets/theme/glasses.svg'
 import hatching from '../assets/theme/hatching.svg'
@@ -73,10 +69,6 @@ export const themeIcons = {
   egg,
   fire,
   fireworks,
-  flagBlue,
-  flagGreen,
-  flagOrange,
-  flagRed,
   flagYellow,
   glasses,
   hatching,
@@ -106,8 +98,6 @@ export const themeIcons = {
   umbrella,
   wrappedGift,
 }
-
-export const juneFlags = [flagRed, flagYellow, flagGreen, flagBlue, flagOrange, flagRed, flagYellow, flagGreen]
 
 export function ThemeIcon({ src }: { src: string }) {
   return <img src={src} alt="" draggable={false} />

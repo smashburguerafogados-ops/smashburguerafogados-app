@@ -2,7 +2,7 @@ import { useEffect, type CSSProperties, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { applyDocumentTheme, ThemeContext, useAppliedTheme, useTheme, type ThemeId } from '../lib/theme'
 import { RaffleMark } from './RaffleMark'
-import { juneFlags, themeIcons, ThemeIcon } from './ThemeIcons'
+import { themeIcons, ThemeIcon } from './ThemeIcons'
 
 type Piece = {
   x: string
@@ -287,13 +287,6 @@ export function ThemeDecor({ theme }: { theme: ThemeId }) {
       {theme === 'sao-joao' ? (
         <>
           <Falling pieces={JUNE_FALL} mark="data-theme-fall" />
-          <div className="theme-flags" data-theme-flags="">
-            {juneFlags.map((src, index) => (
-              <span key={index}>
-                <ThemeIcon src={src} />
-              </span>
-            ))}
-          </div>
           <Pins
             pins={[
               { icon: themeIcons.fire, kind: 'fire', slot: 'r1', attrs: { 'data-theme-fire': '' } },
