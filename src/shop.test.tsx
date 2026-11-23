@@ -212,6 +212,10 @@ describe('shop hours', () => {
     const hours = document.querySelector('.menu__hours')
     expect(hours).toHaveTextContent('Horário: Quarta a domingo, 18h às 23h')
     expect(getComputedStyle(hours!).animationName).toContain('hours-pulse')
+    const dot = hours!.querySelector('.menu__live')
+    expect(dot).toHaveAttribute('aria-hidden', 'true')
+    expect(dot).not.toHaveClass('is-offline')
+    expect(within(hours as HTMLElement).getByText(/Loja online/)).toHaveClass('sr-only')
   })
 
   it('keeps a customer on the opening screen when the shop is offline', async () => {
