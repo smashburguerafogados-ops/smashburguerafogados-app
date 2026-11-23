@@ -908,6 +908,7 @@
 .popup {
   position: fixed;
   inset: 0;
+  overscroll-behavior: contain;
   background: rgba(8, 8, 10, 0.62);
 }
 
@@ -1023,6 +1024,7 @@
   width: min(520px, 100%);
   max-height: min(88vh, 820px);
   overflow: auto;
+  overscroll-behavior: contain;
   background: #1c1d21;
   color: var(--text);
   padding: 14px 16px 24px;

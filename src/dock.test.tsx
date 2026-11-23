@@ -99,29 +99,23 @@ it('hides the bar when the cart sheet scrolls down', async () => {
   expect(screen.getByRole('navigation', { name: 'Atalhos' })).not.toHaveClass('is-away')
 })
 
-it('leaves room under the address, product, cart and account buttons', async () => {
+it('leaves room under the cart, but not under popups, which already sit above the bar', async () => {
   const user = userEvent.setup()
   renderMenu()
 
   await user.click(screen.getByRole('button', { name: 'Conta' }))
   const address = screen.getByRole('dialog', { name: 'Dados para entrega' })
-  const addressSpacer = address.querySelector('.dock-spacer') as HTMLElement
-  expect(parseFloat(getComputedStyle(addressSpacer).height)).toBe(108)
-  expect(getComputedStyle(addressSpacer).boxSizing).toBe('content-box')
-  const phone = within(address).getByRole('textbox', { name: 'Telefone' })
-  expect(phone.compareDocumentPosition(addressSpacer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(address.querySelector('.dock-spacer')).toBeNull()
   await user.click(within(address).getByRole('button', { name: 'Fechar' }))
 
   await user.click(screen.getByRole('button', { name: /Smash da casa/ }))
   const product = screen.getByRole('dialog', { name: 'Smash da casa' })
-  const add = within(product).getByRole('button', { name: 'Adicionar' })
-  const productSpacer = product.querySelector('.dock-spacer') as HTMLElement
-  expect(parseFloat(getComputedStyle(productSpacer).height)).toBe(108)
-  expect(add.compareDocumentPosition(productSpacer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(product.querySelector('.dock-spacer')).toBeNull()
   await user.click(within(product).getByRole('button', { name: 'Fechar' }))
 
   await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
   const cart = screen.getByRole('dialog', { name: 'Carrinho' })
-  expect(cart.querySelector('.dock-spacer')).toBeTruthy()
-  expect(parseFloat(getComputedStyle(cart.querySelector('.dock-spacer') as HTMLElement).height)).toBe(108)
+  const spacer = cart.querySelector('.dock-spacer') as HTMLElement
+  expect(parseFloat(getComputedStyle(spacer).height)).toBe(108)
+  expect(getComputedStyle(spacer).boxSizing).toBe('content-box')
 })

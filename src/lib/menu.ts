@@ -14,6 +14,8 @@ export type CartLine = {
   image: string
   priceCents: number
   note: string
+  /** The add-ons chosen, so a saved cart can be rebuilt from the catalog. */
+  extraIds?: string[]
   qty: number
 }
 
@@ -89,6 +91,7 @@ export function cartLineFor(product: Product, note: string, extraIds: string[]):
     image: product.image,
     priceCents: toCents(product.price) + extras.reduce((sum, extra) => sum + toCents(extra.price), 0),
     note: clean,
+    extraIds: extras.map((extra) => extra.id).sort(),
   }
 }
 
