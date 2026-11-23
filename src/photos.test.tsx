@@ -2,10 +2,7 @@ import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
-  hasInlinePhoto,
   movePhotosBack,
-  movePhotosOut,
-  photoRulesPublished,
   type ListedProduct,
 } from './lib/adminCatalog'
 import { publicImage } from './lib/orders'
@@ -142,42 +139,6 @@ describe('admin: fotos', () => {
     ...overrides,
   })
 
-  it('tells whether the new rules are published', async () => {
-    firebaseMocks.getDoc.mockRejectedValueOnce(denied())
-    expect(await photoRulesPublished()).toBe(false)
-    firebaseMocks.getDoc.mockResolvedValueOnce({ exists: () => false, data: () => undefined })
-    expect(await photoRulesPublished()).toBe(true)
-  })
-
-  it('moves inline photos with a backup, checks the copy, and can run again', async () => {
-    const store: Record<string, string> = {}
-    firebaseMocks.setDoc.mockImplementation(async (ref: unknown, data: unknown) => {
-      store[(ref as { path: string }).path] = (data as { image: string }).image
-    })
-    photoDocs(store)
-    const products = [listed({ id: 'a', name: 'A' }), listed({ id: 'b', name: 'B', image: photoRef('b', 5) }), listed({ id: 'c', name: 'C', image: 'https://x/c.jpg' })]
-    const steps: string[] = []
-    const result = await movePhotosOut(products, (done, total) => steps.push(`${done}/${total}`), () => 42)
-
-    expect(result).toEqual({ done: 1, failed: [] })
-    expect(steps).toEqual(['1/1'])
-    expect(store['productPhotoBackups/a']).toBe(INLINE)
-    expect(store['productPhotos/a']).toBe(INLINE)
-    expect(firebaseMocks.updateDoc).toHaveBeenCalledTimes(1)
-    expect(firebaseMocks.updateDoc).toHaveBeenCalledWith({ path: 'products/a' }, { photoVersion: 42, image: 'DELETE_FIELD' })
-    expect(hasInlinePhoto(products[2])).toBe(false)
-  })
-
-  it('leaves the product untouched when the copy does not match or the write is refused', async () => {
-    firebaseMocks.setDoc.mockImplementation(async (ref: unknown) => {
-      if ((ref as { path: string }).path === 'productPhotoBackups/b') throw denied()
-    })
-    photoDocs({ 'productPhotos/a': 'data:image/jpeg;base64,b3V0cmE' })
-    const result = await movePhotosOut([listed({ id: 'a', name: 'A' }), listed({ id: 'b', name: 'B' })])
-    expect(result).toEqual({ done: 0, failed: ['A', 'B'] })
-    expect(firebaseMocks.updateDoc).not.toHaveBeenCalled()
-  })
-
   it('undoes the move, using the backup when the photo document is gone', async () => {
     photoDocs({ 'productPhotos/a': SEPARATE, 'productPhotoBackups/b': INLINE })
     const result = await movePhotosBack([
@@ -192,7 +153,7 @@ describe('admin: fotos', () => {
     expect(firebaseMocks.updateDoc).toHaveBeenCalledTimes(2)
   })
 
-  it('offers the move in Produtos and refuses it while the rules are not published', async () => {
+  it('shows no move prompt in Produtos, only a quiet done note and the undo', async () => {
     signInAs(adminProfile)
     const user = userEvent.setup()
     renderApp('/admin')
@@ -204,13 +165,25 @@ describe('admin: fotos', () => {
       emit('products', [legacy, moved])
     })
     const section = within(desk).getByRole('region', { name: 'Fotos do cardápio' })
-    expect(section).toHaveTextContent('1 foto ainda está dentro dos produtos')
-    firebaseMocks.getDoc.mockRejectedValue(denied())
-    await user.click(within(section).getByRole('button', { name: 'Mover 1 foto' }))
-    await user.click(within(screen.getByRole('alertdialog', { name: 'Confirmar fotos' })).getByRole('button', { name: 'Mover' }))
-    expect(await within(section).findByRole('alert')).toHaveTextContent('ainda não foram publicadas. Nada foi alterado.')
-    expect(firebaseMocks.setDoc).not.toHaveBeenCalled()
-    expect(firebaseMocks.updateDoc).not.toHaveBeenCalled()
+    expect(section).toHaveTextContent('Fotos no formato rápido.')
+    expect(section).not.toHaveTextContent('ainda')
+    expect(within(desk).queryByRole('button', { name: /^Mover/ })).not.toBeInTheDocument()
+    expect(within(section).getByRole('button', { name: 'Desfazer: voltar fotos para os produtos' })).toBeInTheDocument()
+  })
+
+  it('hides the photos section when no photo is in the new format', async () => {
+    signInAs(adminProfile)
+    const user = userEvent.setup()
+    renderApp('/admin')
+    await user.click(await screen.findByRole('button', { name: 'Abrir menu' }))
+    await user.click(screen.getByRole('button', { name: 'Produtos' }))
+    const desk = await screen.findByRole('dialog', { name: 'Produtos' })
+    await waitFor(() => expect(activeListeners('products')).toHaveLength(1))
+    await act(async () => {
+      emit('products', [legacy])
+    })
+    expect(within(desk).queryByRole('region', { name: 'Fotos do cardápio' })).not.toBeInTheDocument()
+    expect(within(desk).queryByRole('button', { name: /^Mover/ })).not.toBeInTheDocument()
   })
 
   it('does not rewrite an unchanged photo and deletes the photo document with the product', async () => {

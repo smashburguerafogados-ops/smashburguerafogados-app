@@ -21,9 +21,7 @@ import { sortCategories } from './menu'
 import { productImage } from './remoteCatalog'
 import {
   PHOTO_BACKUPS,
-  PHOTOS,
   deletePhotoDoc,
-  isPermissionDenied,
   isPhotoRef,
   readPhotoDoc,
   savePhotoDoc,
@@ -350,57 +348,7 @@ export async function createProduct(product: NewProduct): Promise<string> {
   return ref.id
 }
 
-/** Legacy products carry the photo inline as a data URL. */
-export function hasInlinePhoto(product: Pick<ListedProduct, 'image'>): boolean {
-  return product.image.startsWith('data:')
-}
-
-/**
- * True when the published rules let the admin use productPhotos. A read of a
- * missing document is allowed by the new rules and refused by the old ones.
- */
-export async function photoRulesPublished(): Promise<boolean> {
-  try {
-    await getDoc(doc(db, PHOTOS, '_regras'))
-    return true
-  } catch (error) {
-    if (isPermissionDenied(error)) return false
-    throw error
-  }
-}
-
 export type PhotoMoveResult = { done: number; failed: string[] }
-
-/**
- * Opt-in, one product at a time, safe to run again. For each legacy photo:
- * copy it to productPhotoBackups/{id}, copy it to productPhotos/{id}, read the
- * copy back, and only then swap the inline photo for photoVersion. A product
- * that fails keeps its inline photo. Photos are moved as they are, not
- * re-encoded.
- */
-export async function movePhotosOut(
-  products: ListedProduct[],
-  onStep: (done: number, total: number) => void = () => undefined,
-  now: () => number = Date.now,
-): Promise<PhotoMoveResult> {
-  const todo = products.filter(hasInlinePhoto)
-  const failed: string[] = []
-  let done = 0
-  for (const product of todo) {
-    try {
-      const version = now()
-      await setDoc(doc(db, PHOTO_BACKUPS, product.id), { image: product.image, savedAtMs: version })
-      await setDoc(doc(db, PHOTOS, product.id), { image: product.image, updatedAtMs: version })
-      if ((await readPhotoDoc(product.id)) !== product.image) throw new Error('A cópia da foto não confere.')
-      await updateDoc(doc(db, 'products', product.id), { photoVersion: version, image: deleteField() })
-      done += 1
-    } catch {
-      failed.push(product.name)
-    }
-    onStep(done + failed.length, todo.length)
-  }
-  return { done, failed }
-}
 
 async function readBackup(id: string): Promise<string> {
   const snapshot = await getDoc(doc(db, PHOTO_BACKUPS, id))
