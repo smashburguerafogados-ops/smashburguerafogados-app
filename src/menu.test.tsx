@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { MenuScreen } from './components/MenuScreen'
@@ -12,6 +12,16 @@ import { CATALOG_TIMEOUT_MS } from './lib/remoteCatalog'
 import './index.css'
 import './menu.css'
 import './griddle.css'
+
+const scrollIntoView = vi.fn()
+const scrollTo = vi.fn()
+
+beforeEach(() => {
+  scrollIntoView.mockClear()
+  scrollTo.mockClear()
+  Element.prototype.scrollIntoView = scrollIntoView
+  window.scrollTo = scrollTo as unknown as typeof window.scrollTo
+})
 
 afterEach(() => {
   vi.useRealTimers()
@@ -38,7 +48,7 @@ it('leaves the title empty until a name exists, then shows the first name', asyn
   const brand = header.querySelector('.menu__brand') as HTMLElement
   expect(header.querySelector('.menu__title')).toBeNull()
   expect(header).not.toHaveTextContent('Cardápio')
-  expect(screen.queryByRole('heading')).not.toBeInTheDocument()
+  expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument()
   expect(logo).toBe(header.firstElementChild)
   expect(getComputedStyle(header).justifyContent).toBe('flex-start')
   expect(getComputedStyle(logo).flexGrow).toBe('0')
@@ -49,7 +59,7 @@ it('leaves the title empty until a name exists, then shows the first name', asyn
   signInAs({ ...customerProfile, nome: '' })
   renderMenu()
   expect(document.querySelector('.menu__title')).toBeNull()
-  expect(screen.queryByRole('heading')).not.toBeInTheDocument()
+  expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument()
 })
 
 it('shows only the first name in the header once the customer has one', async () => {
@@ -139,49 +149,92 @@ it('offers a retry when the menu never arrives, and still shows a late answer', 
   expect(document.querySelectorAll('.item').length).toBeGreaterThan(0)
 })
 
-it('opens on Início and lists products from every category', () => {
+it('opens on Início and lists products from every category in one continuous list of sections', () => {
   renderMenu()
   const chips = within(screen.getByRole('toolbar', { name: 'Categorias' })).getAllByRole('button')
   expect(chips.map((chip) => chip.textContent)).toEqual(['Início', 'Smash', 'Acompanhamentos', 'Bebidas'])
   const home = chips[0]
-  expect(home).toHaveAttribute('aria-pressed', 'true')
+  expect(home).toHaveAttribute('aria-current', 'true')
   expect(home).toHaveClass('is-active')
   expect(home).not.toHaveClass('chip--destaque')
   expect(home.querySelector('.chip__sun')).toBeNull()
+  expect(chips.slice(1).every((chip) => !chip.hasAttribute('aria-current'))).toBe(true)
   expect(screen.getByRole('button', { name: /Smash da casa/ })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Batata rústica/ })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Refrigerante lata/ })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /geral/i })).not.toBeInTheDocument()
+
+  const sections = Array.from(document.querySelectorAll<HTMLElement>('section[data-section]'))
+  expect(sections.map((section) => section.dataset.section)).toEqual(['smash', 'sides', 'drinks'])
+  expect(screen.getAllByRole('heading', { level: 2 }).map((title) => title.textContent)).toEqual([
+    'Smash',
+    'Acompanhamentos',
+    'Bebidas',
+  ])
+  expect(within(sections[2]).getByRole('button', { name: /Refrigerante lata/ })).toBeInTheDocument()
+  expect(within(sections[0]).queryByRole('button', { name: /Refrigerante lata/ })).not.toBeInTheDocument()
 })
 
-it('filters by category, remembers it, and returns to all when tapped again', async () => {
+it('scrolls to the section when a chip is tapped and marks it as current, without filtering', async () => {
   const user = userEvent.setup()
   renderMenu()
 
   await user.click(screen.getByRole('button', { name: 'Bebidas' }))
 
-  expect(sessionStorage.getItem('smash.category')).toBe('drinks')
+  expect(scrollIntoView).toHaveBeenCalledTimes(1)
+  expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' })
+  expect(scrollIntoView.mock.contexts[0]).toBe(document.querySelector('[data-section="drinks"]'))
+  expect(screen.getByRole('button', { name: 'Bebidas' })).toHaveAttribute('aria-current', 'true')
+  expect(screen.getByRole('button', { name: 'Início' })).not.toHaveAttribute('aria-current')
   expect(screen.getByRole('button', { name: /Refrigerante lata/ })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /Smash da casa/ })).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Bebidas' })).toHaveAttribute('aria-pressed', 'true')
-
-  await user.click(screen.getByRole('button', { name: 'Bebidas' }))
-
-  expect(sessionStorage.getItem('smash.category')).toBeNull()
-  expect(screen.getByRole('button', { name: 'Início' })).toHaveAttribute('aria-pressed', 'true')
   expect(screen.getByRole('button', { name: /Smash da casa/ })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /Refrigerante lata/ })).toBeInTheDocument()
+  expect(sessionStorage.getItem('smash.category')).toBeNull()
+
+  await user.click(screen.getByRole('button', { name: 'Início' }))
+  expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' })
+  expect(screen.getByRole('button', { name: 'Início' })).toHaveAttribute('aria-current', 'true')
+  expect(screen.getByRole('button', { name: 'Bebidas' })).not.toHaveAttribute('aria-current')
 })
 
-it('restores the last category from the session', () => {
-  sessionStorage.setItem('smash.category', 'sides')
+it('keeps the current chip focusable and focused after it is tapped', async () => {
+  const user = userEvent.setup()
   renderMenu()
-  expect(screen.getByRole('button', { name: /Batata rústica/ })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /Smash da casa/ })).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Acompanhamentos' })).toHaveAttribute('aria-pressed', 'true')
+  await user.tab()
+  const focused = document.activeElement as HTMLElement
+  expect(focused).toBeInstanceOf(HTMLButtonElement)
+  const chip = screen.getByRole('button', { name: 'Acompanhamentos' })
+  chip.focus()
+  expect(chip).toHaveFocus()
+  await user.keyboard('{Enter}')
+  expect(chip).toHaveFocus()
+  expect(chip).toHaveAttribute('aria-current', 'true')
+  expect(scrollIntoView).toHaveBeenCalledTimes(1)
 })
 
-it('searches every product on Início and only the chosen category after that', async () => {
+it('scrolls without animation when the person asks for reduced motion', async () => {
+  const original = window.matchMedia
+  window.matchMedia = ((query: string) => ({
+    matches: query.includes('reduce'),
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof window.matchMedia
+  try {
+    const user = userEvent.setup()
+    renderMenu()
+    await user.click(screen.getByRole('button', { name: 'Bebidas' }))
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'start' })
+    await user.click(screen.getByRole('button', { name: 'Início' }))
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'auto' })
+  } finally {
+    window.matchMedia = original
+  }
+})
+
+it('searches every section and keeps only the sections and chips that have a match', async () => {
   const user = userEvent.setup()
   renderMenu()
   const search = screen.getByRole('searchbox', { name: 'Buscar' })
@@ -189,20 +242,26 @@ it('searches every product on Início and only the chosen category after that', 
   await user.type(search, 'batata')
   expect(screen.getByRole('button', { name: /Batata rústica/ })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Smash da casa/ })).not.toBeInTheDocument()
+  expect(screen.getAllByRole('heading', { level: 2 }).map((title) => title.textContent)).toEqual(['Acompanhamentos'])
+  expect(screen.getByRole('button', { name: 'Smash' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Bebidas' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Acompanhamentos' })).toBeEnabled()
+  expect(screen.getByRole('button', { name: 'Início' })).toBeEnabled()
 
   await user.clear(search)
-  await user.click(screen.getByRole('button', { name: 'Bebidas' }))
-  await user.type(search, 'batata')
-  expect(screen.queryByRole('button', { name: /Batata rústica/ })).not.toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /Refrigerante lata/ })).not.toBeInTheDocument()
+  expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(3)
+  expect(screen.getByRole('button', { name: 'Smash' })).toBeEnabled()
 
-  await user.clear(search)
   await user.type(search, 'lata')
   expect(screen.getByRole('button', { name: /Refrigerante lata/ })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Smash da casa/ })).not.toBeInTheDocument()
+
+  await user.clear(search)
+  await user.type(search, 'zzzz')
+  expect(screen.getByText('Nenhum item encontrado.')).toBeInTheDocument()
 })
 
-it('keeps a product without a category on Início only', async () => {
+it('puts a product without a category in an untitled section at the end of Início', async () => {
   render(
     <AuthProvider>
       <MemoryRouter>
@@ -217,14 +276,14 @@ it('keeps a product without a category on Início only', async () => {
       { id: 'x', categoryId: 'lanches', name: 'X-Burger', price: 20, available: true, image: '' },
     ])
   })
-  expect(screen.getByRole('button', { name: 'Início' })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByRole('button', { name: 'Início' })).toHaveAttribute('aria-current', 'true')
   expect(screen.getByRole('button', { name: /Molho extra/ })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /X-Burger/ })).toBeInTheDocument()
-
-  const user = userEvent.setup()
-  await user.click(screen.getByRole('button', { name: 'Lanches' }))
-  expect(screen.queryByRole('button', { name: /Molho extra/ })).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /X-Burger/ })).toBeInTheDocument()
+  const sections = Array.from(document.querySelectorAll('.section'))
+  expect(sections).toHaveLength(2)
+  expect(sections[1].querySelector('.section__title')).toBeNull()
+  expect(sections[1]).toHaveTextContent('Molho extra')
+  expect(screen.getAllByRole('heading', { level: 2 }).map((title) => title.textContent)).toEqual(['Lanches'])
 })
 
 it('searches by name across the cardápio', async () => {
