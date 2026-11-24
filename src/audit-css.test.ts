@@ -66,6 +66,24 @@ describe('legibility and safe areas', () => {
   })
 })
 
+describe('menu grid', () => {
+  const menu = read('menu.css')
+  const columns = (block: string) => block.match(/grid-template-columns:\s*repeat\((\d+),/)?.[1]
+
+  it('keeps two columns on phones and goes to three from 600px', () => {
+    expect(columns(rule(menu, '.items'))).toBe('2')
+    const tablet = menu.match(/@media \(min-width: 600px\) \{\s*\.items \{([^}]*)\}/)
+    expect(tablet).not.toBeNull()
+    expect(columns(tablet![1])).toBe('3')
+    expect(menu).not.toMatch(/@media \(max-width: 599px\) \{\s*\.items/)
+  })
+
+  it('widens the container to 960px only from 900px', () => {
+    expect(rule(menu, '.menu__content')).toMatch(/width:\s*min\(680px,\s*100%\)/)
+    expect(menu).toMatch(/@media \(min-width: 900px\) \{\s*\.menu__content \{\s*width:\s*min\(960px,\s*100%\);/)
+  })
+})
+
 describe('older browsers', () => {
   it('uses dvh only after a vh fallback', () => {
     for (const css of [read('menu.css'), read('index.css')]) {
