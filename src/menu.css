@@ -647,10 +647,10 @@
 
 .chips {
   display: flex;
-  gap: 8px;
+  gap: 7px;
   overflow-x: auto;
   margin: 0 calc(var(--menu-gutter) * -1);
-  padding: 14px var(--menu-gutter) 14px;
+  padding: 10px var(--menu-gutter) 10px;
   scrollbar-width: none;
 }
 
@@ -658,23 +658,32 @@
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
+  gap: 6px;
+  min-height: 34px;
   border-radius: 999px;
   border: 1px solid rgba(227, 177, 90, 0.5);
   background-color: transparent;
   color: #ece7dc;
-  padding: 0 16px 0 12px;
-  font-size: 0.86rem;
+  padding: 0 13px 0 10px;
+  font-size: 0.78rem;
   font-weight: 500;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 .chip .cat-icon {
   flex: none;
+  width: 16px;
+  height: 16px;
   color: var(--gold);
+}
+
+/* Visual pill is 34px; the invisible extension keeps the tap target at 40px. */
+.chip::before {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
 }
 
 .chip.is-active {
@@ -1764,15 +1773,15 @@ html .chips .chip.chip--destaque {
   border: 2px solid #e3b15a;
   box-shadow:
     0 0 0 2px rgba(227, 177, 90, 0.35),
-    0 0 14px rgba(227, 177, 90, 0.55);
+    0 0 10px rgba(227, 177, 90, 0.55);
   animation: destaque-pulse 1.8s ease-in-out infinite;
 }
 
 .chip__sun {
   position: absolute;
   z-index: 1;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   pointer-events: none;
   background: radial-gradient(circle at 32% 32%, #fff 0%, #e3b15a 62%, #141416 100%);
@@ -1796,13 +1805,13 @@ html .chips .chip.chip--destaque {
     border-color: #e3b15a;
     box-shadow:
       0 0 0 2px rgba(227, 177, 90, 0.4),
-      0 0 10px rgba(227, 177, 90, 0.45);
+      0 0 8px rgba(227, 177, 90, 0.45);
   }
   50% {
     border-color: #f4f5f6;
     box-shadow:
-      0 0 0 4px rgba(227, 177, 90, 0.45),
-      0 0 22px rgba(227, 177, 90, 0.7);
+      0 0 0 3px rgba(227, 177, 90, 0.45),
+      0 0 14px rgba(227, 177, 90, 0.7);
   }
 }
 
@@ -2763,7 +2772,7 @@ html .chips .chip.chip--destaque {
     animation: none;
     box-shadow:
       0 0 0 3px rgba(227, 177, 90, 0.5),
-      0 0 16px rgba(227, 177, 90, 0.6);
+      0 0 12px rgba(227, 177, 90, 0.6);
   }
 
   .chip__sun {
@@ -3681,16 +3690,16 @@ html .chips .chip.chip--destaque {
 }
 
 .theme-fx--chip {
-  top: -7px;
+  top: -5px;
   left: -4px;
-  width: 15px;
-  height: 15px;
+  width: 13px;
+  height: 13px;
   transform: rotate(-12deg);
 }
 
 .theme-fx--chip[data-level='festivo'] {
-  width: 17px;
-  height: 17px;
+  width: 15px;
+  height: 15px;
 }
 
 .theme-fx--label {
