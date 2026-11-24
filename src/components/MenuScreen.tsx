@@ -11,10 +11,8 @@ import {
   cartLineFor,
   cartTotal,
   filterProducts,
-  HOME_LABEL,
-  readSavedCategory,
+  groupBySection,
   removeCartLine,
-  saveCategory,
   sortCategories,
   sortProductsByCategory,
   type CartLine,
@@ -36,7 +34,8 @@ import { ProductDialog, descriptionItems } from './ProductDialog'
 import { ProductPhoto } from './ProductPhoto'
 import { DeliveryForm } from './DeliveryForm'
 import type { UserProfile } from '../types'
-import { CategoryIcon, iconForCategory } from '../lib/categoryIcons'
+import { CategoryChips } from './CategoryChips'
+import { useSectionSpy } from '../lib/sectionSpy'
 import { ReorderStrip } from './ReorderStrip'
 import { ThemeAccent } from './ThemeAccent'
 import type { ReorderEntry } from '../lib/reorder'
@@ -96,7 +95,6 @@ export function MenuScreen() {
   const navigate = useNavigate()
   const [catalog, setCatalog] = useState<Catalog | null>(null)
   const [catalogError, setCatalogError] = useState(false)
-  const [categoryId, setCategoryId] = useState(readSavedCategory)
   const [search, setSearch] = useState('')
   const [lines, setLines] = useState<CartLine[]>([])
   const [product, setProduct] = useState<Product | null>(null)
@@ -110,6 +108,7 @@ export function MenuScreen() {
   const savedCart = useRef(readSavedCart())
   const cartRestored = useRef(false)
   const noticeId = useRef(0)
+  const chipsRow = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (!cartRestored.current) return
@@ -178,20 +177,20 @@ export function MenuScreen() {
   }, [catalog, linkedId])
 
   const categories = catalog ? sortCategories(catalog.categories) : []
-  const activeCategory = categories.some((category) => category.id === categoryId) ? categoryId : ''
   const visible = catalog
-    ? sortProductsByCategory(filterProducts(catalog.products, activeCategory, search), categories)
+    ? sortProductsByCategory(filterProducts(catalog.products, '', search), categories)
     : []
+  const sections = groupBySection(visible, categories)
+  const available = new Set(sections.map((section) => section.id))
+  const closedForCustomers = shop.ready && !shop.online && !(session.status === 'ready' && session.profile.role === 'admin')
+  const spy = useSectionSpy(
+    chipsRow,
+    `${catalog ? 'menu' : 'wait'}|${closedForCustomers}|${sections.map((section) => `${section.id}:${section.products.length}`).join(',')}`,
+  )
   const count = cartCount(lines)
   const total = cartTotal(lines)
   const isAdmin = session.status === 'ready' && session.profile.role === 'admin'
   const openOrders = history.orders.filter((order) => isOpenOrder(order.status)).length
-
-  function chooseCategory(id: string) {
-    const next = activeCategory === id ? '' : id
-    setCategoryId(next)
-    saveCategory(next)
-  }
 
   function addProduct(item: Product, note: string, extraIds: string[], qty: number) {
     if (!item.available) return
@@ -348,77 +347,74 @@ export function MenuScreen() {
 
       {catalog && (
       <>
-      <div className="chips" role="toolbar" aria-label="Categorias">
-        <button
-          type="button"
-          className={activeCategory ? 'chip' : 'chip is-active'}
-          aria-pressed={!activeCategory}
-          onClick={() => chooseCategory('')}
-        >
-          <CategoryIcon iconKey="home" />
-          {HOME_LABEL}
-          <ThemeAccent place="chip" index={0} />
-        </button>
-        {categories.map((category, categoryIndex) => {
-          const classes = ['chip']
-          if (category.destaque) classes.push('chip--destaque')
-          if (activeCategory === category.id) classes.push('is-active')
-          return (
-            <button
-              key={category.id}
-              type="button"
-              className={classes.join(' ')}
-              aria-pressed={activeCategory === category.id}
-              onClick={() => chooseCategory(category.id)}
-            >
-              <CategoryIcon iconKey={iconForCategory(category.name, category.icon)} />
-              {category.name}
-              {category.destaque && <span className="chip__sun" aria-hidden="true" />}
-              <ThemeAccent place="chip" index={categoryIndex + 1} />
-            </button>
-          )
-        })}
-      </div>
+      <CategoryChips
+        rowRef={chipsRow}
+        categories={categories}
+        available={available}
+        active={spy.active}
+        onPick={spy.goTo}
+      />
 
-      {history.status === 'ready' && !activeCategory && !search.trim() && (
+      {history.status === 'ready' && !search.trim() && (
         <ReorderStrip orders={history.orders} products={catalog.products} firstName={firstName} onReorder={reorder} />
       )}
 
       {visible.length === 0 ? (
         <p className="muted">Nenhum item encontrado.</p>
       ) : (
-        <ul className="items">
-          {visible.map((item, itemIndex) => (
-            <li key={item.id}>
-              <ThemeAccent place="card" index={itemIndex} />
-              <button
-                type="button"
-                className={item.available ? 'item' : 'item item--sold'}
-                onClick={() => setProduct(item)}
+        <>
+          {sections.map((section, sectionIndex) => {
+            const headingId = `section-${section.id || 'outros'}`
+            const before = sections.slice(0, sectionIndex).reduce((sum, entry) => sum + entry.products.length, 0)
+            return (
+              <section
+                key={section.id || 'outros'}
+                className="section"
+                data-section={section.id}
+                aria-labelledby={section.name ? headingId : undefined}
               >
-                <ProductPhoto src={item.image} />
-                <span className="item__copy">
-                  <span className="item__name">{item.name}</span>
-                  <span className="item__price">{formatPrice(toCents(item.price))}</span>
-                  {item.description.trim() && (
-                    <span className="item__desc">{descriptionItems(item.description).join(', ')}</span>
-                  )}
-                  {!item.available && <span className="item__tag">Esgotado</span>}
-                </span>
-                {item.available && (
-                  <span className="mark-btn item__add" aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                      <path d="M12 6v12M6 12h12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-                    </svg>
-                  </span>
+                {section.name && (
+                  <h2 id={headingId} className="section__title">
+                    {section.name}
+                  </h2>
                 )}
-              </button>
-            </li>
-          ))}
-        </ul>
+                <ul className="items">
+                  {section.products.map((item, itemIndex) => (
+                    <li key={item.id}>
+                      <ThemeAccent place="card" index={before + itemIndex} />
+                      <button
+                        type="button"
+                        className={item.available ? 'item' : 'item item--sold'}
+                        onClick={() => setProduct(item)}
+                      >
+                        <ProductPhoto src={item.image} />
+                        <span className="item__copy">
+                          <span className="item__name">{item.name}</span>
+                          <span className="item__price">{formatPrice(toCents(item.price))}</span>
+                          {item.description.trim() && (
+                            <span className="item__desc">{descriptionItems(item.description).join(', ')}</span>
+                          )}
+                          {!item.available && <span className="item__tag">Esgotado</span>}
+                        </span>
+                        {item.available && (
+                          <span className="mark-btn item__add" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                              <path d="M12 6v12M6 12h12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                            </svg>
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )
+          })}
+        </>
       )}
       </>
       )}
+      <i className="menu__end" data-menu-end aria-hidden="true" />
       </div>
 
       <BottomBar

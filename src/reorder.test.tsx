@@ -189,16 +189,17 @@ describe('Pedir de novo on the cardápio', () => {
     expect(within(sheet).getByText('2 × R$ 32,00')).toBeInTheDocument()
   })
 
-  it('goes away while searching or inside a category, and comes back on Início', async () => {
+  it('stays at the start of the menu, goes away while searching and comes back after', async () => {
     const user = userEvent.setup()
     await openMenu([order({ id: 'a', status: 'finalizado', createdAtMs: 3, items: [item('smash-casa', 'Smash da casa')] })])
     expect(screen.getByRole('region', { name: 'Pedir de novo' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Smash' }))
-    expect(screen.queryByRole('region', { name: 'Pedir de novo' })).not.toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /Início/ }))
     expect(screen.getByRole('region', { name: 'Pedir de novo' })).toBeInTheDocument()
-    await user.type(screen.getByRole('searchbox', { name: 'Buscar' }), 'smash')
+    const search = screen.getByRole('searchbox', { name: 'Buscar' })
+    await user.type(search, 'smash')
     expect(screen.queryByRole('region', { name: 'Pedir de novo' })).not.toBeInTheDocument()
+    await user.clear(search)
+    expect(screen.getByRole('region', { name: 'Pedir de novo' })).toBeInTheDocument()
   })
 
   it('opens exactly the purchase of the tapped card, whatever the order, and adds only that one', async () => {

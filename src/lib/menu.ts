@@ -1,8 +1,6 @@
 import type { Category, Product } from '../data/catalog'
 import { toCents } from './money'
 
-const CATEGORY_KEY = 'smash.category'
-
 /** All-products view. Not a Firestore category. */
 export const HOME_CATEGORY = ''
 export const HOME_LABEL = 'Início'
@@ -39,21 +37,24 @@ export function sortProductsByCategory(products: Product[], categories: Category
     .map((entry) => entry.product)
 }
 
-export function readSavedCategory(): string {
-  try {
-    return sessionStorage.getItem(CATEGORY_KEY) ?? ''
-  } catch {
-    return ''
-  }
+export type MenuSection = {
+  /** The category id. Empty for products whose category no longer exists. */
+  id: string
+  name: string
+  products: Product[]
 }
 
-export function saveCategory(id: string): void {
-  try {
-    if (id) sessionStorage.setItem(CATEGORY_KEY, id)
-    else sessionStorage.removeItem(CATEGORY_KEY)
-  } catch {
-    // Session storage can be blocked. The menu still works for this view.
-  }
+/** One section per category that has products, in category order. Orphans close the list, untitled. */
+export function groupBySection(products: Product[], categories: Category[]): MenuSection[] {
+  const sections: MenuSection[] = categories.map((category) => ({
+    id: category.id,
+    name: category.name,
+    products: products.filter((product) => product.categoryId === category.id),
+  }))
+  const known = new Set(categories.map((category) => category.id))
+  const orphans = products.filter((product) => !product.categoryId || !known.has(product.categoryId))
+  if (orphans.length > 0) sections.push({ id: '', name: '', products: orphans })
+  return sections.filter((section) => section.products.length > 0)
 }
 
 export function foldText(value: string): string {
