@@ -75,6 +75,11 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
   }
 
   async function send(profile: UserProfile) {
+    const status = shop.check()
+    if (!status.open) {
+      setError(`Loja fechada. ${status.message}`)
+      throw new Error('Loja fechada.')
+    }
     setBusy(true)
     setError('')
     try {
@@ -84,9 +89,13 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
       setPlacedId(id)
       setCheckout(emptyCheckout)
       onPlaced()
-    } catch {
-      setError('Não foi possível enviar o pedido. Tente de novo.')
-      throw new Error('Não foi possível enviar o pedido. Tente de novo.')
+    } catch (failure) {
+      const denied = (failure as { code?: unknown } | null)?.code === 'permission-denied'
+      const text = denied
+        ? 'Não foi possível enviar o pedido. A loja pode estar fechada agora. Tente de novo.'
+        : 'Não foi possível enviar o pedido. Tente de novo.'
+      setError(text)
+      throw new Error(text)
     } finally {
       setBusy(false)
     }
@@ -94,6 +103,11 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
 
   async function submit() {
     if (!ready || busy) return
+    const status = shop.check()
+    if (!status.open) {
+      setError(`Loja fechada. ${status.message}`)
+      return
+    }
     if (session.status === 'ready' && session.profile.role === 'customer') {
       try {
         if (fulfillment === 'retirada' && contactReady(session.profile)) {
@@ -298,7 +312,12 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
             </fieldset>
           )}
 
-          {error && (
+          {!shop.online && (
+            <p className="alert" role="alert">
+              Loja fechada. {shop.message}
+            </p>
+          )}
+          {error && shop.online && (
             <p className="alert" role="alert">
               {error}
             </p>
@@ -317,7 +336,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
               Total <strong data-testid="cart-total">{formatPrice(total)}</strong>
             </p>
           </div>
-          <button type="button" className="btn" disabled={!ready || busy} onClick={() => void submit()}>
+          <button type="button" className="btn" disabled={!ready || busy || !shop.online} onClick={() => void submit()}>
             {busy ? 'Enviando...' : 'Fazer Pedido'}
             {!busy && <span aria-hidden="true">→</span>}
           </button>

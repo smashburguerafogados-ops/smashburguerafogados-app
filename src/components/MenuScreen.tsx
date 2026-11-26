@@ -304,7 +304,7 @@ export function MenuScreen() {
         </button>
       </header>
 
-      {shop.hours ? (
+      {shop.ready && shop.hours ? (
         <p className="menu__hours" role="status">
           <span className={`menu__live${shop.online ? '' : ' is-offline'}`} aria-hidden="true" />
           <span className="sr-only">{shop.online ? 'Loja online. ' : 'Loja fechada. '}</span>

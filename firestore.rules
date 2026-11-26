@@ -66,6 +66,14 @@ rules_version = '2';
 // products, addons and settings are open to people who are not signed in, so
 // no rule can keep a blocked phone out of the menu. The app hides it instead.
 // A blocked number can still sign in with a different phone.
+// Opening hours: creating an order is denied outside the weekly schedule saved
+// in settings/shop.schedule. The server decides with its own clock, in Recife
+// time (UTC-3, no daylight saving), so a wrong clock on the customer's phone
+// cannot place an order after closing. With no schedule saved, the default is
+// 16:00 to 23:00 every day except Wednesday. 23:00 sharp is already closed.
+// Each day is { open: bool, from: minutes, to: minutes } with the day keys
+// mon, tue, wed, thu, fri, sat, sun. The manual Online switch is only checked
+// by the app, not here.
 // connection_tests is locked. Everything else is denied.
 
 service cloud.firestore {
@@ -92,6 +100,29 @@ service cloud.firestore {
       return request.auth != null
         && 'email' in request.auth.token
         && phoneIsBlocked(loginPhone());
+    }
+
+    function recifeNow() {
+      return request.time - duration.time(3, 0, 0, 0);
+    }
+
+    function shopDay() {
+      return ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'][recifeNow().dayOfWeek() - 1];
+    }
+
+    function shopSettings() {
+      return exists(/databases/$(database)/documents/settings/shop)
+        ? get(/databases/$(database)/documents/settings/shop).data
+        : {};
+    }
+
+    function shopIsOpen() {
+      let day = shopDay();
+      let entry = shopSettings().get('schedule', {}).get(day, {});
+      let minute = recifeNow().hours() * 60 + recifeNow().minutes();
+      return entry.get('open', day != 'wed')
+        && minute >= entry.get('from', 960)
+        && minute < entry.get('to', 1380);
     }
 
     function customerCreate(userId) {
@@ -178,7 +209,8 @@ service cloud.firestore {
         && data.payment is map
         && data.payment.method in ['pix', 'cartao', 'dinheiro']
         && !loginIsBlocked()
-        && !phoneIsBlocked(data.customerWhatsapp);
+        && !phoneIsBlocked(data.customerWhatsapp)
+        && shopIsOpen();
     }
 
     function customerFinishes() {

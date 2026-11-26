@@ -4,6 +4,8 @@ import { afterEach, beforeEach, vi } from 'vitest'
 import { resetFirebaseMocks } from './mocks'
 import { forgetCatalogState } from '../lib/remoteCatalog'
 import { forgetPhotos } from '../lib/productPhotos'
+import { clock } from '../lib/clock'
+import { OPEN_THURSDAY_MS } from './times'
 
 configure({ asyncUtilTimeout: 3000 })
 
@@ -104,6 +106,7 @@ Object.defineProperty(HTMLMediaElement.prototype, 'pause', {
 })
 
 beforeEach(() => {
+  clock.now = () => OPEN_THURSDAY_MS
   sessionStorage.clear()
   localStorage.clear()
   resetFirebaseMocks()

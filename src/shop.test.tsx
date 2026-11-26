@@ -8,6 +8,7 @@ vi.mock('./lib/photo', () => ({
 import { DEFAULT_CLOSED_MESSAGE } from './lib/shop'
 import { activeListeners, emit, emitDoc, firebaseMocks } from './test/mocks'
 import { adminProfile, renderApp, signInAs } from './test/render'
+import { OPEN_THURSDAY_MS } from './test/times'
 import './index.css'
 import './menu.css'
 
@@ -182,17 +183,7 @@ describe('shop hours', () => {
     await user.click(toggle)
     expect(firebaseMocks.setDoc).toHaveBeenCalledWith(
       { path: 'settings/shop' },
-      { online: false, message: DEFAULT_CLOSED_MESSAGE, hours: '' },
-      { merge: true },
-    )
-
-    const hours = within(sheet).getByRole('textbox', { name: 'Horário de funcionamento' })
-    await user.clear(hours)
-    await user.type(hours, 'Quarta a domingo, 18h às 23h')
-    await user.click(within(sheet).getByRole('button', { name: 'Salvar horário' }))
-    expect(firebaseMocks.setDoc).toHaveBeenLastCalledWith(
-      { path: 'settings/shop' },
-      { online: false, message: DEFAULT_CLOSED_MESSAGE, hours: 'Quarta a domingo, 18h às 23h' },
+      { online: false, message: DEFAULT_CLOSED_MESSAGE, closedAtMs: OPEN_THURSDAY_MS },
       { merge: true },
     )
 
@@ -202,7 +193,7 @@ describe('shop hours', () => {
     await user.click(within(sheet).getByRole('button', { name: 'Salvar mensagem' }))
     expect(firebaseMocks.setDoc).toHaveBeenLastCalledWith(
       { path: 'settings/shop' },
-      { online: false, message: 'Hoje fechado. Abrimos sexta, das 18h às 23h.', hours: 'Quarta a domingo, 18h às 23h' },
+      { online: false, message: 'Hoje fechado. Abrimos sexta, das 18h às 23h.', closedAtMs: OPEN_THURSDAY_MS },
       { merge: true },
     )
   })
@@ -212,10 +203,10 @@ describe('shop hours', () => {
     await waitFor(() => expect(activeListeners('settings/shop')).toHaveLength(1))
     expect(document.querySelector('.menu__hours')).not.toBeInTheDocument()
     await act(async () => {
-      emitDoc('settings/shop', { online: true, message: DEFAULT_CLOSED_MESSAGE, hours: 'Quarta a domingo, 18h às 23h' })
+      emitDoc('settings/shop', { online: true, message: DEFAULT_CLOSED_MESSAGE })
     })
     const hours = document.querySelector('.menu__hours')
-    expect(hours).toHaveTextContent('Quarta a domingo, 18h às 23h')
+    expect(hours).toHaveTextContent('Seg–Ter e Qui–Dom, 16h às 23h · Fechado às quartas')
     expect(hours).not.toHaveTextContent('Horário')
     expect(getComputedStyle(hours!).animationName).toContain('hours-pulse')
     const dot = hours!.querySelector('.menu__live')
