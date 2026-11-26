@@ -87,6 +87,16 @@ describe('firestore.rules', () => {
     expect(orderRule).toContain('!phoneIsBlocked(data.customerWhatsapp)')
   })
 
+  it('denies creating an order outside the opening hours, by the server clock in Recife time', () => {
+    const orderRule = rules.slice(rules.indexOf('function orderCreate()'), rules.indexOf('function customerFinishes()'))
+    expect(orderRule).toContain('shopIsOpen()')
+    expect(rules).toContain('request.time - duration.time(3, 0, 0, 0)')
+    expect(rules).toContain("settings/shop")
+    expect(rules).toContain("entry.get('open', day != 'wed')")
+    expect(rules).toContain('minute < entry.get(\'to\', 1380)')
+    expect(rules).not.toMatch(/appCheck|request\.auth\.token\.firebase\.app_check/i)
+  })
+
   it('lets an admin list customers on its own rule', () => {
     const users = block('users')
     const reads = users.match(/allow read:.*;/g) ?? []

@@ -99,10 +99,10 @@ it('shows the real open state and hours and lets the customer enter before the h
   const onDone = vi.fn()
   renderSplash(onDone)
   act(() => {
-    emitDoc('settings/shop', { online: true, hours: '16h às 23h' })
+    emitDoc('settings/shop', { online: true })
   })
   expect(screen.getByText('Aberto agora')).toBeInTheDocument()
-  expect(screen.getByText('16h às 23h')).toBeInTheDocument()
+  expect(screen.getByText('Seg–Ter e Qui–Dom, 16h às 23h · Fechado às quartas')).toBeInTheDocument()
 
   await act(async () => {
     await Promise.resolve()
@@ -121,10 +121,10 @@ it('shows the real open state and hours and lets the customer enter before the h
 it('marks the shop closed when the admin turned it off', () => {
   renderSplash()
   act(() => {
-    emitDoc('settings/shop', { online: false, hours: '16h às 23h' })
+    emitDoc('settings/shop', { online: false })
   })
   expect(screen.getByText('Fechado')).toBeInTheDocument()
-  expect(screen.getByText('16h às 23h').closest('.shop-status')).toHaveClass('is-closed')
+  expect(screen.getByText('Seg–Ter e Qui–Dom, 16h às 23h · Fechado às quartas').closest('.shop-status')).toHaveClass('is-closed')
 })
 
 it('hides Entrar no cardápio until the signed-in profile finishes loading', async () => {

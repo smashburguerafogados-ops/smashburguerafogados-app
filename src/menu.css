@@ -3830,3 +3830,77 @@ html .chips .chip.chip--destaque {
   transform: rotate(-14deg);
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.7));
 }
+
+.shop-controls__state {
+  margin: 0;
+  font-weight: 600;
+}
+
+.shop-controls__hint {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.shop-schedule {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #2c2c2c;
+  border-radius: 14px;
+  min-inline-size: 0;
+}
+
+.shop-schedule legend {
+  padding: 0 6px;
+  font-weight: 600;
+}
+
+.shop-schedule__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-height: 44px;
+}
+
+.shop-schedule__day {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 120px;
+  min-height: 44px;
+}
+
+.shop-schedule__day input {
+  width: 22px;
+  height: 22px;
+}
+
+.shop-schedule__times {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shop-schedule__times input[type='time'] {
+  min-height: 44px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid #3a3a3a;
+  background: #141416;
+  color: #f4f5f6;
+  font: inherit;
+}
+
+.shop-schedule__closed {
+  color: #9a9ea5;
+}
+
+.shop-schedule__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}

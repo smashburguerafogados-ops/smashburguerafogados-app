@@ -63,6 +63,18 @@ Do not register that WhatsApp through the app. The app always writes `role: "cus
 
 The same rules only allow a signed-in user to read and write `users/{their uid}`. The admin screen does not list customers.
 
+## Horário automático
+
+The shop opens and closes by itself from a weekly schedule, always in `America/Recife` time (UTC-3, no daylight saving), whatever the time zone of the customer's phone.
+
+Default: open Monday and Tuesday 16:00 to 23:00, closed all day Wednesday, open Thursday to Sunday 16:00 to 23:00. 16:00 is already open, 23:00 is already closed.
+
+- The schedule lives in `settings/shop.schedule` (`mon`..`sun`, each `{ open, from, to }`, minutes after midnight). Without it the app and `firestore.rules` use the default above. The admin edits it in the side menu, Funcionamento.
+- Customers see when the shop opens again ("Abrimos hoje às 16h", "Abrimos amanhã às 16h", "Fechado às quartas. Abrimos quinta às 16h"). The open page re-checks at the next opening or closing time and when the tab comes back to the front, with no reload.
+- Precedence: (1) outside the schedule the shop is always closed, nobody can force it open; (2) inside it the shop is open unless the admin turned the Online switch off; (3) that manual close lasts only until the end of that day's opening window (or the one that starts later the same day), then the schedule takes over. A close saved by an older version without a time stays until the admin turns the switch on. The manual close uses the admin's own message ("Mensagem de fechado").
+- Orders cannot be placed while closed: the cart button is disabled and the send is re-checked at the moment of the click. `firestore.rules` also denies creating an order outside the schedule, using the server clock (the manual switch is checked only by the app). Publish the rules again after this change.
+- Limits: the screen relies on the phone's clock, so a wrong clock can show the wrong state until the rules (server clock) refuse the order. The manual switch is not enforced by the rules.
+
 ## Firebase console, still required
 
 1. Authentication → Sign-in method → enable **Email/Password**.
