@@ -215,7 +215,7 @@ describe('shop hours', () => {
     expect(within(hours as HTMLElement).getByText(/Loja online/)).toHaveClass('sr-only')
   })
 
-  it('keeps a customer on the opening screen when the shop is offline', async () => {
+  it('keeps the whole menu for a customer when the shop is offline and shows the closed sign', async () => {
     renderApp()
     await waitFor(() => expect(activeListeners('settings/shop')).toHaveLength(1))
     expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
@@ -224,11 +224,11 @@ describe('shop hours', () => {
       emitDoc('settings/shop', { online: false, message: '' })
     })
 
-    expect(screen.getByText(DEFAULT_CLOSED_MESSAGE)).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Smash Burger' })).toBeInTheDocument()
-    expect(document.querySelector('video.fire__video')).toHaveAttribute('src', expect.stringContaining('fire.mp4'))
-    expect(screen.queryByRole('searchbox', { name: 'Buscar' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^Carrinho,/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('status', { name: /^Loja fechada\. / })).toHaveTextContent(DEFAULT_CLOSED_MESSAGE)
+    expect(document.querySelector('.menu__closed-dot')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Carrinho,/ })).toBeInTheDocument()
+    expect(document.querySelector('video.fire__video')).not.toBeInTheDocument()
   })
 
   it('stays open when the shop listener fails', async () => {
@@ -250,7 +250,7 @@ describe('shop hours', () => {
       emitDoc('settings/shop', { online: false, message: 'Fechado hoje.' })
     })
     expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
-    expect(screen.queryByText('Fechado hoje.')).not.toBeInTheDocument()
+    expect(screen.getByRole('status', { name: /^Loja fechada\. Fechado hoje\./ })).toBeInTheDocument()
   })
 
   it('keeps the admin panel available while the shop is offline', async () => {

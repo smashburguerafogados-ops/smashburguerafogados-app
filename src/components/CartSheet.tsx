@@ -77,8 +77,9 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
   async function send(profile: UserProfile) {
     const status = shop.check()
     if (!status.open) {
-      setError(`Loja fechada. ${status.message}`)
-      throw new Error('Loja fechada.')
+      const text = `Loja fechada. ${status.notice}`
+      setError(text)
+      throw new Error(text)
     }
     setBusy(true)
     setError('')
@@ -105,7 +106,7 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
     if (!ready || busy) return
     const status = shop.check()
     if (!status.open) {
-      setError(`Loja fechada. ${status.message}`)
+      setError(`Loja fechada. ${status.notice}`)
       return
     }
     if (session.status === 'ready' && session.profile.role === 'customer') {
@@ -313,8 +314,9 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
           )}
 
           {!shop.online && (
-            <p className="alert" role="alert">
-              Loja fechada. {shop.message}
+            <p className="alert cart__closed" id="cart-closed" role="status">
+              <span className="cart__closed-dot" aria-hidden="true" />
+              <span>Loja fechada. {shop.notice}</span>
             </p>
           )}
           {error && shop.online && (
@@ -336,7 +338,13 @@ export function CartSheet({ lines, onClose, onRemove, onPlaced }: CartSheetProps
               Total <strong data-testid="cart-total">{formatPrice(total)}</strong>
             </p>
           </div>
-          <button type="button" className="btn" disabled={!ready || busy || !shop.online} onClick={() => void submit()}>
+          <button
+            type="button"
+            className="btn"
+            disabled={!ready || busy || !shop.online}
+            aria-describedby={shop.online ? undefined : 'cart-closed'}
+            onClick={() => void submit()}
+          >
             {busy ? 'Enviando...' : 'Fazer Pedido'}
             {!busy && <span aria-hidden="true">→</span>}
           </button>

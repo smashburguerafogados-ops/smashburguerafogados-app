@@ -24,7 +24,6 @@ import { clearSavedCart, readSavedCart, restoreCart, restoreNotice, saveCart } f
 import { useKeyboardOpen } from '../lib/keyboard'
 import { useShop } from '../lib/shop'
 import { AdminPrompt } from './AdminPrompt'
-import { ClosedScreen } from './ClosedScreen'
 import { AttendancePrompt } from './AttendancePrompt'
 import { BottomBar } from './BottomBar'
 import { CartSheet } from './CartSheet'
@@ -182,10 +181,9 @@ export function MenuScreen() {
     : []
   const sections = groupBySection(visible, categories)
   const available = new Set(sections.map((section) => section.id))
-  const closedForCustomers = shop.ready && !shop.online && !(session.status === 'ready' && session.profile.role === 'admin')
   const spy = useSectionSpy(
     chipsRow,
-    `${catalog ? 'menu' : 'wait'}|${closedForCustomers}|${sections.map((section) => `${section.id}:${section.products.length}`).join(',')}`,
+    `${catalog ? 'menu' : 'wait'}|${sections.map((section) => `${section.id}:${section.products.length}`).join(',')}`,
   )
   const count = cartCount(lines)
   const total = cartTotal(lines)
@@ -219,11 +217,6 @@ export function MenuScreen() {
     }
     setAdminOpen(true)
   })
-
-  const adminKeepsMenu = session.status === 'ready' && session.profile.role === 'admin'
-  if (shop.ready && !shop.online && !adminKeepsMenu) {
-    return <ClosedScreen message={shop.message} hours={shop.hours} />
-  }
 
   function toggle(next: Sheet) {
     setNotice(null)
@@ -303,6 +296,16 @@ export function MenuScreen() {
           {count > 0 && <span className="menu__cart-count">{count}</span>}
         </button>
       </header>
+
+      {shop.ready && !shop.online ? (
+        <p className="menu__closed" role="status" aria-label={`Loja fechada. ${shop.notice}`}>
+          <span className="menu__closed-dot" aria-hidden="true" />
+          <span className="menu__closed-text" aria-hidden="true">
+            <strong>Fechado</strong>
+            <span>{shop.notice}</span>
+          </span>
+        </p>
+      ) : null}
 
       {shop.ready && shop.hours ? (
         <p className="menu__hours" role="status">

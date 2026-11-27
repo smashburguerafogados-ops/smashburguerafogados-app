@@ -7,6 +7,7 @@ import { adminProfile, customerProfile, renderApp, signInAs } from './test/rende
 import { recife } from './test/times'
 import './index.css'
 import './menu.css'
+import menuCss from './menu.css?raw'
 
 const WED = 25
 const THU = 26
@@ -27,11 +28,13 @@ describe('opening hours on the customer menu', () => {
     expect(document.querySelector('.menu__hours')).toHaveTextContent('Seg–Ter e Qui–Dom, 16h às 23h')
   })
 
-  it('shows the closed screen before opening and says when it opens', async () => {
+  it('keeps the menu before opening and says when it opens', async () => {
     clock.now = () => recife(2026, 11, THU, 15, 59)
     renderApp()
     await shopReady()
-    expect(screen.queryByRole('searchbox', { name: 'Buscar' })).not.toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
+    expect(screen.getByRole('status', { name: 'Loja fechada. Abrimos hoje às 16h' })).toBeInTheDocument()
+    expect(document.querySelector('.menu__closed-dot')).toBeInTheDocument()
     expect(screen.getByText('Abrimos hoje às 16h')).toBeInTheDocument()
   })
 
@@ -39,7 +42,7 @@ describe('opening hours on the customer menu', () => {
     clock.now = () => recife(2026, 11, WED, 20, 0)
     renderApp()
     await shopReady({ online: true })
-    expect(screen.queryByRole('searchbox', { name: 'Buscar' })).not.toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
     expect(screen.getByText('Fechado às quartas. Abrimos quinta às 16h')).toBeInTheDocument()
   })
 
@@ -60,8 +63,9 @@ describe('opening hours on the customer menu', () => {
     renderApp()
     await shopReady()
     expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
+    expect(document.querySelector('.menu__closed-dot')).not.toBeInTheDocument()
     expect(await screen.findByText('Abrimos amanhã às 16h')).toBeInTheDocument()
-    expect(screen.queryByRole('searchbox', { name: 'Buscar' })).not.toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
   })
 
   it('opens by itself at 16:00', async () => {
@@ -71,7 +75,8 @@ describe('opening hours on the customer menu', () => {
     renderApp()
     await shopReady()
     expect(screen.getByText('Abrimos hoje às 16h')).toBeInTheDocument()
-    expect(await screen.findByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
+    await waitFor(() => expect(document.querySelector('.menu__closed-dot')).not.toBeInTheDocument())
+    expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
   })
 
   it('re-evaluates when the tab comes back to the front', async () => {
@@ -97,8 +102,8 @@ describe('opening hours on the customer menu', () => {
     clock.now = () => recife(2026, 11, THU, 19, 0)
     renderApp()
     await shopReady({ online: false, closedAtMs: recife(2026, 11, THU, 18, 0), message: 'Acabou o pão.' })
-    expect(screen.getByText('Acabou o pão.')).toBeInTheDocument()
-    expect(screen.queryByRole('searchbox', { name: 'Buscar' })).not.toBeInTheDocument()
+    expect(screen.getByText('Acabou o pão. Abrimos amanhã às 16h')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Buscar' })).toBeInTheDocument()
   })
 
   it('goes back to the schedule the next day after a manual close', async () => {
@@ -163,6 +168,76 @@ describe('placing an order', () => {
     const cart = screen.getByRole('dialog', { name: 'Carrinho' })
     expect(within(cart).getByText(/Loja fechada\. Fechado às quartas\. Abrimos quinta às 16h/)).toBeInTheDocument()
     expect(within(cart).getByRole('button', { name: 'Fazer Pedido' })).toBeDisabled()
+  })
+})
+
+describe('closed shop keeps the menu and the cart', () => {
+  async function addSmash(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole('button', { name: /Smash da casa/ }))
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Adicionar' }))
+    await user.click(screen.getByRole('button', { name: /^Carrinho,/ }))
+    const cart = screen.getByRole('dialog', { name: 'Carrinho' })
+    await user.click(within(cart).getByRole('radio', { name: 'Retirada' }))
+    await user.click(within(cart).getByRole('radio', { name: 'Pix' }))
+    return cart
+  }
+
+  it('lets a customer add to the cart on a closed Wednesday, with the order button off and the opening time', async () => {
+    clock.now = () => recife(2026, 11, WED, 20, 0)
+    signInAs(customerProfile)
+    const user = userEvent.setup()
+    renderApp()
+    await waitFor(() => expect(firebaseMocks.getDoc).toHaveBeenCalled())
+    await shopReady()
+    const cart = await addSmash(user)
+    const button = within(cart).getByRole('button', { name: 'Fazer Pedido' })
+    expect(button).toBeDisabled()
+    expect(within(cart).getByText('Loja fechada. Fechado às quartas. Abrimos quinta às 16h')).toBeInTheDocument()
+    expect(button).toHaveAccessibleDescription(/Abrimos quinta às 16h/)
+    expect(firebaseMocks.addDoc).not.toHaveBeenCalled()
+  })
+
+  it('enables the order button by itself when the shop opens', async () => {
+    clock.now = () => recife(2026, 11, THU, 15, 59)
+    signInAs(customerProfile)
+    const user = userEvent.setup()
+    renderApp()
+    await waitFor(() => expect(firebaseMocks.getDoc).toHaveBeenCalled())
+    await shopReady()
+    const cart = await addSmash(user)
+    expect(within(cart).getByRole('button', { name: 'Fazer Pedido' })).toBeDisabled()
+    expect(within(cart).getByText('Loja fechada. Abrimos hoje às 16h')).toBeInTheDocument()
+
+    clock.now = () => recife(2026, 11, THU, 16, 0)
+    act(() => {
+      fireEvent(window, new Event('focus'))
+    })
+    await waitFor(() => expect(within(cart).getByRole('button', { name: 'Fazer Pedido' })).toBeEnabled())
+    expect(within(cart).queryByText(/Loja fechada/)).not.toBeInTheDocument()
+    expect(document.querySelector('.menu__closed-dot')).not.toBeInTheDocument()
+  })
+
+  it('refuses to send in code when the shop closes while the pickup form is open', async () => {
+    clock.now = () => recife(2026, 11, THU, 22, 58)
+    signInAs({ ...customerProfile, whatsapp: '' })
+    const user = userEvent.setup()
+    renderApp()
+    await waitFor(() => expect(firebaseMocks.getDoc).toHaveBeenCalled())
+    await shopReady()
+    const cart = await addSmash(user)
+    await user.click(within(cart).getByRole('button', { name: 'Fazer Pedido' }))
+    const form = await screen.findByRole('dialog', { name: 'Dados para retirada' })
+    await user.type(within(form).getByRole('textbox', { name: 'Telefone' }), '87988887777')
+
+    clock.now = () => recife(2026, 11, THU, 23, 0)
+    await user.click(within(form).getByRole('button', { name: 'Salvar e pedir' }))
+    expect(await within(form).findByText(/Loja fechada\. Abrimos amanhã às 16h/)).toBeInTheDocument()
+    expect(firebaseMocks.addDoc).not.toHaveBeenCalled()
+    expect(screen.queryByText('Pedido enviado')).not.toBeInTheDocument()
+  })
+
+  it('keeps the closed dot still with reduced motion', () => {
+    expect(menuCss).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.menu__closed-dot,\s*\.cart__closed-dot\s*\{\s*animation: none;/)
   })
 })
 

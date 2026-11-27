@@ -88,6 +88,8 @@ export type ShopState = {
   manualClosed: boolean
   /** What the customer reads while closed. Empty while open. */
   message: string
+  /** What the customer reads next to the closed sign: the reason plus when the shop opens. Empty while open. */
+  notice: string
   /** Summary of the week for the splash and the menu header. */
   hours: string
   /** Next instant the answer may change, or null when it never will. */
@@ -122,15 +124,26 @@ export function evaluateShop(settings: ShopSettings, ms: number): ShopState {
       reason: 'schedule',
       manualClosed,
       message: closedByScheduleMessage(settings.schedule, ms),
+      notice: closedByScheduleMessage(settings.schedule, ms),
       hours,
       nextChangeMs,
       manualUntilMs: until,
     }
   }
   if (manualClosed) {
-    return { open: false, reason: 'manual', manualClosed, message: settings.message, hours, nextChangeMs, manualUntilMs: until }
+    const reopens = until === null ? '' : closedByScheduleMessage(settings.schedule, until)
+    return {
+      open: false,
+      reason: 'manual',
+      manualClosed,
+      message: settings.message,
+      notice: reopens ? `${settings.message} ${reopens}` : settings.message,
+      hours,
+      nextChangeMs,
+      manualUntilMs: until,
+    }
   }
-  return { open: true, reason: 'open', manualClosed, message: '', hours, nextChangeMs, manualUntilMs: until }
+  return { open: true, reason: 'open', manualClosed, message: '', notice: '', hours, nextChangeMs, manualUntilMs: until }
 }
 
 const MAX_WAIT_MS = 15 * 60_000

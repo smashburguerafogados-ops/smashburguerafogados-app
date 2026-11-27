@@ -160,6 +160,21 @@ describe('manual switch', () => {
     })
   })
 
+  it('tells the customer when the shop opens again after a manual close', () => {
+    const closed = shop({ online: false, closedAtMs: during, message: 'Acabou o pão.' })
+    expect(evaluateShop(closed, recife(2026, 11, THU, 19)).notice).toBe('Acabou o pão. Abrimos amanhã às 16h')
+    const tuesday = shop({ online: false, closedAtMs: recife(2026, 11, TUE, 18), message: 'Acabou o pão.' })
+    expect(evaluateShop(tuesday, recife(2026, 11, TUE, 19)).notice).toBe('Acabou o pão. Abrimos quinta às 16h')
+    const legacy = shop({ online: false, closedAtMs: null, message: 'Acabou o pão.' })
+    expect(evaluateShop(legacy, recife(2026, 11, THU, 19)).notice).toBe('Acabou o pão.')
+  })
+
+  it('has no notice while open and the schedule message while closed by the schedule', () => {
+    expect(evaluateShop(shop(), recife(2026, 11, THU, 18)).notice).toBe('')
+    expect(evaluateShop(shop(), recife(2026, 11, THU, 10)).notice).toBe('Abrimos hoje às 16h')
+    expect(evaluateShop(shop(), recife(2026, 11, WED, 18)).notice).toBe('Fechado às quartas. Abrimos quinta às 16h')
+  })
+
   it('ends with the opening window and the schedule takes over', () => {
     const closed = shop({ online: false, closedAtMs: during })
     expect(isOpen(recife(2026, 11, THU, 22, 59), closed)).toBe(false)
